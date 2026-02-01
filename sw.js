@@ -1,6 +1,6 @@
 // Service Worker para DeltaF
 // Versión del cache - incrementa este número cuando hagas cambios
-const CACHE_VERSION = 'v0.15';
+const CACHE_VERSION = 'v0.16';
 const CACHE_NAME = `deltaf-cache-${CACHE_VERSION}`;
 
 // Archivos a cachear
