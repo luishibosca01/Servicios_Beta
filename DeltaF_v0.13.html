@@ -1,0 +1,2400 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#ffffff">
+    <meta name="description" content="Gestión de servicios y facturas">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>Gestión de Servicios</title>
+    <link rel="manifest"
+        href="data:application/json;base64,eyJuYW1lIjoiR2VzdGnDs24gZGUgU2VydmljaW9zIiwic2hvcnRfbmFtZSI6IlNlcnZpY2lvcyIsInN0YXJ0X3VybCI6Ii4iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImJhY2tncm91bmRfY29sb3IiOiIjZjlmYWZiIiwidGhlbWVfY29sb3IiOiIjZmZmZmZmIn0=">
+    <style>
+        :root {
+            /* --- Variables de Color (Tema Claro) --- */
+            --bg-body: #f9fafb;
+            --bg-card: #ffffff;
+            --bg-header: rgba(255, 255, 255, 0.800);
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --text-inv: #ffffff;
+            --border: #e5e7eb;
+            --input-bg: #ffffff;
+            --input-focus: #272450;
+            --c-blue: #5382e6;
+            --c-green: #60ac94;
+            --c-red: #c05d76;
+            --c-purple: #8b5cf6;
+            --c-gold: #d6af66;
+            --c-gray-btn: #e7e7e7;
+            --c-white: #ffffff;
+            --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            --radius: 10px;
+        }
+
+        body.dark-mode {
+            /* --- Variables de Color (Tema Oscuro) --- */
+            --bg-body: #111827;
+            --bg-card: #1f2937;
+            --bg-header: rgba(17, 24, 39, 0.800);
+            --text-main: #f9fafb;
+            --text-muted: #d1d5db;
+            --border: #374151;
+            --input-bg: #374151;
+            --input-focus: #374151;
+            --c-gray-btn: #374151;
+            --shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        body.modal-open {
+            overflow: hidden !important;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        html {
+            scrollbar-gutter: stable;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: var(--bg-body);
+            color: var(--text-main);
+            overflow-anchor: none;
+            transition: background 0.3s, color 0.3s;
+            overflow-y: auto;
+            touch-action: pan-y;
+        }
+
+        /* --- Layout & Contenedores --- */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        /* Layout de 2 columnas para desktop */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        @media (min-width: 768px) {
+            .main-grid {
+                grid-template-columns: 400px 1fr;
+                align-items: start;
+            }
+
+            .sidebar-left {
+                display: flex;
+                flex-direction: column;
+                gap: 1rem;
+                position: sticky;
+                top: 70px;
+            }
+
+            .sidebar-left .card {
+                margin-bottom: 0;
+            }
+        }
+
+        .header {
+            background: var(--bg-header);
+            backdrop-filter: blur(10px);
+            padding: 0.6rem;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 90;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 1.25rem;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-shrink: 0;
+            margin-right: auto;
+            margin-left: 1rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .icon-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 0.5rem;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .icon-btn:active {
+            transform: scale(0.95);
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 1.5rem 1rem;
+            margin-bottom: 1rem;
+            box-shadow: var(--shadow);
+            color: var(--text-main);
+        }
+
+        .card h2 {
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-main);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* --- Iconos --- */
+        .icon {
+            width: 1.2em;
+            height: 1.2em;
+            vertical-align: text-bottom;
+            fill: currentColor;
+            stroke: currentColor;
+            stroke-width: 0;
+        }
+
+        .icon-line {
+            stroke-width: 2;
+            fill: none;
+        }
+
+        /* --- Botones --- */
+        button {
+            width: 100%;
+            padding: 0.875rem;
+            border: 1px solid transparent;
+            border-radius: var(--radius);
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            color: var(--text-main);
+            background: var(--c-gray-btn);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button:disabled {
+            background: transparent;
+            cursor: not-allowed;
+            transform: none;
+            color: #6b7280;
+            opacity: 0.5;
+        }
+
+        .btn-primary {
+            background: var(--c-blue);
+            color: var(--text-inv);
+        }
+
+        .btn-success {
+            background: var(--c-green);
+            color: var(--text-inv);
+        }
+
+        .btn-danger {
+            background: var(--c-red);
+            color: var(--text-inv);
+        }
+
+        .btn-add {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            padding: 0;
+            background: var(--c-blue);
+            color: var(--text-inv);
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 80;
+        }
+
+        /* --- Servicios --- */
+        .servicios-lista {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .servicio-item {
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .servicio-item:active {
+            transform: scale(0.98);
+        }
+
+        .servicio-item.vencido {
+            border-left: 4px solid var(--c-red);
+        }
+
+        .servicio-item.lejano {
+            border-left: 4px solid var(--c-blue);
+        }
+
+        .servicio-item.proximo {
+            border-left: 4px solid var(--c-gold);
+        }
+
+        .servicio-item.urgente {
+            border-left: 4px solid var(--c-red);
+        }
+
+        .servicio-item.pagado {
+            border-left: 4px solid var(--c-green);
+        }
+
+        .servicio-nombre {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .servicio-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .servicio-monto {
+            font-weight: 600;
+            color: var(--text-main);
+            font-size: 1rem;
+        }
+
+        .servicio-fecha {
+            font-size: 0.85rem;
+        }
+
+        .servicio-estado {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: var(--radius);
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+
+        .estado-vencido {
+            background: rgba(192, 93, 118, 0.15);
+            color: var(--c-red);
+        }
+
+        .estado-proximo {
+            background: rgba(214, 175, 102, 0.15);
+            color: var(--c-gold);
+        }
+
+        .estado-pagado {
+            background: rgba(96, 172, 148, 0.15);
+            color: var(--c-green);
+        }
+
+        /* --- Modal --- */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s ease;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-header h3 {
+            font-size: 1.2rem;
+            color: var(--text-main);
+        }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            width: auto;
+            padding: 0.5rem;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+
+        /* --- Formularios --- */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group select {
+            width: 100%;
+            padding: 0.875rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 1rem;
+            background: var(--input-bg);
+            color: var(--text-main);
+            cursor: pointer;
+        }
+
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--input-focus);
+        }
+
+        label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 1rem;
+            background: var(--input-bg);
+            color: var(--text-main);
+            transition: border-color 0.2s;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--c-blue);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+        }
+
+        /* --- Facturas --- */
+        .facturas-lista {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .factura-item {
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s;
+        }
+
+        .factura-item.pagada {
+            opacity: 0.6;
+            border-color: var(--c-green);
+        }
+
+        .factura-info {
+            flex: 1;
+        }
+
+        .factura-monto {
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--text-main);
+        }
+
+        .factura-fecha {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        .factura-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-small {
+            width: auto;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.85rem;
+        }
+
+        /* --- Animaciones --- */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* --- Scrollbar --- */
+        .custom-scroll {
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .custom-scroll::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .custom-scroll::-webkit-scrollbar-track {
+            background: var(--bg-body);
+            border-radius: var(--radius);
+        }
+
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: var(--radius);
+        }
+
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+
+        /* --- Empty State --- */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-muted);
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+
+        .empty-state p {
+            font-size: 0.95rem;
+        }
+
+        /* --- Menu Ajustes --- */
+        .menu-ajustes {
+            position: fixed;
+            top: 0;
+            right: -280px;
+            width: 280px;
+            height: 100vh;
+            height: 100dvh;
+            background: var(--bg-card);
+            box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+            transition: right 0.3s;
+            z-index: 102;
+            padding: 1rem;
+            overscroll-behavior: contain;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @media (max-width: 480px) {
+            .menu-ajustes {
+                right: -75vw;
+                width: 75vw;
+                max-width: 280px;
+            }
+        }
+
+        .menu-ajustes.active {
+            right: 0;
+        }
+
+        @media (max-width: 480px) {
+            .menu-ajustes.active {
+                right: 0;
+            }
+        }
+
+        .menu-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 20;
+        }
+
+        .menu-overlay.active {
+            display: block;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+            }
+
+            to {
+                transform: translateX(0);
+            }
+        }
+
+        .menu-item {
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--text-main);
+            transition: color 0.2s;
+        }
+
+        .menu-item:hover {
+            color: var(--text-muted);
+        }
+
+        .menu-item:last-child {
+            border-bottom: none;
+        }
+
+        .menu-content {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .menu-footer {
+            margin-top: auto;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .btn-cerrar-menu {
+            width: 100%;
+            padding: 0.875rem;
+            margin-bottom: 1rem;
+            background: transparent;
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            color: var(--text-main);
+        }
+
+        .btn-cerrar-menu:active {
+            transform: scale(0.98);
+        }
+
+        .menu-version {
+            text-align: center;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            padding: 0.5rem 0;
+        }
+
+        .menu-header {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        /* --- Toast Notifications --- */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--bg-card);
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 999;
+            opacity: 0;
+            transition: all 0.3s ease;
+            border-left: 4px solid var(--c-blue);
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast.success {
+            border-left-color: var(--c-green);
+        }
+
+        .toast.error {
+            border-left-color: var(--c-red);
+        }
+
+        .resumen-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .resumen-item {
+            background: var(--input-bg);
+            padding: 1rem;
+            border-radius: var(--radius);
+            text-align: center;
+        }
+
+        .resumen-valor {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+            color: var(--text-main);
+        }
+
+        .resumen-label {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .resumen-monto {
+            padding: 1rem;
+            border-radius: var(--radius);
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .resumen-monto .resumen-valor {
+            font-size: 2rem;
+            color: var(--c-white);
+        }
+
+        /* --- Estilos para colapso de facturas --- */
+        .servicio-item {
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .servicio-item.expanded {
+            background: var(--input-bg);
+        }
+
+        .facturas-colapso {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .facturas-colapso.active {
+            max-height: 2000px;
+            transition: max-height 0.5s ease-in;
+        }
+
+        .factura-item-inline {
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            background: var(--bg-card);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .factura-item-inline:hover {
+            background: var(--input-bg);
+        }
+
+        .factura-info-inline {
+            flex: 1;
+            cursor: pointer;
+        }
+
+        .factura-monto-inline {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-main);
+        }
+
+        .factura-fecha-inline {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        .factura-estado-inline {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            margin-top: 0.25rem;
+            display: inline-block;
+        }
+
+        .factura-estado-inline.pagada {
+            background: rgba(96, 172, 148, 0.1);
+            color: var(--c-green);
+        }
+
+        .factura-actions-inline {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .btn-agregar-factura-inline {
+            width: 100%;
+            padding: 0.75rem;
+            margin-top: 0.5rem;
+            background: var(--c-green);
+            color: var(--text-inv);
+            border: none;
+            border-radius: var(--radius);
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-agregar-factura-inline:active {
+            transform: scale(0.98);
+        }
+
+        /* --- Botón flotante agregar factura --- */
+        .btn-add-factura {
+            position: absolute;
+            top: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--c-green);
+            color: var(--text-inv);
+            font-size: 1.5rem;
+            font-weight: 300;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            z-index: 30;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-add-factura:hover {
+            transform: translateX(-50%) scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-add-factura:active {
+            transform: translateX(-50%) scale(0.95);
+        }
+
+        .servicio-wrapper {
+            position: relative;
+        }
+
+        .servicio-item {
+            position: relative;
+            z-index: 1;
+        }
+
+        .facturas-colapso {
+            position: relative;
+            z-index: 10;
+        }
+
+        .facturas-colapso-content {
+            padding-top: 3rem;
+            border-radius: var(--radius);
+            position: relative;
+        }
+
+        /* --- codigo css --- */
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <h1>
+            <svg class="icon" viewBox="0 0 24 24">
+                <path
+                    d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z" />
+                <path d="M7 12h2v5H7zm4-3h2v8h-2zm4-3h2v11h-2z" />
+            </svg>
+            Servicios
+        </h1>
+        <div class="header-actions">
+            <button class="icon-btn" id="btn-ajustes" aria-label="Ajustes">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path
+                        d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z" />
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Overlay del menú -->
+    <div class="menu-overlay" id="menu-overlay"></div>
+
+    <!-- Menú de Ajustes -->
+    <div class="menu-ajustes" id="menu-ajustes">
+        <div class="menu-header">Ajustes</div>
+
+        <div class="menu-content">
+            <div class="menu-item" id="menu-tema">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path class="icon-line" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                </svg>
+                <span>Tema</span>
+            </div>
+
+            <div class="menu-item" id="menu-exportar">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path class="icon-line" d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5-5 5 5M12 5v12" />
+                </svg>
+                <span>Descargar</span>
+            </div>
+
+            <div class="menu-item" id="menu-importar">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path class="icon-line" d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+                </svg>
+                <span>Restaurar</span>
+            </div>
+
+            <div class="menu-item" id="menu-limpiar">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path class="icon-line"
+                        d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                </svg>
+                <span>Borrar todo</span>
+            </div>
+        </div>
+
+        <div class="menu-footer">
+            <button class="btn-cerrar-menu" id="btn-cerrar-menu">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <line class="icon-line" x1="18" y1="6" x2="6" y2="18" />
+                    <line class="icon-line" x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+                Cerrar menú
+            </button>
+            <div class="menu-version">Version 0.12</div>
+        </div>
+    </div>
+
+    <!-- Contenedor Principal -->
+    <div class="container">
+        <div class="main-grid">
+            <!-- Columna izquierda (sidebar) -->
+            <div class="sidebar-left">
+                <!-- Tarjeta de Estado (incluye fecha) -->
+                <div class="card">
+                    <div style="text-align: center; padding-bottom: 1rem; border-bottom: 1px solid var(--border);">
+                        <div style="font-size: 1.125rem; font-weight: 600; color: var(--text-main);" id="fecha-dia">
+                            Sábado</div>
+                        <div style="font-size: 0.875rem; color: var(--text-muted);" id="fecha-texto">31 de Enero de 2026
+                        </div>
+                    </div>
+                    <div id="resumen-mes"></div>
+                </div>
+
+                <!-- Tarjeta de Estadísticas -->
+                <div class="card">
+                    <h2>
+                        <svg class="icon" viewBox="0 0 24 24">
+                            <path
+                                d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z" />
+                            <path d="M7 12h2v5H7zm4-3h2v8h-2zm4-3h2v11h-2z" />
+                        </svg>
+                        Estadísticas
+                    </h2>
+                    <div id="estadisticas-mes"></div>
+                </div>
+            </div>
+
+            <!-- Columna derecha (contenido principal) -->
+            <div class="main-content">
+                <!-- Tarjeta de Servicios -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>
+                            <svg class="icon" viewBox="0 0 24 24">
+                                <rect class="icon-line" x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                                <line class="icon-line" x1="16" y1="2" x2="16" y2="6" />
+                                <line class="icon-line" x1="8" y1="2" x2="8" y2="6" />
+                                <line class="icon-line" x1="3" y1="10" x2="21" y2="10" />
+                            </svg>
+                            Servicios
+                        </h2>
+                        <div class="card-actions">
+                            <button class="icon-btn" id="btn-undo" title="Deshacer (Ctrl+Z)" disabled>
+                                <svg class="icon" viewBox="0 0 24 24">
+                                    <path class="icon-line" d="M3 7v6h6" />
+                                    <path class="icon-line" d="M21 17a9 9 0 00-9-9 9 9 0 00-9 9" />
+                                </svg>
+                            </button>
+                            <button class="icon-btn" id="btn-redo" title="Rehacer (Ctrl+Y)" disabled>
+                                <svg class="icon" viewBox="0 0 24 24">
+                                    <path class="icon-line" d="M21 7v6h-6" />
+                                    <path class="icon-line" d="M3 17a9 9 0 019-9 9 9 0 019 9" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="servicios-lista" id="servicios-lista">
+                        <!-- Los servicios se cargarán aquí -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botón Agregar Servicio -->
+    <button class="btn-add" id="btn-agregar-servicio" aria-label="Agregar servicio">+</button>
+
+    <!-- Modal Agregar/Editar Servicio -->
+    <div class="modal" id="modal-servicio">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-servicio-titulo">Nuevo Servicio</h3>
+                <button class="modal-close" id="modal-servicio-close">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path class="icon-line" d="M18 6L6 18M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <form id="form-servicio">
+                <div class="form-group">
+                    <label for="servicio-nombre">Nombre del servicio</label>
+                    <input type="text" id="servicio-nombre" required placeholder="Ej: Internet, Luz, Agua">
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">Guardar</button>
+                    <button type="button" class="btn-danger" id="btn-eliminar-servicio"
+                        style="display: none;">Eliminar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Ver Facturas -->
+    <div class="modal" id="modal-facturas">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-facturas-titulo">Facturas</h3>
+                <button class="modal-close" id="modal-facturas-close">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path class="icon-line" d="M18 6L6 18M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <button type="button" class="btn-success" id="btn-agregar-factura">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path class="icon-line" d="M12 5v14M5 12h14" />
+                </svg>
+                Agregar Factura
+            </button>
+
+            <div class="facturas-lista" id="facturas-lista">
+                <!-- Las facturas se cargarán aquí -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Agregar/Editar Factura -->
+    <div class="modal" id="modal-factura">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-factura-titulo">Nueva Factura</h3>
+                <button class="modal-close" id="modal-factura-close">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path class="icon-line" d="M18 6L6 18M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <form id="form-factura">
+                <div class="form-group">
+                    <label for="factura-monto">Monto</label>
+                    <input type="number" id="factura-monto" required placeholder="0.00" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                    <label for="factura-tipo">Tipo de factura</label>
+                    <select id="factura-tipo" required>
+                        <option value="mensual">Mensual</option>
+                        <option value="bimestral">Bimestral</option>
+                        <option value="semestral">Semestral</option>
+                        <option value="anual">Anual</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="factura-fecha">Fecha de vencimiento</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="date" id="factura-fecha" required style="flex: 1;">
+                        <button type="button" class="icon-btn" id="btn-fecha-hoy" title="Fecha de hoy">
+                            <svg class="icon" viewBox="0 0 24 24">
+                                <rect class="icon-line" x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                                <line class="icon-line" x1="16" y1="2" x2="16" y2="6" />
+                                <line class="icon-line" x1="8" y1="2" x2="8" y2="6" />
+                                <line class="icon-line" x1="3" y1="10" x2="21" y2="10" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="form-group" id="grupo-fecha-pago" style="display: none;">
+                    <label for="factura-fecha-pago">Fecha de pago</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="date" id="factura-fecha-pago" style="flex: 1;">
+                        <button type="button" class="icon-btn" id="btn-fecha-pago-hoy" title="Fecha de hoy">
+                            <svg class="icon" viewBox="0 0 24 24">
+                                <rect class="icon-line" x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                                <line class="icon-line" x1="16" y1="2" x2="16" y2="6" />
+                                <line class="icon-line" x1="8" y1="2" x2="8" y2="6" />
+                                <line class="icon-line" x1="3" y1="10" x2="21" y2="10" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">Guardar</button>
+                    <button type="button" class="btn-danger" id="btn-eliminar-factura-modal"
+                        style="display: none;">Eliminar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast de notificaciones -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ============================================
+        // APLICACIÓN DE GESTIÓN DE SERVICIOS
+        // ============================================
+
+        class GestionServicios {
+            constructor() {
+                // Estado de la aplicación
+                this.servicios = [];
+                this.servicioActual = null;
+                this.facturaActual = null;
+
+                // Sistema de Undo/Redo
+                this.historial = [];
+                this.historialIndex = -1;
+                this.maxHistorial = 50;
+
+                // Configuración
+                this.STORAGE_KEY = 'gestion_servicios_data';
+                this.THEME_KEY = 'gestion_servicios_theme';
+
+                this.mostrandoPagadoMes = false;
+                this.datosResumen = { pendiente: 0, pagadoMes: 0 };
+
+                this.init();
+            }
+
+            obtenerFechaLocal() {
+                const hoy = new Date();
+                return `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
+            }
+
+            // ========================================
+            // INICIALIZACIÓN
+            // ========================================
+
+            init() {
+                this.cargarDatos();
+                this.cargarTema();
+                this.actualizarFecha();
+                this.actualizarResumenMes();
+                this.renderServicios();
+                this.setupEventListeners();
+                this.actualizarBotonesHistorial();
+
+                // Actualizar fecha cada minuto
+                setInterval(() => this.actualizarFecha(), 60000);
+            }
+
+            setupEventListeners() {
+                // Botones principales
+                document.getElementById('btn-agregar-servicio').addEventListener('click', () => this.abrirModalServicio());
+                document.getElementById('btn-ajustes').addEventListener('click', () => this.toggleMenuAjustes());
+                document.getElementById('menu-overlay').addEventListener('click', () => this.cerrarMenuAjustes());
+                document.getElementById('btn-cerrar-menu').addEventListener('click', () => this.cerrarMenuAjustes());
+
+                // Undo/Redo
+                document.getElementById('btn-undo').addEventListener('click', () => this.deshacer());
+                document.getElementById('btn-redo').addEventListener('click', () => this.rehacer());
+
+                // Menú ajustes
+                document.getElementById('menu-tema').addEventListener('click', () => this.toggleTema());
+                document.getElementById('menu-exportar').addEventListener('click', () => this.exportarDatos());
+                document.getElementById('menu-importar').addEventListener('click', () => this.importarDatos());
+                document.getElementById('menu-limpiar').addEventListener('click', () => this.limpiarDatos());
+
+                // Modales
+                document.getElementById('modal-servicio-close').addEventListener('click', () => this.cerrarModal('modal-servicio'));
+                document.getElementById('modal-facturas-close').addEventListener('click', () => this.cerrarModal('modal-facturas'));
+                document.getElementById('modal-factura-close').addEventListener('click', () => this.cerrarModal('modal-factura'));
+
+                // Cerrar modales al hacer click fuera
+                document.querySelectorAll('.modal').forEach(modal => {
+                    modal.addEventListener('click', (e) => {
+                        if (e.target === modal) {
+                            this.cerrarTodosLosModales();
+                        }
+                    });
+                });
+
+                // Formularios
+                document.getElementById('form-servicio').addEventListener('submit', (e) => this.guardarServicio(e));
+                document.getElementById('form-factura').addEventListener('submit', (e) => this.guardarFactura(e));
+                document.getElementById('btn-eliminar-servicio').addEventListener('click', () => this.eliminarServicio());
+                document.getElementById('btn-agregar-factura').addEventListener('click', () => this.abrirModalFactura());
+                document.getElementById('btn-fecha-hoy').addEventListener('click', () => this.establecerFechaHoy());
+                document.getElementById('btn-eliminar-factura-modal').addEventListener('click', () => this.eliminarFacturaDesdeModal());
+                // Botón para establecer fecha de pago como hoy
+                document.getElementById('btn-fecha-pago-hoy').addEventListener('click', () => {
+                    document.getElementById('factura-fecha-pago').value = this.obtenerFechaLocal();
+                });
+
+                // Cerrar modales con ESC
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        this.cerrarTodosLosModales();
+                    }
+                });
+
+                // Atajos de teclado
+                document.addEventListener('keydown', (e) => {
+                    if (e.ctrlKey || e.metaKey) {
+                        if (e.key === 'z' && !e.shiftKey) {
+                            e.preventDefault();
+                            this.deshacer();
+                        } else if ((e.key === 'z' && e.shiftKey) || e.key === 'y') {
+                            e.preventDefault();
+                            this.rehacer();
+                        }
+                    }
+                });
+            }
+
+            // ========================================
+            // GESTIÓN DE FECHA
+            // ========================================
+
+            actualizarFecha() {
+                const ahora = new Date();
+                const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+                const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+                const dia = ahora.getDate();
+                const diaSemana = dias[ahora.getDay()];
+                const mes = meses[ahora.getMonth()];
+                const año = ahora.getFullYear();
+
+                document.getElementById('fecha-dia').textContent = diaSemana;
+                document.getElementById('fecha-texto').textContent = `${dia} de ${mes} de ${año}`;
+            }
+
+            actualizarResumenMes() {
+                const mesActual = new Date().getMonth();
+                const añoActual = new Date().getFullYear();
+                const mesSiguiente = mesActual === 11 ? 0 : mesActual + 1;
+                const añoSiguiente = mesActual === 11 ? añoActual + 1 : añoActual;
+
+                let totalAPagar = 0;
+                let totalPagadoMes = 0;
+
+                this.servicios.forEach(servicio => {
+                    servicio.facturas.forEach(factura => {
+                        const fechaFactura = new Date(factura.fecha + 'T00:00:00');
+                        const mesFactura = fechaFactura.getMonth();
+                        const añoFactura = fechaFactura.getFullYear();
+
+                        const esDelMesActual = mesFactura === mesActual && añoFactura === añoActual;
+                        const esDelMesSiguiente = mesFactura === mesSiguiente && añoFactura === añoSiguiente;
+
+                        if (esDelMesActual || esDelMesSiguiente) {
+                            if (!factura.pagada) {
+                                totalAPagar += factura.monto;
+                            }
+                        }
+
+                        // Calcular pagado este mes
+                        if (factura.pagada && factura.fechaPago) {
+                            const fechaPago = new Date(factura.fechaPago + 'T00:00:00');
+                            if (fechaPago.getMonth() === mesActual && fechaPago.getFullYear() === añoActual) {
+                                totalPagadoMes += factura.monto;
+                            }
+                        }
+                    });
+                });
+
+                // Guardar datos para el toggle
+                this.datosResumen = {
+                    pendiente: totalAPagar,
+                    pagadoMes: totalPagadoMes
+                };
+
+                // Mostrar según estado actual
+                if (this.mostrandoPagadoMes) {
+                    this.mostrarPagadoEnResumen();
+                } else {
+                    this.mostrarPendienteEnResumen();
+                }
+
+                // Actualizar estadísticas
+                this.actualizarEstadisticas();
+            }
+
+            mostrarPendienteEnResumen() {
+                const resumenHTML = `
+        <div class="resumen-monto" style="margin-top: 1rem; cursor: pointer;" id="resumen-toggle">
+            <div class="resumen-valor">${this.formatearMoneda(this.datosResumen.pendiente)}</div>
+            <div class="resumen-label">Pendiente de pago</div>
+        </div>
+    `;
+                document.getElementById('resumen-mes').innerHTML = resumenHTML;
+                this.mostrandoPagadoMes = false;
+
+                // Agregar event listener
+                document.getElementById('resumen-toggle').addEventListener('click', () => {
+                    this.toggleResumen();
+                });
+            }
+
+            mostrarPagadoEnResumen() {
+                const resumenHTML = `
+        <div class="resumen-monto" style="margin-top: 1rem; cursor: pointer;" id="resumen-toggle">
+            <div class="resumen-valor">${this.formatearMoneda(this.datosResumen.pagadoMes)}</div>
+            <div class="resumen-label">Pagado este mes</div>
+        </div>
+    `;
+                document.getElementById('resumen-mes').innerHTML = resumenHTML;
+                this.mostrandoPagadoMes = true;
+
+                // Agregar event listener
+                document.getElementById('resumen-toggle').addEventListener('click', () => {
+                    this.toggleResumen();
+                });
+            }
+
+            toggleResumen() {
+                if (this.mostrandoPagadoMes) {
+                    this.mostrarPendienteEnResumen();
+                } else {
+                    this.mostrarPagadoEnResumen();
+                }
+            }
+
+            actualizarEstadisticas() {
+                const hoy = new Date();
+                hoy.setHours(0, 0, 0, 0);
+                const mesActual = hoy.getMonth();
+                const añoActual = hoy.getFullYear();
+
+                // Obtener el mes seleccionado del selector (si existe)
+                const selectMes = document.getElementById('select-mes-estadisticas');
+                let mesSeleccionado, añoSeleccionado;
+
+                if (selectMes && selectMes.value) {
+                    const [año, mes] = selectMes.value.split('-');
+                    añoSeleccionado = parseInt(año);
+                    mesSeleccionado = parseInt(mes) - 1;
+                } else {
+                    // Por defecto usar mes actual
+                    mesSeleccionado = mesActual;
+                    añoSeleccionado = añoActual;
+                }
+
+                // Calcular estadísticas del mes seleccionado
+                let cantidadPendientes = 0;
+                let cantidadPagadas = 0;
+                let cantidadVencidas = 0;
+                let totalMes = 0;
+
+                this.servicios.forEach(servicio => {
+                    servicio.facturas.forEach(factura => {
+                        const fechaFactura = new Date(factura.fecha + 'T00:00:00');
+                        const mesFactura = fechaFactura.getMonth();
+                        const añoFactura = fechaFactura.getFullYear();
+
+                        // Solo contar facturas del mes seleccionado
+                        if (mesFactura === mesSeleccionado && añoFactura === añoSeleccionado) {
+                            totalMes += factura.monto;
+                            if (factura.pagada) {
+                                cantidadPagadas++;
+                            } else {
+                                cantidadPendientes++;
+
+                                // Verificar si está vencida
+                                const vencimiento = new Date(factura.fecha + 'T00:00:00');
+                                vencimiento.setHours(0, 0, 0, 0);
+                                if (vencimiento < hoy) {
+                                    cantidadVencidas++;
+                                }
+                            }
+                        }
+                    });
+                });
+
+                const estadisticasHTML = `
+        <div style="margin-bottom: 1rem;">
+            <select id="select-mes-estadisticas" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: var(--radius); font-size: 0.875rem; background: var(--bg-card); color: var(--text-main); cursor: pointer;">
+                ${this.generarOpcionesMeses(mesSeleccionado, añoSeleccionado)}
+            </select>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0;">
+                <span style="font-size: 0.875rem; color: var(--text-muted);">Total</span>
+                <span style="font-size: 0.875rem; font-weight: 600; color: var(--text-main);">${this.formatearMoneda(totalMes)}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid var(--border);">
+                <span style="font-size: 0.875rem; color: var(--text-muted);">Facturas</span>
+                <span style="font-size: 0.875rem; font-weight: 600; color: var(--text-main);">${cantidadPendientes + cantidadPagadas}</span>
+            </div>    
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid var(--border);">
+                <span style="font-size: 0.875rem; color: var(--text-muted);">Pendientes</span>
+                <span style="font-size: 0.875rem; font-weight: 600; color: var(--text-main);">${cantidadPendientes}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid var(--border);">
+                <span style="font-size: 0.875rem; color: var(--text-muted);">Pagadas</span>
+                <span style="font-size: 0.875rem; font-weight: 600; color: var(--text-main);">${cantidadPagadas}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid var(--border);">
+                <span style="font-size: 0.875rem; color: var(--text-muted);">Vencidas</span>
+                <span style="font-size: 0.875rem; font-weight: 600; color: var(--text-main);">${cantidadVencidas}</span>
+            </div>                    
+        </div>
+    `;
+
+                document.getElementById('estadisticas-mes').innerHTML = estadisticasHTML;
+
+                // Agregar event listener al select
+                const select = document.getElementById('select-mes-estadisticas');
+                if (select) {
+                    select.addEventListener('change', () => {
+                        this.actualizarEstadisticas();
+                    });
+                }
+            }
+
+            generarOpcionesMeses(mesSeleccionado, añoSeleccionado) {
+                const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+                // Obtener todos los meses que tienen facturas
+                const mesesConFacturas = new Set();
+
+                this.servicios.forEach(servicio => {
+                    servicio.facturas.forEach(factura => {
+                        const fechaFactura = new Date(factura.fecha + 'T00:00:00');
+                        const año = fechaFactura.getFullYear();
+                        const mes = fechaFactura.getMonth();
+                        const claveMes = `${año}-${String(mes + 1).padStart(2, '0')}`;
+                        mesesConFacturas.add(claveMes);
+                    });
+                });
+
+                // Ordenar meses de más reciente a más antiguo
+                const mesesOrdenados = Array.from(mesesConFacturas).sort((a, b) => b.localeCompare(a));
+
+                // Si no hay meses con facturas, mostrar solo el mes actual
+                if (mesesOrdenados.length === 0) {
+                    const claveActual = `${añoSeleccionado}-${String(mesSeleccionado + 1).padStart(2, '0')}`;
+                    return `<option value="${claveActual}">${meses[mesSeleccionado]} ${añoSeleccionado}</option>`;
+                }
+
+                // Generar opciones
+                return mesesOrdenados.map(claveMes => {
+                    const [año, mes] = claveMes.split('-');
+                    const nombreMes = meses[parseInt(mes) - 1];
+                    const esSeleccionado = parseInt(año) === añoSeleccionado && parseInt(mes) - 1 === mesSeleccionado;
+                    return `<option value="${claveMes}" ${esSeleccionado ? 'selected' : ''}>${nombreMes} ${año}</option>`;
+                }).join('');
+            }
+
+            // ========================================
+            // GESTIÓN DE SERVICIOS
+            // ========================================
+
+            renderServicios() {
+                // Guardar posición de scroll antes de actualizar
+                const scrollPos = window.scrollY || window.pageYOffset;
+
+                const lista = document.getElementById('servicios-lista');
+
+                if (this.servicios.length === 0) {
+                    lista.innerHTML = `
+            <div class="empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="12" y1="9" x2="12" y2="15"/>
+                    <line x1="9" y1="12" x2="15" y2="12"/>
+                </svg>
+                <p>No hay servicios registrados<br>Presiona el botón + para agregar uno</p>
+            </div>
+        `;
+                    return;
+                }
+
+                // Ordenar servicios por fecha de vencimiento más próxima
+                const serviciosOrdenados = [...this.servicios].sort((a, b) => {
+                    const facturaA = this.obtenerUltimaFactura(a.id);
+                    const facturaB = this.obtenerUltimaFactura(b.id);
+
+                    if (!facturaA && !facturaB) return 0;
+                    if (!facturaA) return 1;
+                    if (!facturaB) return -1;
+
+                    if (facturaA.pagada && !facturaB.pagada) return 1;
+                    if (!facturaA.pagada && facturaB.pagada) return -1;
+
+                    return new Date(facturaA.fecha) - new Date(facturaB.fecha);
+                });
+
+                lista.innerHTML = serviciosOrdenados.map(servicio => {
+                    const ultimaFactura = this.obtenerUltimaFactura(servicio.id);
+                    let estado = '', claseEstado = '', montoTexto = 'Sin facturas', fechaTexto = '';
+
+                    if (ultimaFactura) {
+                        montoTexto = this.formatearMoneda(ultimaFactura.monto);
+                        fechaTexto = this.formatearFecha(ultimaFactura.fecha);
+
+                        if (ultimaFactura.pagada) {
+                            const fechaPagoTexto = ultimaFactura.fechaPago
+                                ? this.formatearFecha(ultimaFactura.fechaPago)
+                                : 'Sin fecha';
+                            estado = `Pagado ${fechaPagoTexto}`;
+                            claseEstado = 'pagado';
+                        } else {
+                            const hoy = new Date();
+                            hoy.setHours(0, 0, 0, 0);
+                            const vencimiento = new Date(ultimaFactura.fecha + 'T00:00:00');
+                            vencimiento.setHours(0, 0, 0, 0);
+                            const diasRestantes = Math.ceil((vencimiento - hoy) / (1000 * 60 * 60 * 24));
+
+                            if (diasRestantes < 0) {
+                                estado = 'Vencido';
+                                claseEstado = 'vencido';
+                            } else if (diasRestantes === 0) {
+                                estado = 'Vence hoy';
+                                claseEstado = 'urgente';
+                            } else if (diasRestantes === 1) {
+                                estado = 'Vence mañana';
+                                claseEstado = 'urgente';
+                            } else if (diasRestantes === 2) {
+                                estado = 'Vence en 2 días';
+                                claseEstado = 'urgente';
+                            } else if (diasRestantes <= 7) {
+                                estado = `Vence en ${diasRestantes} días`;
+                                claseEstado = 'proximo';
+                            } else {
+                                estado = `Vence ${fechaTexto}`;
+                                claseEstado = 'lejano';
+                            }
+                        }
+                    }
+
+                    // Generar HTML de facturas
+                    const facturasHTML = this.generarFacturasHTML(servicio);
+
+                    return `
+    <div class="servicio-wrapper" data-id="${servicio.id}">
+        <div class="servicio-item ${claseEstado}" data-id="${servicio.id}">
+            <div class="servicio-nombre">${this.escaparHTML(servicio.nombre)}</div>
+            <div class="servicio-info">
+                <span class="servicio-monto">${montoTexto}</span>
+                ${fechaTexto ? `<span class="servicio-fecha">${fechaTexto}</span>` : ''}
+            </div>
+            ${estado ? `<span class="servicio-estado estado-${claseEstado}">${estado}</span>` : ''}
+        </div>
+        <div class="facturas-colapso" id="facturas-${servicio.id}">
+            <div class="facturas-colapso-content">
+                ${facturasHTML}
+                <button class="btn-add-factura" onclick="event.stopPropagation(); app.abrirModalFactura('${servicio.id}', null)" title="Agregar factura">
+                    +
+                </button>
+            </div>
+        </div>
+    </div>
+`;
+                }).join('');
+
+                // Eventos de click en servicios
+                lista.querySelectorAll('.servicio-item').forEach(item => {
+                    item.addEventListener('click', (e) => {
+                        // Evitar que se dispare si se hace click en un botón
+                        if (e.target.closest('button')) return;
+
+                        const id = item.dataset.id;
+                        this.toggleFacturasColapso(id);
+                    });
+
+                    // Long press para editar (móvil)
+                    let pressTimer;
+                    item.addEventListener('touchstart', (e) => {
+                        pressTimer = setTimeout(() => {
+                            const id = item.dataset.id;
+                            this.editarServicio(id);
+                        }, 500);
+                    });
+                    item.addEventListener('touchend', () => {
+                        clearTimeout(pressTimer);
+                    });
+                    item.addEventListener('touchmove', () => {
+                        clearTimeout(pressTimer);
+                    });
+
+                    // Right click para editar (desktop)
+                    item.addEventListener('contextmenu', (e) => {
+                        e.preventDefault();
+                        const id = item.dataset.id;
+                        this.editarServicio(id);
+                    });
+                });
+
+                // Restaurar posición de scroll después de actualizar
+                requestAnimationFrame(() => {
+                    window.scrollTo(0, scrollPos);
+                });
+
+                this.actualizarResumenMes();
+            }
+
+            generarFacturasHTML(servicio) {
+                if (servicio.facturas.length === 0) {
+                    return `<p style="text-align: center; color: var(--text-muted); padding: 1rem 0;">No hay facturas registradas</p>`;
+                }
+
+                // Ordenar facturas por fecha (más reciente primero)
+                const facturasOrdenadas = [...servicio.facturas].sort((a, b) => {
+                    return new Date(b.fecha) - new Date(a.fecha);
+                });
+
+                return facturasOrdenadas.map(factura => {
+                    const estadoPagoTexto = factura.pagada && factura.fechaPago
+                        ? `<div style="color: var(--c-green); font-size: 0.75rem; margin-top: 0.25rem;">Pagado: ${this.formatearFecha(factura.fechaPago)}</div>`
+                        : `<div style="color: var(--c-gold); font-size: 0.75rem; margin-top: 0.25rem;">Sin pagar</div>`;
+
+                    return `
+            <div class="factura-item-inline">
+                <div class="factura-info-inline" onclick="event.stopPropagation(); app.editarFactura('${factura.id}')">
+                    <div class="factura-monto-inline">${this.formatearMoneda(factura.monto)}</div>
+                    <div class="factura-fecha-inline">
+                        Tipo: ${factura.tipo || 'mensual'} | Vence: ${this.formatearFecha(factura.fecha)}
+                    </div>
+                    ${estadoPagoTexto}
+                </div>
+                <div class="factura-actions-inline">
+                    ${!factura.pagada ? `
+                        <button class="btn-small btn-success" onclick="event.stopPropagation(); app.marcarPagada('${factura.id}')">
+                            <svg class="icon" viewBox="0 0 24 24">
+                                <polyline class="icon-line" points="20 6 9 17 4 12"/>
+                            </svg>
+                        </button>
+                    ` : `
+                        <button class="btn-small btn-primary" onclick="event.stopPropagation(); app.marcarNoPagada('${factura.id}')">
+                            <svg class="icon" viewBox="0 0 24 24">
+                                <path class="icon-line" d="M18 6L6 18M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    `}
+                </div>
+            </div>
+        `;
+                }).join('');
+            }
+            toggleFacturasColapso(servicioId) {
+                // Cerrar todos los colapsos abiertos
+                document.querySelectorAll('.facturas-colapso.active').forEach(colapso => {
+                    if (colapso.id !== `facturas-${servicioId}`) {
+                        colapso.classList.remove('active');
+                        const wrapper = colapso.closest('.servicio-wrapper');
+                        if (wrapper) {
+                            wrapper.querySelector('.servicio-item').classList.remove('expanded');
+                        }
+                    }
+                });
+
+                // Toggle del colapso seleccionado
+                const colapso = document.getElementById(`facturas-${servicioId}`);
+                const servicioItem = document.querySelector(`.servicio-item[data-id="${servicioId}"]`);
+
+                if (colapso && servicioItem) {
+                    colapso.classList.toggle('active');
+                    servicioItem.classList.toggle('expanded');
+                }
+            }
+
+            abrirModalServicio(servicioId = null) {
+                this.servicioActual = servicioId;
+                const modal = document.getElementById('modal-servicio');
+                const titulo = document.getElementById('modal-servicio-titulo');
+                const form = document.getElementById('form-servicio');
+                const btnEliminar = document.getElementById('btn-eliminar-servicio');
+
+                form.reset();
+
+                if (servicioId) {
+                    const servicio = this.servicios.find(s => s.id === servicioId);
+                    if (servicio) {
+                        titulo.textContent = 'Editar Servicio';
+                        document.getElementById('servicio-nombre').value = servicio.nombre;
+                        btnEliminar.style.display = 'block';
+                    }
+                } else {
+                    titulo.textContent = 'Nuevo Servicio';
+                    btnEliminar.style.display = 'none';
+                }
+
+                this.abrirModal('modal-servicio');
+                document.getElementById('servicio-nombre').focus();
+            }
+
+            guardarServicio(e) {
+                e.preventDefault();
+
+                const nombre = document.getElementById('servicio-nombre').value.trim();
+
+                if (!nombre) {
+                    this.mostrarToast('El nombre es requerido', 'error');
+                    return;
+                }
+
+                if (this.servicioActual) {
+                    // Editar servicio existente
+                    const servicio = this.servicios.find(s => s.id === this.servicioActual);
+                    if (servicio) {
+                        servicio.nombre = nombre;
+                        this.mostrarToast('Servicio actualizado', 'success');
+                    }
+                } else {
+                    // Crear nuevo servicio
+                    const nuevoServicio = {
+                        id: this.generarId(),
+                        nombre: nombre,
+                        facturas: []
+                    };
+                    this.servicios.push(nuevoServicio);
+                    this.mostrarToast('Servicio creado', 'success');
+                }
+
+                this.guardarDatos();
+                this.guardarEstado();
+                this.renderServicios();
+                this.cerrarModal('modal-servicio');
+            }
+
+            editarServicio(servicioId) {
+                this.abrirModalServicio(servicioId);
+            }
+
+            eliminarServicio() {
+                if (!this.servicioActual) return;
+
+                if (confirm('¿Estás seguro de eliminar este servicio y todas sus facturas?')) {
+                    this.servicios = this.servicios.filter(s => s.id !== this.servicioActual);
+
+                    this.guardarDatos();
+                    this.guardarEstado();
+                    this.renderServicios();
+                    this.cerrarModal('modal-servicio');
+                    this.mostrarToast('Servicio eliminado', 'success');
+                }
+            }
+
+            // ========================================
+            // GESTIÓN DE FACTURAS
+            // ========================================
+
+            abrirFacturasServicio(servicioId) {
+                this.servicioActual = servicioId;
+                const servicio = this.servicios.find(s => s.id === servicioId);
+
+                if (!servicio) return;
+
+                document.getElementById('modal-facturas-titulo').textContent = `${servicio.nombre}`;
+
+                this.renderFacturas();
+                this.abrirModal('modal-facturas');
+            }
+
+            renderFacturas() {
+                // Guardar posición de scroll antes de actualizar
+                const scrollPos = window.scrollY || window.pageYOffset;
+
+                const servicio = this.servicios.find(s => s.id === this.servicioActual);
+                if (!servicio) return;
+
+                const lista = document.getElementById('facturas-lista');
+
+                if (servicio.facturas.length === 0) {
+                    lista.innerHTML = `
+                        <div class="empty-state" style="padding: 2rem 1rem;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                                <line x1="12" y1="18" x2="12" y2="12"/>
+                                <line x1="9" y1="15" x2="15" y2="15"/>
+                            </svg>
+                            <p>No hay facturas registradas</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Ordenar facturas por fecha (más reciente primero)
+                const facturasOrdenadas = [...servicio.facturas].sort((a, b) => {
+                    return new Date(b.fecha) - new Date(a.fecha);
+                });
+
+                lista.innerHTML = facturasOrdenadas.map(factura => {
+                    return `
+        <div class="factura-item ${factura.pagada ? 'pagada' : ''}" data-id="${factura.id}">
+            <div class="factura-info" style="cursor: pointer;" onclick="app.editarFactura('${factura.id}')">
+                <div class="factura-monto">${this.formatearMoneda(factura.monto)}</div>
+                <div class="factura-fecha">
+    <div>Tipo: ${factura.tipo || 'mensual'} | Vence: ${this.formatearFecha(factura.fecha)}</div>
+    ${factura.pagada && factura.fechaPago ? `<div style="color: var(--c-green); font-size: 0.875rem; margin-top: 0.25rem;">Pagado: ${this.formatearFecha(factura.fechaPago)}</div>` : ''}
+</div>
+            </div>
+            <div class="factura-actions">
+                ${!factura.pagada ? `
+                    <button class="btn-small btn-success" onclick="app.marcarPagada('${factura.id}')">
+                        <svg class="icon" viewBox="0 0 24 24">
+                            <polyline class="icon-line" points="20 6 9 17 4 12"/>
+                        </svg>
+                    </button>
+                ` : `
+                    <button class="btn-small btn-primary" onclick="app.marcarNoPagada('${factura.id}')">
+                        <svg class="icon" viewBox="0 0 24 24">
+                            <path class="icon-line" d="M18 6L6 18M6 6l12 12"/>
+                        </svg>
+                    </button>
+                `}
+                <button class="btn-small btn-danger" onclick="app.eliminarFactura('${factura.id}')">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path class="icon-line" d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    `;
+                }).join('');
+
+                // Restaurar posición de scroll después de actualizar
+                requestAnimationFrame(() => {
+                    window.scrollTo(0, scrollPos);
+                });
+            }
+
+            abrirModalFactura(servicioId, facturaId = null) {
+                this.servicioActual = servicioId;
+                this.facturaActual = facturaId;
+
+                const modal = document.getElementById('modal-factura');
+                const titulo = document.getElementById('modal-factura-titulo');
+                const form = document.getElementById('form-factura');
+                const btnEliminar = document.getElementById('btn-eliminar-factura-modal');
+                const grupoFechaPago = document.getElementById('grupo-fecha-pago');
+
+                form.reset();
+                grupoFechaPago.style.display = 'none';
+
+                if (facturaId) {
+                    const servicio = this.servicios.find(s => s.id === servicioId);
+                    if (servicio) {
+                        const factura = servicio.facturas.find(f => f.id === facturaId);
+                        if (factura) {
+                            titulo.textContent = 'Editar Factura';
+                            document.getElementById('factura-monto').value = factura.monto;
+                            document.getElementById('factura-tipo').value = factura.tipo || 'mensual';
+                            document.getElementById('factura-fecha').value = factura.fecha;
+
+                            if (factura.pagada && factura.fechaPago) {
+                                grupoFechaPago.style.display = 'block';
+                                document.getElementById('factura-fecha-pago').value = factura.fechaPago;
+                            }
+
+                            btnEliminar.style.display = 'block';
+                        }
+                    }
+                } else {
+                    titulo.textContent = 'Nueva Factura';
+                    btnEliminar.style.display = 'none';
+                }
+
+                this.abrirModal('modal-factura');
+                document.getElementById('factura-monto').focus();
+            }
+
+            guardarFactura(e) {
+                e.preventDefault();
+
+                const monto = parseFloat(document.getElementById('factura-monto').value);
+                const tipo = document.getElementById('factura-tipo').value;
+                const fecha = document.getElementById('factura-fecha').value;
+                const fechaPago = document.getElementById('factura-fecha-pago').value;
+
+                if (!monto || monto <= 0) {
+                    this.mostrarToast('El monto debe ser mayor a 0', 'error');
+                    return;
+                }
+
+                if (!fecha) {
+                    this.mostrarToast('La fecha es requerida', 'error');
+                    return;
+                }
+
+                const servicio = this.servicios.find(s => s.id === this.servicioActual);
+                if (!servicio) return;
+
+                if (this.facturaActual) {
+                    // Editar factura existente
+                    const factura = servicio.facturas.find(f => f.id === this.facturaActual);
+                    if (factura) {
+                        factura.monto = monto;
+                        factura.tipo = tipo;
+                        factura.fecha = fecha;
+                        if (fechaPago) {
+                            factura.fechaPago = fechaPago;
+                        }
+                        this.mostrarToast('Factura actualizada', 'success');
+                    }
+                } else {
+                    // Crear nueva factura
+                    const nuevaFactura = {
+                        id: this.generarId(),
+                        monto: monto,
+                        tipo: tipo,
+                        fecha: fecha,
+                        pagada: false,
+                        fechaPago: null
+                    };
+                    servicio.facturas.push(nuevaFactura);
+                    this.mostrarToast('Factura creada', 'success');
+                }
+
+                this.guardarDatos();
+                this.guardarEstado();
+                this.renderFacturas();
+                this.renderServicios();
+                this.cerrarModal('modal-factura');
+            }
+
+            marcarPagada(facturaId) {
+                const servicio = this.servicios.find(s => s.facturas.some(f => f.id === facturaId));
+                if (!servicio) return;
+
+                const factura = servicio.facturas.find(f => f.id === facturaId);
+                if (factura) {
+                    factura.pagada = true;
+                    factura.fechaPago = this.obtenerFechaLocal();
+
+                    this.guardarDatos();
+                    this.guardarEstado();
+                    this.renderServicios(); // Cambiado de renderFacturas()
+                    this.mostrarToast('Factura marcada como pagada', 'success');
+                }
+            }
+
+            marcarNoPagada(facturaId) {
+                const servicio = this.servicios.find(s => s.facturas.some(f => f.id === facturaId));
+                if (!servicio) return;
+
+                const factura = servicio.facturas.find(f => f.id === facturaId);
+                if (factura) {
+                    factura.pagada = false;
+                    factura.fechaPago = null;
+
+                    this.guardarDatos();
+                    this.guardarEstado();
+                    this.renderServicios(); // Cambiado de renderFacturas()
+                    this.mostrarToast('Factura marcada como no pagada', 'success');
+                }
+            }
+
+            editarFactura(facturaId) {
+                // Buscar el servicio que contiene esta factura
+                const servicio = this.servicios.find(s => s.facturas.some(f => f.id === facturaId));
+                if (!servicio) return;
+
+                this.abrirModalFactura(servicio.id, facturaId);
+            }
+
+            establecerFechaHoy() {
+                document.getElementById('factura-fecha').value = this.obtenerFechaLocal();
+            }
+
+            eliminarFacturaDesdeModal() {
+                if (!this.facturaActual) return;
+
+                if (confirm('¿Estás seguro de eliminar esta factura?')) {
+                    const servicio = this.servicios.find(s => s.id === this.servicioActual);
+                    if (!servicio) return;
+
+                    servicio.facturas = servicio.facturas.filter(f => f.id !== this.facturaActual);
+
+                    this.guardarDatos();
+                    this.guardarEstado();
+                    this.renderServicios();
+                    this.cerrarModal('modal-factura');
+                    this.mostrarToast('Factura eliminada', 'success');
+                }
+            }
+
+            obtenerUltimaFactura(servicioId) {
+                const servicio = this.servicios.find(s => s.id === servicioId);
+                if (!servicio || !servicio.facturas || servicio.facturas.length === 0) {
+                    return null;
+                }
+
+                // Filtrar facturas no pagadas
+                const facturasNoPagadas = servicio.facturas.filter(f => !f.pagada);
+
+                // Si no hay facturas pendientes, mostrar la más reciente (incluso si está pagada)
+                if (facturasNoPagadas.length === 0) {
+                    return servicio.facturas.sort((a, b) => new Date(b.fecha) - new Date(a.fecha))[0];
+                }
+
+                // Devolver la factura no pagada con vencimiento más próximo
+                return facturasNoPagadas.sort((a, b) => new Date(a.fecha) - new Date(b.fecha))[0];
+            }
+
+            // ========================================
+            // SISTEMA UNDO/REDO
+            // ========================================
+
+            guardarEstado() {
+                // Crear una copia profunda del estado actual DESPUÉS del cambio
+                const nuevoEstado = JSON.parse(JSON.stringify(this.servicios));
+
+                // Si estamos en medio del historial, eliminar estados futuros
+                if (this.historialIndex < this.historial.length - 1) {
+                    this.historial.splice(this.historialIndex + 1);
+                }
+
+                // Agregar el nuevo estado
+                this.historial.push(nuevoEstado);
+
+                // Limitar el tamaño del historial
+                if (this.historial.length > this.maxHistorial) {
+                    this.historial.shift();
+                } else {
+                    this.historialIndex++;
+                }
+
+                this.actualizarBotonesHistorial();
+            }
+
+            deshacer() {
+                if (this.historialIndex > 0) {
+                    this.historialIndex--;
+                    this.servicios = JSON.parse(JSON.stringify(this.historial[this.historialIndex]));
+                    this.guardarDatos();
+                    this.renderServicios();
+                    this.cerrarTodosLosModales();
+                    this.actualizarBotonesHistorial();
+                    this.mostrarToast('Acción deshecha', 'success');
+                }
+            }
+
+            rehacer() {
+                if (this.historialIndex < this.historial.length - 1) {
+                    this.historialIndex++;
+                    this.servicios = JSON.parse(JSON.stringify(this.historial[this.historialIndex]));
+                    this.guardarDatos();
+                    this.renderServicios();
+                    this.cerrarTodosLosModales();
+                    this.actualizarBotonesHistorial();
+                    this.mostrarToast('Acción rehecha', 'success');
+                }
+            }
+
+            actualizarBotonesHistorial() {
+                const puedeDeshacer = this.historialIndex > 0;
+                const puedeRehacer = this.historialIndex < this.historial.length - 1;
+
+                document.getElementById('btn-undo').disabled = !puedeDeshacer;
+                document.getElementById('btn-redo').disabled = !puedeRehacer;
+            }
+
+            // ========================================
+            // PERSISTENCIA DE DATOS
+            // ========================================
+
+            cargarDatos() {
+                try {
+                    const datos = localStorage.getItem(this.STORAGE_KEY);
+                    if (datos) {
+                        const parsed = JSON.parse(datos);
+
+                        // Validación de integridad
+                        if (this.validarDatos(parsed)) {
+                            this.servicios = parsed;
+                        } else {
+                            console.error('Datos corruptos detectados');
+                            this.servicios = [];
+                        }
+                    }
+
+                    // Inicializar historial con estado actual (después de cargar)
+                    this.historial = [JSON.parse(JSON.stringify(this.servicios))];
+                    this.historialIndex = 0;
+                } catch (error) {
+                    console.error('Error al cargar datos:', error);
+                    this.servicios = [];
+                    this.historial = [[]];
+                    this.historialIndex = 0;
+                }
+            }
+
+            guardarDatos() {
+                try {
+                    const datos = JSON.stringify(this.servicios);
+                    localStorage.setItem(this.STORAGE_KEY, datos);
+                } catch (error) {
+                    console.error('Error al guardar datos:', error);
+                    this.mostrarToast('Error al guardar datos', 'error');
+                }
+            }
+
+            validarDatos(datos) {
+                if (!Array.isArray(datos)) return false;
+
+                return datos.every(servicio => {
+                    return (
+                        servicio.id &&
+                        servicio.nombre &&
+                        Array.isArray(servicio.facturas) &&
+                        servicio.facturas.every(factura =>
+                            factura.id &&
+                            typeof factura.monto === 'number' &&
+                            factura.fecha &&
+                            typeof factura.pagada === 'boolean'
+                        )
+                    );
+                });
+            }
+
+            // ========================================
+            // IMPORTAR/EXPORTAR
+            // ========================================
+
+            exportarDatos() {
+                try {
+                    const datos = {
+                        version: '1.0',
+                        fecha: new Date().toISOString(),
+                        servicios: this.servicios
+                    };
+
+                    const json = JSON.stringify(datos, null, 2);
+                    const blob = new Blob([json], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `servicios_${this.obtenerFechaLocal()}.json`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+
+                    this.mostrarToast('Datos exportados correctamente', 'success');
+                    this.cerrarMenuAjustes();
+                } catch (error) {
+                    console.error('Error al exportar:', error);
+                    this.mostrarToast('Error al exportar datos', 'error');
+                }
+            }
+
+            importarDatos() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'application/json';
+
+                input.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        try {
+                            const datos = JSON.parse(event.target.result);
+
+                            // Validar estructura
+                            if (!datos.servicios || !Array.isArray(datos.servicios)) {
+                                throw new Error('Formato de archivo inválido');
+                            }
+
+                            // Validar integridad
+                            if (!this.validarDatos(datos.servicios)) {
+                                throw new Error('Datos corruptos en el archivo');
+                            }
+
+                            if (confirm('¿Deseas reemplazar todos los datos actuales?')) {
+                                this.servicios = datos.servicios;
+                                this.guardarDatos();
+                                this.guardarEstado();
+                                this.renderServicios();
+                                this.mostrarToast('Datos importados correctamente', 'success');
+                            }
+                        } catch (error) {
+                            console.error('Error al importar:', error);
+                            this.mostrarToast('Error: ' + error.message, 'error');
+                        }
+                    };
+                    reader.readAsText(file);
+                });
+
+                input.click();
+                this.cerrarMenuAjustes();
+            }
+
+            limpiarDatos() {
+                if (confirm('¿Estás seguro de eliminar TODOS los datos? Esta acción no se puede deshacer.')) {
+                    {
+                        this.servicios = [];
+                        this.guardarDatos();
+                        this.guardarEstado();
+                        this.renderServicios();
+                        this.actualizarBotonesHistorial();
+                        this.mostrarToast('Todos los datos han sido eliminados', 'success');
+                        this.cerrarMenuAjustes();
+                    }
+                }
+            }
+
+            // ========================================
+            // TEMA
+            // ========================================
+
+            cargarTema() {
+                const tema = localStorage.getItem(this.THEME_KEY);
+                if (tema === 'dark') {
+                    document.body.classList.add('dark-mode');
+                }
+            }
+
+            toggleTema() {
+                document.body.classList.toggle('dark-mode');
+                const esDark = document.body.classList.contains('dark-mode');
+                localStorage.setItem(this.THEME_KEY, esDark ? 'dark' : 'light');
+                this.mostrarToast(`Tema ${esDark ? 'oscuro' : 'claro'} activado`, 'success');
+                this.cerrarMenuAjustes();
+            }
+
+            // ========================================
+            // MODALES Y MENÚS
+            // ========================================
+
+            abrirModal(modalId) {
+                const modal = document.getElementById(modalId);
+                modal.classList.add('active');
+                document.body.classList.add('modal-open');
+            }
+
+            cerrarModal(modalId) {
+                const modal = document.getElementById(modalId);
+                modal.classList.remove('active');
+                document.body.classList.remove('modal-open');
+            }
+
+            cerrarTodosLosModales() {
+                document.querySelectorAll('.modal').forEach(modal => {
+                    modal.classList.remove('active');
+                });
+                document.body.classList.remove('modal-open');
+            }
+
+            toggleMenuAjustes() {
+                const menu = document.getElementById('menu-ajustes');
+                const overlay = document.getElementById('menu-overlay');
+                menu.classList.toggle('active');
+                overlay.classList.toggle('active');
+
+                // Bloquear scroll del body cuando el menú está abierto
+                if (menu.classList.contains('active')) {
+                    document.body.style.overflow = 'hidden';
+                } else {
+                    document.body.style.overflow = '';
+                }
+            }
+
+            cerrarMenuAjustes() {
+                const menu = document.getElementById('menu-ajustes');
+                const overlay = document.getElementById('menu-overlay');
+                menu.classList.remove('active');
+                overlay.classList.remove('active');
+
+                // Restaurar scroll del body
+                document.body.style.overflow = '';
+            }
+
+            // ========================================
+            // UTILIDADES
+            // ========================================
+
+            generarId() {
+                return Date.now().toString(36) + Math.random().toString(36).substr(2);
+            }
+
+            formatearMoneda(monto) {
+                return new Intl.NumberFormat('es-AR', {
+                    style: 'currency',
+                    currency: 'ARS'
+                }).format(monto);
+            }
+
+            formatearFecha(fecha) {
+                const date = new Date(fecha + 'T00:00:00');
+                return date.toLocaleDateString('es-AR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                });
+            }
+
+            escaparHTML(texto) {
+                const div = document.createElement('div');
+                div.textContent = texto;
+                return div.innerHTML;
+            }
+
+            mostrarToast(mensaje, tipo = 'success') {
+                const toast = document.getElementById('toast');
+                toast.textContent = mensaje;
+                toast.className = `toast ${tipo}`;
+                toast.classList.add('show');
+
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
+            }
+        }
+
+        // Inicializar aplicación
+        const app = new GestionServicios();
+    </script>
+</body>
+
+</html>
+
+<!--// ====================================================================
+    //                 NOTAS SISTEMA DeltaF VERSION 0.12
+    // ====================================================================
+    
+     - PROMP:
+    1) Se 
+
+     
+
+    -->
