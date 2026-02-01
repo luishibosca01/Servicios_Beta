@@ -2384,6 +2384,26 @@
         // Inicializar aplicación
         const app = new GestionServicios();
     </script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(registration => {
+                        console.log('SW registrado:', registration.scope);
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    // Lógica visual para avisar al usuario
+                                    if (window.UILogic) UILogic.mostrarToast('Nueva versión disponible. Recarga la página.', 'info');
+                                }
+                            });
+                        });
+                    })
+                    .catch(err => console.error('❌ Error SW:', err));
+            });
+        }
+    </script>
 </body>
 
 </html>
