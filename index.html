@@ -173,14 +173,12 @@
             background: var(--bg-card);
             border-radius: var(--radius);
             padding: 1.5rem 1rem;
-            margin-bottom: 1rem;
             box-shadow: var(--shadow);
             color: var(--text-main);
         }
 
         .card h2 {
             font-size: 1rem;
-            margin-bottom: 1rem;
             display: flex;
             align-items: center;
             gap: 0.5rem;
@@ -454,7 +452,7 @@
             font-size: 1rem;
             background: var(--input-bg);
             color: var(--text-main);
-            transition: border-color 0.2s;
+
         }
 
         input:focus,
@@ -868,6 +866,46 @@
             font-size: 0.8rem;
         }
 
+        /* Tarjeta colapsable */
+        .card-header-collapsible {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .card-header-collapsible+.collapsible-content {
+            padding-top: 0;
+            transition: max-height 0.3s ease, opacity 0.3s ease, padding-top 0.3s ease;
+        }
+
+        .card-header-collapsible+.collapsible-content:not(.collapsed) {
+            padding-top: 1rem;
+        }
+
+        .chevron-icon {
+            transition: transform 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .chevron-icon.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        .collapsible-content {
+            max-height: 1000px;
+            overflow: hidden;
+            transition: max-height 0.3s ease, opacity 0.3s ease, padding-top 0.3s ease;
+            opacity: 1;
+        }
+
+        .collapsible-content.collapsed {
+            max-height: 0;
+            opacity: 0;
+
+        }
+
         /* --- codigo css --- */
     </style>
 </head>
@@ -939,7 +977,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">Version 0.16</div> <!-- DeltaF -->
+            <div class="menu-version">Version 0.18</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -955,15 +993,21 @@
 
                 <!-- Tarjeta de Estadísticas -->
                 <div class="card">
-                    <h2>
-                        <svg class="icon" viewBox="0 0 24 24">
-                            <path
-                                d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z" />
-                            <path d="M7 12h2v5H7zm4-3h2v8h-2zm4-3h2v11h-2z" />
+                    <h2 class="card-header-collapsible" id="estadisticas-header">
+                        <span>
+                            <svg class="icon" viewBox="0 0 24 24">
+                                <path
+                                    d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z" />
+                                <path d="M7 12h2v5H7zm4-3h2v8h-2zm4-3h2v11h-2z" />
+                            </svg>
+                            Estadísticas
+                        </span>
+                        <svg class="icon chevron-icon" id="estadisticas-chevron" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"></polyline>
                         </svg>
-                        Estadísticas
                     </h2>
-                    <div id="estadisticas-mes"></div>
+                    <div id="estadisticas-mes" class="collapsible-content"></div>
                 </div>
             </div>
 
@@ -1191,6 +1235,12 @@
                 this.renderServicios();
                 this.setupEventListeners();
                 this.actualizarBotonesHistorial();
+                // Restaurar estado de estadísticas colapsadas
+                const estadisticasColapsadas = localStorage.getItem('estadisticas-collapsed') === 'true';
+                if (estadisticasColapsadas) {
+                    document.getElementById('estadisticas-mes').classList.add('collapsed');
+                    document.getElementById('estadisticas-chevron').classList.add('collapsed');
+                }
             }
 
             setupEventListeners() {
@@ -1234,6 +1284,11 @@
                 // Botón para establecer fecha de pago como hoy
                 document.getElementById('btn-fecha-pago-hoy').addEventListener('click', () => {
                     document.getElementById('factura-fecha-pago').value = this.obtenerFechaLocal();
+                });
+
+                // Toggle de estadísticas colapsable
+                document.getElementById('estadisticas-header').addEventListener('click', () => {
+                    this.toggleEstadisticas();
                 });
 
                 // Cerrar modales con ESC
@@ -1456,6 +1511,18 @@
                 }
             }
 
+            toggleEstadisticas() {
+                const contenido = document.getElementById('estadisticas-mes');
+                const chevron = document.getElementById('estadisticas-chevron');
+
+                contenido.classList.toggle('collapsed');
+                chevron.classList.toggle('collapsed');
+
+                // Guardar estado en localStorage
+                const estaColapsado = contenido.classList.contains('collapsed');
+                localStorage.setItem('estadisticas-collapsed', estaColapsado);
+            }
+
             generarOpcionesMeses(mesSeleccionado, añoSeleccionado) {
                 const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
                     'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
@@ -1522,7 +1589,7 @@
 
                 lista.innerHTML = serviciosOrdenados.map(servicio => {
                     const ultimaFactura = this.obtenerUltimaFactura(servicio.id);
-                    let estado = '', claseEstado = '', montoTexto = 'Sin facturas', fechaTexto = '';
+                    let estado = '', claseEstado = '', montoTexto = '-', fechaTexto = '';
 
                     if (ultimaFactura) {
                         montoTexto = this.formatearMoneda(ultimaFactura.monto);
@@ -2461,12 +2528,11 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA DeltaF VERSION 0.16
+    //                 NOTAS SISTEMA DeltaF VERSION 0.19
     // ====================================================================
     
      - PROMP:
-     1) Se rediseña la tarjeta de estado
-     2) Se corrige bug cuando se abrian algunos modales no se cerraba el modal padre
+     1) Se agrega colapso en la tarjeta de servicios
 
 
 
