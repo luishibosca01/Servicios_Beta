@@ -282,7 +282,7 @@
         .servicios-lista {
             display: flex;
             flex-direction: column;
-            gap: 0.75rem;
+            gap: 0.5rem;
             max-height: 5000px;
             opacity: 1;
             overflow: hidden;
@@ -409,6 +409,10 @@
             animation: slideUp 0.3s ease;
         }
 
+        #modal-facturas-servicio>.modal-content>button+button {
+            margin-top: 0.5rem;
+        }
+
         .modal-header {
             display: flex;
             justify-content: space-between;
@@ -476,6 +480,18 @@
             outline: none;
         }
 
+        /* Ocultar flechas de input number */
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[type="number"] {
+            -moz-appearance: textfield;
+            appearance: textfield;
+        }
+
         .form-actions {
             display: flex;
             gap: 0.5rem;
@@ -486,8 +502,8 @@
         .facturas-lista {
             display: flex;
             flex-direction: column;
+            margin: 1rem 0;
             gap: 0.5rem;
-            margin-top: 1rem;
         }
 
         .factura-item {
@@ -495,7 +511,6 @@
             border: 1px solid var(--border);
             border-radius: var(--radius);
             padding: 0.75rem;
-            margin-bottom: 0.75rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -568,6 +583,11 @@
                 opacity: 1;
                 transform: translateY(0);
             }
+        }
+
+        .card-fade-in {
+            animation: slideDownFade 0.5s ease-out forwards;
+            opacity: 0;
         }
 
         /* --- Scrollbar --- */
@@ -931,7 +951,13 @@
             max-height: 2000px;
             overflow: hidden;
             transition: max-height 0.4s ease-in-out, opacity 0.4s ease-in-out, padding-top 0.4s ease-in-out;
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .collapsible-content:not(.collapsed) {
             opacity: 1;
+            visibility: visible;
         }
 
         .collapsible-content.collapsed {
@@ -975,10 +1001,58 @@
         }
 
         /* --- codigo css --- */
+        /* --- codigo css --- */
     </style>
+    <script>
+        // Aplicar estado de tarjetas colapsables
+        (function () {
+            const estadisticasColapsadas = localStorage.getItem('estadisticas-collapsed') === 'true';
+            const serviciosState = localStorage.getItem('servicios-collapse-state') || 'expanded';
+
+            document.addEventListener('DOMContentLoaded', function () {
+                const estadisticasMes = document.getElementById('estadisticas-mes');
+                const estadisticasChevron = document.getElementById('estadisticas-chevron');
+                const serviciosContent = document.getElementById('servicios-content');
+                const serviciosChevron = document.getElementById('servicios-chevron');
+
+                // Aplicar estado de estadísticas
+                if (!estadisticasColapsadas) {
+                    estadisticasMes.classList.remove('collapsed');
+                } else {
+                    estadisticasMes.classList.add('collapsed');
+                    estadisticasChevron.classList.add('collapsed');
+                }
+
+                // Aplicar estado de servicios
+                if (serviciosState === 'expanded') {
+                    serviciosContent.classList.remove('collapsed', 'semi-collapsed');
+                } else if (serviciosState === 'collapsed') {
+                    serviciosContent.classList.add('collapsed');
+                    serviciosChevron.classList.add('collapsed');
+                } else if (serviciosState === 'semi-collapsed') {
+                    serviciosContent.classList.add('semi-collapsed');
+                    serviciosChevron.classList.add('semi-collapsed');
+                }
+            });
+        })();
+    </script>
 </head>
 
 <body>
+    <script>
+        // Aplicar tema INMEDIATAMENTE antes de renderizar (evitar parpadeo)
+        (function () {
+            try {
+                var tema = localStorage.getItem('gestion_servicios_theme');
+                if (tema === 'dark') {
+                    document.body.classList.add('dark-mode');
+                } else if (tema === 'light') {
+                    document.body.classList.remove('dark-mode');
+                }
+                // Si tema es null (primera vez), modo claro por defecto
+            } catch (e) { }
+        })();
+    </script>
 
     <svg style="display: none;">
         <symbol id="icon-moon" viewBox="0 0 24 24">
@@ -1157,11 +1231,11 @@
         <div class="menu-footer">
             <button class="btn-cerrar-menu" id="btn-cerrar-menu">
                 <svg class="icon">
-                        <use href="#icon-cancel" />
-                    </svg>
+                    <use href="#icon-cancel" />
+                </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">Version 0.22</div> <!-- DeltaF -->
+            <div class="menu-version">Version 0.23</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -1170,12 +1244,12 @@
         <div class="main-grid">
             <!-- Columna izquierda (sidebar) -->
             <div class="sidebar-left">
-                <div class="card">
+                <div class="card card-fade-in" style="animation-delay: 0.1s;">
                     <div id="resumen-mes"></div>
                 </div>
 
                 <!-- Tarjeta de Estadísticas -->
-                <div class="card">
+                <div class="card card-fade-in" style="animation-delay: 0.2s;">
                     <h2 class="card-header-collapsible" id="estadisticas-header">
                         <span>
                             <svg class="icon" viewBox="0 0 24 24">
@@ -1190,14 +1264,14 @@
                             <polyline points="6 9 12 15 18 9"></polyline>
                         </svg>
                     </h2>
-                    <div id="estadisticas-mes" class="collapsible-content"></div>
+                    <div id="estadisticas-mes" class="collapsible-content collapsed"></div>
                 </div>
             </div>
 
             <!-- Columna derecha (contenido principal) -->
             <div class="main-content">
                 <!-- Tarjeta de Servicios -->
-                <div class="card">
+                <div class="card card-fade-in" style="animation-delay: 0.3s;">
                     <h2 class="card-header-collapsible" id="servicios-header">
                         <span style="display: flex; align-items: center; gap: 0.5rem;">
                             <svg class="icon" viewBox="0 0 24 24">
@@ -1214,7 +1288,7 @@
                         </svg>
                     </h2>
 
-                    <div id="servicios-content" class="collapsible-content">
+                    <div id="servicios-content" class="collapsible-content collapsed">
                         <div class="card-actions servicios-actions" id="servicios-actions">
                             <button class="icon-btn" id="btn-filter" title="Filtrar servicios">
                                 <svg class="icon">
@@ -1337,24 +1411,23 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 id="modal-facturas-titulo">Facturas del Servicio</h3>
-                <button class="modal-close" onclick="app.cerrarModal('modal-facturas-servicio')">
-                    <svg class="icon" viewBox="0 0 24 24">
-                        <path class="icon-line" d="M18 6L6 18M6 6l12 12" />
-                    </svg>
-                </button>
             </div>
-
-            <button type="button"
-                onclick="app.abrirModalFactura(document.getElementById('modal-facturas-servicio').dataset.servicioId, null)">
-                <svg class="icon" viewBox="0 0 24 24">
-                    <path class="icon-line" d="M12 5v14M5 12h14" />
-                </svg>
-                Agregar Factura
-            </button>
-
             <div class="facturas-lista custom-scroll" id="lista-facturas-modal">
                 <!-- Las facturas se cargarán aquí -->
             </div>
+            <button type="button"
+                onclick="app.abrirModalFactura(document.getElementById('modal-facturas-servicio').dataset.servicioId, null)">
+                <svg class="icon">
+                    <use href="#icon-plus" />
+                </svg>
+                Agregar Factura
+            </button>
+            <button type="button" onclick="app.cerrarModal('modal-facturas-servicio')">
+                <svg class="icon">
+                    <use href="#icon-cancel" />
+                </svg>
+                Cerrar
+            </button>
         </div>
     </div>
 
@@ -1382,7 +1455,7 @@
                 this.STORAGE_KEY = 'gestion_servicios_data';
                 this.THEME_KEY = 'gestion_servicios_theme';
 
-                this.mostrandoPagadoMes = false;
+                this.mostrandoPagadoMes = localStorage.getItem('resumen-mostrar-pagado') === 'true';
                 this.datosResumen = { pendiente: 0, pagadoMes: 0 };
 
                 this.serviciosCollapseState = 'expanded'; // 'expanded', 'semi-collapsed', 'collapsed'
@@ -1558,7 +1631,7 @@
                 const fechaFormateada = fechaHoy.toLocaleDateString('es-AR', opciones);
 
                 const resumenHTML = `
-        <div class="resumen-monto" id="resumen-toggle">
+        <div class="resumen-monto" id="resumen-toggle" style="animation: slideDownFade 0.3s ease-out;">
             <div class="resumen-titulo">Resumen de pagos</div>
             <div class="resumen-valor">${this.formatearMoneda(this.datosResumen.pendiente)}</div>
             <div class="resumen-label">Pendiente de pago</div>
@@ -1567,6 +1640,7 @@
     `;
                 document.getElementById('resumen-mes').innerHTML = resumenHTML;
                 this.mostrandoPagadoMes = false;
+                localStorage.setItem('resumen-mostrar-pagado', 'false');
 
                 // Agregar event listener
                 document.getElementById('resumen-toggle').addEventListener('click', () => {
@@ -1580,7 +1654,7 @@
                 const fechaFormateada = fechaHoy.toLocaleDateString('es-AR', opciones);
 
                 const resumenHTML = `
-        <div class="resumen-monto" id="resumen-toggle">
+        <div class="resumen-monto" id="resumen-toggle" style="animation: slideDownFade 0.3s ease-out;">
             <div class="resumen-titulo">Resumen de pagos</div>
             <div class="resumen-valor">${this.formatearMoneda(this.datosResumen.pagadoMes)}</div>
             <div class="resumen-label">Pagados Este Mes</div>
@@ -1589,6 +1663,7 @@
     `;
                 document.getElementById('resumen-mes').innerHTML = resumenHTML;
                 this.mostrandoPagadoMes = true;
+                localStorage.setItem('resumen-mostrar-pagado', 'true');
 
                 // Agregar event listener
                 document.getElementById('resumen-toggle').addEventListener('click', () => {
@@ -2165,6 +2240,7 @@
                     this.guardarDatos();
                     this.guardarEstado();
                     this.renderServicios();
+                    this.actualizarResumenMes();
                     this.cerrarModal('modal-servicio');
                     this.mostrarToast('Servicio eliminado', 'success');
                 }
@@ -2273,6 +2349,9 @@
                 // Actualizar solo el servicio afectado
                 this.actualizarServicioIndividual(this.servicioActual);
 
+                // Actualizar resumen de pagos
+                this.actualizarResumenMes();
+
                 // Actualizar el modal de facturas si está abierto
                 const modalFacturas = document.getElementById('modal-facturas-servicio');
                 if (modalFacturas.classList.contains('active') && modalFacturas.dataset.servicioId === this.servicioActual) {
@@ -2364,6 +2443,7 @@
                     this.guardarDatos();
                     this.guardarEstado();
                     this.renderServicios();
+                    this.actualizarResumenMes();
                     this.cerrarModal('modal-factura');
                     this.mostrarToast('Factura eliminada', 'success');
                 }
@@ -2710,11 +2790,11 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA DeltaF VERSION 0.22
+    //                 NOTAS SISTEMA DeltaF VERSION 0.23
     // ====================================================================
     
      - PROMP:
-     1) Se agrega timer para contraer toda la tarjeta de servicios
+     1) optimizacion de codigo
 
 
      - bugs:
