@@ -1,58 +1,60 @@
-// Service Worker para DeltaF
-// Versión del cache - incrementa este número cuando hagas cambios
-const CACHE_VERSION = 'v0.28-cache';
-const CACHE_NAME = `deltaf-cache-${CACHE_VERSION}`;
+// Service Worker para DeltaF - Offline First
+// IMPORTANTE: Incrementa este número CADA VEZ que actualices el index.html
+const CACHE_VERSION = 'v0.31';
+const CACHE_NAME = `deltaf-${CACHE_VERSION}`;
 
-// Archivos a cachear
+// Lista de archivos a cachear
+// IMPORTANTE: Actualiza 'DeltaF_v0_31.html' con el nombre actual de tu archivo
 const urlsToCache = [
   './',
-  './index.html', 
+  './index.html',  // ⚠️ CAMBIA ESTO por el nombre de tu archivo HTML
   './manifest.json'
 ];
 
 // Instalación del Service Worker
 self.addEventListener('install', (event) => {
-  console.log('[SW] Instalando Service Worker...', CACHE_VERSION);
+  console.log('[SW] Instalando versión:', CACHE_VERSION);
   
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        console.log('[SW] Cache abierto');
+        console.log('[SW] Cacheando archivos');
         return cache.addAll(urlsToCache);
       })
       .then(() => {
-        // Forzar que el nuevo SW tome control inmediatamente
-        return self.skipWaiting();
+        console.log('[SW] Instalación completa');
+        // NO hacer skipWaiting() aquí - esperar activación manual
       })
   );
 });
 
 // Activación del Service Worker
 self.addEventListener('activate', (event) => {
-  console.log('[SW] Activando Service Worker...', CACHE_VERSION);
+  console.log('[SW] Activando versión:', CACHE_VERSION);
   
   event.waitUntil(
     caches.keys()
       .then((cacheNames) => {
+        // Eliminar caches antiguas
         return Promise.all(
           cacheNames.map((cacheName) => {
             if (cacheName !== CACHE_NAME) {
-              console.log('[SW] Eliminando cache antiguo:', cacheName);
+              console.log('[SW] Eliminando cache antigua:', cacheName);
               return caches.delete(cacheName);
             }
           })
         );
       })
       .then(() => {
-        // Tomar control de todas las páginas inmediatamente
+        console.log('[SW] Tomando control de las páginas');
         return self.clients.claim();
       })
       .then(() => {
-        // Notificar a todos los clientes que hay una actualización
+        // Notificar a los clientes que hay nueva versión
         return self.clients.matchAll().then((clients) => {
           clients.forEach((client) => {
             client.postMessage({
-              type: 'SW_UPDATED',
+              type: 'SW_ACTIVATED',
               version: CACHE_VERSION
             });
           });
@@ -61,34 +63,51 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Estrategia de cache: Network First, fallback to Cache
+// Estrategia CACHE FIRST para modo offline
 self.addEventListener('fetch', (event) => {
   event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        // Si la respuesta es válida, la clonamos y guardamos en cache
-        if (response && response.status === 200) {
-          const responseToCache = response.clone();
+    caches.match(event.request)
+      .then((cachedResponse) => {
+        // Si está en cache, retornarlo
+        if (cachedResponse) {
+          console.log('[SW] Sirviendo desde cache:', event.request.url);
           
-          caches.open(CACHE_NAME)
-            .then((cache) => {
-              cache.put(event.request, responseToCache);
+          // En segundo plano, intentar actualizar el cache
+          fetch(event.request)
+            .then((response) => {
+              if (response && response.status === 200) {
+                caches.open(CACHE_NAME).then((cache) => {
+                  cache.put(event.request, response);
+                });
+              }
+            })
+            .catch(() => {
+              // Ignorar errores de red en background
             });
+          
+          return cachedResponse;
         }
         
-        return response;
-      })
-      .catch(() => {
-        // Si falla la red, intentamos obtener del cache
-        return caches.match(event.request)
-          .then((cachedResponse) => {
-            if (cachedResponse) {
-              return cachedResponse;
+        // Si no está en cache, intentar red
+        return fetch(event.request)
+          .then((response) => {
+            // No cachear si no es una respuesta válida
+            if (!response || response.status !== 200 || response.type === 'error') {
+              return response;
             }
             
-            // Si no hay cache y es una navegación, retornamos la página principal
+            // Cachear la respuesta para futuras peticiones
+            const responseToCache = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseToCache);
+            });
+            
+            return response;
+          })
+          .catch(() => {
+            // Si falla la red y es navegación, retornar página principal
             if (event.request.mode === 'navigate') {
-              return caches.match('/index.html');
+              return caches.match('./index.html');  // ⚠️ CAMBIA ESTO también
             }
             
             return new Response('Offline - Recurso no disponible', {
@@ -103,6 +122,7 @@ self.addEventListener('fetch', (event) => {
 // Escuchar mensajes del cliente
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
+    console.log('[SW] Activación forzada por el usuario');
     self.skipWaiting();
   }
 });
