@@ -370,30 +370,31 @@
             font-size: 0.75rem;
             font-weight: 600;
             margin-top: 0.5rem;
+            color: var(--c-white);
         }
 
         .estado-vencido {
-            border: 1px solid var(--c-red);
+            background: var(--c-red);
         }
 
         .estado-urgente {
-            border: 1px solid var(--c-red);
+            background: var(--c-red);
         }
 
         .estado-proximo {
-            border: 1px solid var(--c-gold);
+            background: var(--c-gold);
         }
 
         .estado-pagado {
-            border: 1px solid var(--c-green);
+            background: var(--c-green);
         }
 
         .estado-lejano {
-            border: 1px solid var(--c-blue);
+            background: var(--c-blue);
         }
 
         .estado-sin-facturas-mes {
-            border: 1px solid var(--c-purple);
+            background: var(--c-purple);
         }
 
         /* --- Modal --- */
@@ -3132,7 +3133,7 @@
                     return;
                 }
 
-                if (monto > 9999999) {
+                if (monto > 99999999) {
                     this.mostrarToast('El monto es demasiado grande', 'error');
                     return;
                 }
@@ -3536,7 +3537,7 @@
                             return false;
                         }
 
-                        if (factura.monto <= 0 || factura.monto > 9999999) {
+                        if (factura.monto <= 0 || factura.monto > 99999999) {
                             console.error(`Validación: factura[${fidx}].monto fuera de rango en servicio[${idx}]`);
                             return false;
                         }
@@ -3672,7 +3673,7 @@
                                 this.guardarDatos();
                                 this.guardarEstado();
                                 this.renderServicios();
-                                this.mostrarToast(`✅ Importados ${cantidad} servicios`, 'success');
+                                this.mostrarToast(`Importados ${cantidad} servicios`, 'success');
                             }
                         } catch (error) {
                             console.error('Error al importar:', error);
