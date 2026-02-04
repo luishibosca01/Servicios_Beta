@@ -1535,7 +1535,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">Version 0.33</div> <!-- DeltaF -->
+            <div class="menu-version">Version 0.34</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -2653,8 +2653,8 @@
                     }
 
                     return `
-    <div class="servicio-wrapper" data-id="${servicio.id}">
-        <div class="servicio-item ${claseEstado}" data-id="${servicio.id}">
+    <div class="servicio-wrapper" data-id="${this.escaparAtributoHTML(servicio.id)}">
+        <div class="servicio-item ${claseEstado}" data-id="${this.escaparAtributoHTML(servicio.id)}">
             <div class="servicio-nombre">${this.escaparHTML(servicio.nombre)}</div>
             <div class="servicio-info">
                 <span class="servicio-monto">${montoTexto}</span>
@@ -3055,7 +3055,7 @@
 
                 selectServicio.innerHTML = serviciosOrdenados.map(servicio => {
                     const selected = servicio.id === servicioId ? 'selected' : '';
-                    return `<option value="${servicio.id}" ${selected}>${this.escaparHTML(servicio.nombre)}</option>`;
+                    return `<option value="${this.escaparAtributoHTML(servicio.id)}" ${selected}>${this.escaparHTML(servicio.nombre)}</option>`;
                 }).join('');
 
                 if (facturaId) {
@@ -3428,31 +3428,159 @@
                 }
             }
 
-            guardarDatos() {
+            verificarEspacioDisponible() {
                 try {
                     const datos = JSON.stringify(this.servicios);
-                    localStorage.setItem(this.STORAGE_KEY, datos);
+                    const tamaño = new Blob([datos]).size;
+                    const tamañoMB = tamaño / (1024 * 1024);
+
+                    return {
+                        tamaño: tamañoMB,
+                        tamañoBytes: tamaño,
+                        advertencia: tamañoMB > 3,
+                        critico: tamañoMB > 4.5
+                    };
                 } catch (error) {
-                    console.error('Error al guardar datos:', error);
-                    this.mostrarToast('Error al guardar datos', 'error');
+                    return {
+                        tamaño: 0,
+                        tamañoBytes: 0,
+                        advertencia: false,
+                        critico: false
+                    };
+                }
+            }
+
+            guardarDatos() {
+                try {
+                    // Verificar espacio antes de guardar
+                    const espacio = this.verificarEspacioDisponible();
+
+                    if (espacio.critico) {
+                        console.warn(`⚠️ Almacenamiento crítico: ${espacio.tamaño.toFixed(2)} MB`);
+                        this.mostrarToast('⚠️ Almacenamiento casi lleno. Exporta tus datos.', 'error');
+                    } else if (espacio.advertencia) {
+                        console.warn(`⚠️ Almacenamiento en advertencia: ${espacio.tamaño.toFixed(2)} MB`);
+                    }
+
+                    const datos = JSON.stringify(this.servicios);
+                    localStorage.setItem(this.STORAGE_KEY, datos);
+
+                    return true;
+                } catch (error) {
+                    if (error.name === 'QuotaExceededError') {
+                        console.error('❌ Cuota de almacenamiento excedida');
+                        this.mostrarToast('❌ Sin espacio. Elimina datos antiguos o exporta.', 'error');
+
+                        // Intentar exportar automáticamente como respaldo
+                        setTimeout(() => {
+                            if (confirm('¿Deseas exportar tus datos como respaldo?')) {
+                                this.exportarDatos();
+                            }
+                        }, 1000);
+                    } else {
+                        console.error('Error al guardar datos:', error);
+                        this.mostrarToast('Error al guardar datos', 'error');
+                    }
+                    return false;
                 }
             }
 
             validarDatos(datos) {
-                if (!Array.isArray(datos)) return false;
+                // Validar que sea un array
+                if (!Array.isArray(datos)) {
+                    console.error('Validación: datos no es un array');
+                    return false;
+                }
 
-                return datos.every(servicio => {
-                    return (
-                        servicio.id &&
-                        servicio.nombre &&
-                        Array.isArray(servicio.facturas) &&
-                        servicio.facturas.every(factura =>
-                            factura.id &&
-                            typeof factura.monto === 'number' &&
-                            factura.fecha &&
-                            typeof factura.pagada === 'boolean'
-                        )
-                    );
+                // Validar cada servicio
+                return datos.every((servicio, idx) => {
+                    // Validar ID del servicio
+                    if (typeof servicio.id !== 'string' || !servicio.id.trim()) {
+                        console.error(`Validación: servicio[${idx}].id inválido`);
+                        return false;
+                    }
+
+                    // Validar nombre del servicio
+                    if (typeof servicio.nombre !== 'string' || !servicio.nombre.trim()) {
+                        console.error(`Validación: servicio[${idx}].nombre inválido`);
+                        return false;
+                    }
+
+                    if (servicio.nombre.length > 30) {
+                        console.error(`Validación: servicio[${idx}].nombre demasiado largo`);
+                        return false;
+                    }
+
+                    // Validar array de facturas
+                    if (!Array.isArray(servicio.facturas)) {
+                        console.error(`Validación: servicio[${idx}].facturas no es un array`);
+                        return false;
+                    }
+
+                    // Validar cada factura
+                    return servicio.facturas.every((factura, fidx) => {
+                        // Validar ID
+                        if (typeof factura.id !== 'string' || !factura.id.trim()) {
+                            console.error(`Validación: factura[${fidx}].id inválido en servicio[${idx}]`);
+                            return false;
+                        }
+
+                        // Validar monto
+                        if (typeof factura.monto !== 'number') {
+                            console.error(`Validación: factura[${fidx}].monto no es número en servicio[${idx}]`);
+                            return false;
+                        }
+
+                        if (!isFinite(factura.monto)) {
+                            console.error(`Validación: factura[${fidx}].monto no es finito en servicio[${idx}]`);
+                            return false;
+                        }
+
+                        if (factura.monto <= 0 || factura.monto > 9999999) {
+                            console.error(`Validación: factura[${fidx}].monto fuera de rango en servicio[${idx}]`);
+                            return false;
+                        }
+
+                        // Validar fecha
+                        if (typeof factura.fecha !== 'string') {
+                            console.error(`Validación: factura[${fidx}].fecha no es string en servicio[${idx}]`);
+                            return false;
+                        }
+
+                        if (!/^\d{4}-\d{2}-\d{2}$/.test(factura.fecha)) {
+                            console.error(`Validación: factura[${fidx}].fecha formato inválido en servicio[${idx}]`);
+                            return false;
+                        }
+
+                        // Validar estado de pago
+                        if (typeof factura.pagada !== 'boolean') {
+                            console.error(`Validación: factura[${fidx}].pagada no es boolean en servicio[${idx}]`);
+                            return false;
+                        }
+
+                        // Validar fecha de pago (opcional)
+                        if (factura.fechaPago !== null && factura.fechaPago !== undefined) {
+                            if (typeof factura.fechaPago !== 'string') {
+                                console.error(`Validación: factura[${fidx}].fechaPago no es string en servicio[${idx}]`);
+                                return false;
+                            }
+                            if (!/^\d{4}-\d{2}-\d{2}$/.test(factura.fechaPago)) {
+                                console.error(`Validación: factura[${fidx}].fechaPago formato inválido en servicio[${idx}]`);
+                                return false;
+                            }
+                        }
+
+                        // Validar tipo (opcional)
+                        if (factura.tipo !== undefined) {
+                            const tiposValidos = ['mensual', 'bimestral', 'semestral', 'anual'];
+                            if (!tiposValidos.includes(factura.tipo)) {
+                                console.error(`Validación: factura[${fidx}].tipo inválido en servicio[${idx}]`);
+                                return false;
+                            }
+                        }
+
+                        return true;
+                    });
                 });
             }
 
@@ -3497,33 +3625,65 @@
                     const file = e.target.files[0];
                     if (!file) return;
 
+                    // Validar tamaño del archivo
+                    const maxSize = 10 * 1024 * 1024; // 10MB
+                    if (file.size > maxSize) {
+                        this.mostrarToast('Archivo demasiado grande (máx 10MB)', 'error');
+                        return;
+                    }
+
+                    // Validar extensión
+                    if (!file.name.endsWith('.json')) {
+                        this.mostrarToast('Solo se permiten archivos .json', 'error');
+                        return;
+                    }
+
                     const reader = new FileReader();
+
                     reader.onload = (event) => {
                         try {
                             const datos = JSON.parse(event.target.result);
 
+                            // Validar versión
+                            if (datos.version && datos.version !== '1.0') {
+                                const continuar = confirm(
+                                    `Versión ${datos.version} detectada (actual: 1.0). Puede haber incompatibilidades. ¿Continuar?`
+                                );
+                                if (!continuar) return;
+                            }
+
                             // Validar estructura
                             if (!datos.servicios || !Array.isArray(datos.servicios)) {
-                                throw new Error('Formato de archivo inválido');
+                                throw new Error('Formato de archivo inválido: falta "servicios"');
                             }
 
-                            // Validar integridad
+                            // Validar integridad de datos
                             if (!this.validarDatos(datos.servicios)) {
-                                throw new Error('Datos corruptos en el archivo');
+                                throw new Error('Datos corruptos o inválidos en el archivo');
                             }
 
-                            if (confirm('¿Deseas reemplazar todos los datos actuales?')) {
+                            // Advertir sobre cantidad de datos
+                            const cantidad = datos.servicios.length;
+                            const facturas = datos.servicios.reduce((acc, s) => acc + s.facturas.length, 0);
+                            const mensaje = `Se importarán ${cantidad} servicios y ${facturas} facturas. ¿Deseas reemplazar todos los datos actuales?`;
+
+                            if (confirm(mensaje)) {
                                 this.servicios = datos.servicios;
                                 this.guardarDatos();
                                 this.guardarEstado();
                                 this.renderServicios();
-                                this.mostrarToast('Datos importados correctamente', 'success');
+                                this.mostrarToast(`✅ Importados ${cantidad} servicios`, 'success');
                             }
                         } catch (error) {
                             console.error('Error al importar:', error);
-                            this.mostrarToast('Error: ' + error.message, 'error');
+                            this.mostrarToast('❌ Error: ' + error.message, 'error');
                         }
                     };
+
+                    reader.onerror = () => {
+                        this.mostrarToast('Error al leer el archivo', 'error');
+                    };
+
                     reader.readAsText(file);
                 });
 
@@ -3671,6 +3831,13 @@
                 return div.innerHTML;
             }
 
+            escaparAtributoHTML(texto) {
+                if (!texto) return '';
+                const div = document.createElement('div');
+                div.setAttribute('data-attr', texto);
+                return div.getAttribute('data-attr');
+            }
+
             mostrarToast(mensaje, tipo = 'success') {
                 const toast = document.getElementById('toast');
                 toast.textContent = mensaje;
@@ -3693,12 +3860,11 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA DeltaF VERSION 0.33
+    //                 NOTAS SISTEMA DeltaF VERSION 0.34
     // ====================================================================
     
      - CAMBIOS:
-     1) se achica el menu de ajustes en moviles
-     2) rediseño general de algunas partes y correcion menores de bugs
+     1) 
 
 
      - BUGS:
