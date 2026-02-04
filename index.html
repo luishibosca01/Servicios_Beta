@@ -234,7 +234,9 @@
             transform: scale(0.98);
         }
 
-        button:disabled {
+        button:disabled,
+        input:disabled,
+        select:disabled {
             background: transparent;
             cursor: not-allowed;
             transform: none;
@@ -333,6 +335,10 @@
             border-left: 4px solid var(--c-green);
         }
 
+        .servicio-item.sin-facturas-mes {
+            border-left: 4px solid var(--c-purple);
+        }
+
         .servicio-nombre {
             font-weight: 600;
             font-size: 1.1rem;
@@ -379,6 +385,11 @@
         .estado-pagado {
             background: rgba(96, 172, 148, 0.15);
             color: var(--c-green);
+        }
+
+        .estado-sin-facturas-mes {
+            background: rgba(139, 92, 246, 0.15);
+            color: var(--c-purple);
         }
 
         /* --- Modal --- */
@@ -1068,6 +1079,12 @@
             margin-top: 0.25rem;
         }
 
+        .factura-estado-vencido {
+            color: var(--c-red);
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+
         .factura-info-clickable {
             cursor: pointer;
         }
@@ -1256,6 +1273,37 @@
             pointer-events: none;
         }
 
+        /* Botón toggle de estado de pago */
+        .btn-toggle-pagada {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.875rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--input-bg);
+            color: var(--text-main);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+
+        .btn-toggle-pagada:hover {
+            background: var(--c-gray-btn);
+        }
+
+        .btn-toggle-pagada:active {
+            transform: scale(0.98);
+        }
+
+        .btn-toggle-pagada.pagada {
+            background: var(--c-green);
+            color: var(--text-inv);
+            border-color: var(--c-green);
+        }
+
         /* --- codigo css --- */
     </style>
     <script>
@@ -1314,6 +1362,10 @@
         <symbol id="icon-moon" viewBox="0 0 24 24">
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" class="icon-line" stroke-width="2"
                 stroke="currentColor" fill="none"></path>
+        </symbol>
+        <symbol id="icon-card" viewBox="0 0 24 24">
+            <rect x="2" y="5" width="20" height="14" rx="2" class="icon-line" stroke="currentColor"></rect>
+            <line x1="2" y1="10" x2="22" y2="10" class="icon-line" stroke="currentColor"></line>
         </symbol>
         <symbol id="icon-sun" viewBox="0 0 24 24">
             <g class="icon-line" stroke-width="2" stroke="currentColor">
@@ -1465,9 +1517,8 @@
             </div>
 
             <div class="menu-item" id="menu-limpiar">
-                <svg class="icon" viewBox="0 0 24 24">
-                    <path class="icon-line"
-                        d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                <svg class="icon">
+                    <use href="#icon-trash" />
                 </svg>
                 <span>Borrar todo</span>
             </div>
@@ -1480,7 +1531,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">Version 0.31</div> <!-- DeltaF -->
+            <div class="menu-version">Version 0.33</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -1558,9 +1609,8 @@
                             </svg>
                             <input type="text" id="search-input" class="search-input" placeholder="Buscar servicio...">
                             <button class="search-clear" id="search-clear" style="display: none;">
-                                <svg class="icon" viewBox="0 0 24 24">
-                                    <line x1="18" y1="6" x2="6" y2="18" class="icon-line" stroke="currentColor"></line>
-                                    <line x1="6" y1="6" x2="18" y2="18" class="icon-line" stroke="currentColor"></line>
+                                <svg class="icon">
+                                    <use href="#icon-cancel" />
                                 </svg>
                             </button>
                         </div>
@@ -1610,7 +1660,8 @@
             <form id="form-servicio">
                 <div class="form-group">
                     <label for="servicio-nombre">Nombre del servicio</label>
-                    <input type="text" id="servicio-nombre" required placeholder="Ej: Internet, Luz, Agua">
+                    <input type="text" id="servicio-nombre" required placeholder="Ej: Internet, Luz, Agua"
+                        maxlength="30">
                 </div>
                 <div class="form-actions">
                     <button type="submit">
@@ -1690,13 +1741,14 @@
                         </button>
                     </div>
                 </div>
-                <div class="form-group" id="grupo-fecha-pago" style="display: none;">
+                <div class="form-group">
                     <label for="factura-fecha-pago">Fecha de pago</label>
-                    <div style="display: flex; gap: 0.5rem;">
-                        <input type="date" id="factura-fecha-pago" style="flex: 1;">
-                        <button type="button" class="icon-btn" id="btn-fecha-pago-hoy" title="Fecha de hoy">
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <input type="date" id="factura-fecha-pago" disabled style="flex: 1;">
+                        <button type="button" id="btn-toggle-pagada" class="icon-btn" onclick="app.toggleEstadoPago()"
+                            title="Marcar como pagada/no pagada">
                             <svg class="icon">
-                                <use href="#icon-calendar" />
+                                <use href="#icon-card" />
                             </svg>
                         </button>
                     </div>
@@ -1916,10 +1968,6 @@
                 document.getElementById('btn-eliminar-servicio').addEventListener('click', () => this.eliminarServicio());
                 document.getElementById('btn-fecha-hoy').addEventListener('click', () => this.establecerFechaHoy());
                 document.getElementById('btn-eliminar-factura-modal').addEventListener('click', () => this.eliminarFacturaDesdeModal());
-                // Botón para establecer fecha de pago como hoy
-                document.getElementById('btn-fecha-pago-hoy').addEventListener('click', () => {
-                    document.getElementById('factura-fecha-pago').value = this.obtenerFechaLocal();
-                });
 
                 // Toggle de estadísticas colapsable
                 document.getElementById('estadisticas-header').addEventListener('click', () => {
@@ -2400,6 +2448,17 @@
                     this.serviciosCollapseState = 'collapsed';
                     this.aplicarEstadoServicios('collapsed');
                     localStorage.setItem('servicios-collapse-state', 'collapsed');
+
+                    // Limpiar búsqueda al colapsar
+                    const searchInput = document.getElementById('search-input');
+                    const searchClear = document.getElementById('search-clear');
+                    if (searchInput && searchInput.value !== '') {
+                        searchInput.value = '';
+                        this.terminoBusqueda = '';
+                        searchClear.style.display = 'none';
+                        this.enModoBusqueda = false;
+                        this.renderServicios();
+                    }
                     return;
                 }
 
@@ -2432,6 +2491,17 @@
                     this.serviciosCollapseState = 'semi-collapsed';
                     this.aplicarEstadoServicios('semi-collapsed');
                     localStorage.setItem('servicios-collapse-state', 'semi-collapsed');
+
+                    // Limpiar búsqueda al contraer
+                    const searchInput = document.getElementById('search-input');
+                    const searchClear = document.getElementById('search-clear');
+                    if (searchInput && searchInput.value !== '') {
+                        searchInput.value = '';
+                        this.terminoBusqueda = '';
+                        searchClear.style.display = 'none';
+                        this.enModoBusqueda = false;
+                        this.renderServicios();
+                    }
                 }
             }
 
@@ -2565,9 +2635,17 @@
                         }
                     }
                     else {
-                        // Cuando no hay facturas
-                        estado = 'Sin facturas';
-                        claseEstado = 'sin-facturas';
+                        // Cuando obtenerUltimaFactura retorna null
+                        // Verificar si el servicio tiene facturas en general
+                        if (servicio.facturas && servicio.facturas.length > 0) {
+                            // Tiene facturas, pero no en el mes actual/siguiente
+                            estado = 'Sin facturas este mes';
+                            claseEstado = 'sin-facturas-mes';
+                        } else {
+                            // No tiene facturas en absoluto
+                            estado = 'Sin facturas';
+                            claseEstado = 'sin-facturas';
+                        }
                     }
 
                     return `
@@ -2805,32 +2883,32 @@
                     });
 
                     listaFacturas.innerHTML = facturasOrdenadas.map(factura => {
-                        const estadoPago = factura.pagada && factura.fechaPago
-                            ? `<div class="factura-estado-pagado">✓ Pagado: ${this.formatearFecha(factura.fechaPago)}</div>`
-                            : '<div class="factura-estado-pendiente">⏱ Pendiente</div>';
+                        let estadoPago;
+                        if (factura.pagada && factura.fechaPago) {
+                            estadoPago = `<div class="factura-estado-pagado">✓ Pagado: ${this.formatearFecha(factura.fechaPago)}</div>`;
+                        } else {
+                            // Verificar si está vencida
+                            const hoy = new Date();
+                            hoy.setHours(0, 0, 0, 0);
+                            const vencimiento = new Date(factura.fecha + 'T00:00:00');
+                            vencimiento.setHours(0, 0, 0, 0);
+
+                            if (vencimiento < hoy) {
+                                estadoPago = '<div class="factura-estado-vencido">⚠ Vencida</div>';
+                            } else {
+                                estadoPago = '<div class="factura-estado-pendiente">⏱ Pendiente</div>';
+                            }
+                        }
 
                         return `
                             <div class="factura-item" data-id="${factura.id}">
                                 <div class="factura-info" onclick="app.editarFactura('${factura.id}')">
-                                    <div class="factura-monto">${this.formatearMoneda(factura.monto)}</div>
-                                    <div class="factura-fecha">
-                                        ${factura.tipo || 'mensual'} | Vence: ${this.formatearFecha(factura.fecha)}
-                                    </div>
-                                    ${estadoPago}
-                                </div>
-                                <div class="factura-actions">
-                                    ${!factura.pagada ? `
-                                        <button class="icon-btn" onclick="app.marcarPagada('${factura.id}')">
-                                            <svg class="icon" viewBox="0 0 24 24">
-                                                <polyline class="icon-line" points="20 6 9 17 4 12"/>
-                                            </svg>
-                                        </button>
-                                    ` : `
-                                        <button class="icon-btn" onclick="app.marcarNoPagada('${factura.id}')">
-                                            <svg class="icon"><use href="#icon-cancel" /></svg>
-                                        </button>
-                                    `}
-                                </div>
+                             <div class="factura-monto">${this.formatearMoneda(factura.monto)}</div>
+                             <div class="factura-fecha">
+                                 ${factura.tipo || 'mensual'} | Vence: ${this.formatearFecha(factura.fecha)}
+                             </div>
+                             ${estadoPago}
+                         </div>
                             </div>
                         `;
                     }).join('');
@@ -2945,12 +3023,14 @@
                 const titulo = document.getElementById('modal-factura-titulo');
                 const form = document.getElementById('form-factura');
                 const btnEliminar = document.getElementById('btn-eliminar-factura-modal');
-                const grupoFechaPago = document.getElementById('grupo-fecha-pago');
                 const selectServicio = document.getElementById('factura-servicio');
                 const btnVolver = document.getElementById('modal-factura-close');
+                const btnTogglePagada = document.getElementById('btn-toggle-pagada');
+                const inputFechaPago = document.getElementById('factura-fecha-pago');
 
                 form.reset();
-                grupoFechaPago.style.display = 'none';
+                inputFechaPago.disabled = true;
+                btnTogglePagada.classList.remove('pagada');
 
                 // Cambiar texto del botón según el origen
                 if (origen === 'menu') {
@@ -2980,9 +3060,14 @@
                             document.getElementById('factura-fecha').value = factura.fecha;
                             selectServicio.value = servicioId;
 
-                            if (factura.pagada && factura.fechaPago) {
-                                grupoFechaPago.style.display = 'block';
-                                document.getElementById('factura-fecha-pago').value = factura.fechaPago;
+                            if (factura.pagada) {
+                                btnTogglePagada.classList.add('pagada');
+                                inputFechaPago.disabled = false;
+                                if (factura.fechaPago) {
+                                    inputFechaPago.value = factura.fechaPago;
+                                } else {
+                                    inputFechaPago.value = this.obtenerFechaLocal();
+                                }
                             }
 
                             btnEliminar.style.display = 'block';
@@ -2996,13 +3081,37 @@
                 this.abrirModal('modal-factura');
             }
 
+            toggleEstadoPago() {
+                const btnTogglePagada = document.getElementById('btn-toggle-pagada');
+                const inputFechaPago = document.getElementById('factura-fecha-pago');
+                const iconUse = btnTogglePagada.querySelector('use');
+
+                const estaPagada = btnTogglePagada.classList.contains('pagada');
+
+                if (estaPagada) {
+                    // Cambiar a NO pagada
+                    btnTogglePagada.classList.remove('pagada');
+                    inputFechaPago.disabled = true;
+                    inputFechaPago.value = '';
+                    iconUse.setAttribute('href', '#icon-card');
+                } else {
+                    // Cambiar a pagada
+                    btnTogglePagada.classList.add('pagada');
+                    inputFechaPago.disabled = false;
+                    inputFechaPago.value = this.obtenerFechaLocal();
+                    iconUse.setAttribute('href', '#icon-cancel');
+                }
+            }
+
             guardarFactura(e) {
                 e.preventDefault();
 
                 const monto = parseFloat(document.getElementById('factura-monto').value);
                 const tipo = document.getElementById('factura-tipo').value;
                 const fecha = document.getElementById('factura-fecha').value;
-                const fechaPago = document.getElementById('factura-fecha-pago').value;
+                const btnTogglePagada = document.getElementById('btn-toggle-pagada');
+                const estaPagada = btnTogglePagada.classList.contains('pagada');
+                const fechaPago = estaPagada ? document.getElementById('factura-fecha-pago').value : null;
                 const servicioSeleccionadoId = document.getElementById('factura-servicio').value;
 
                 if (!monto || isNaN(monto) || monto <= 0) {
@@ -3040,9 +3149,8 @@
                                 factura.monto = monto;
                                 factura.tipo = tipo;
                                 factura.fecha = fecha;
-                                if (fechaPago) {
-                                    factura.fechaPago = fechaPago;
-                                }
+                                factura.pagada = estaPagada;
+                                factura.fechaPago = fechaPago;
 
                                 const servicioNuevo = this.servicios.find(s => s.id === servicioNuevoId);
                                 if (servicioNuevo) {
@@ -3053,9 +3161,8 @@
                                 factura.monto = monto;
                                 factura.tipo = tipo;
                                 factura.fecha = fecha;
-                                if (fechaPago) {
-                                    factura.fechaPago = fechaPago;
-                                }
+                                factura.pagada = estaPagada;
+                                factura.fechaPago = fechaPago;
                             }
                         }
                     }
@@ -3066,8 +3173,8 @@
                         monto: monto,
                         tipo: tipo,
                         fecha: fecha,
-                        pagada: false,
-                        fechaPago: null
+                        pagada: estaPagada,
+                        fechaPago: fechaPago
                     };
 
                     const servicioDestino = this.servicios.find(s => s.id === servicioNuevoId);
@@ -3188,15 +3295,35 @@
                     return null;
                 }
 
-                // Filtrar facturas no pagadas
-                const facturasNoPagadas = servicio.facturas.filter(f => !f.pagada);
+                const hoy = new Date();
+                hoy.setHours(0, 0, 0, 0);
 
-                // Si no hay facturas pendientes, mostrar la más reciente (incluso si está pagada)
-                if (facturasNoPagadas.length === 0) {
-                    return servicio.facturas.sort((a, b) => new Date(b.fecha) - new Date(a.fecha))[0];
+                // Obtener el primer día del mes actual
+                const primerDiaMesActual = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+
+                // Obtener el último día del mes actual (no el siguiente)
+                const ultimoDiaMesActual = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
+
+                // Filtrar facturas que estén entre el primer día y el último día del mes actual
+                const facturasEnRango = servicio.facturas.filter(f => {
+                    const fechaVencimiento = new Date(f.fecha + 'T00:00:00');
+                    return fechaVencimiento >= primerDiaMesActual && fechaVencimiento <= ultimoDiaMesActual;
+                });
+
+                // Si no hay facturas en el rango, retornar null
+                if (facturasEnRango.length === 0) {
+                    return null;
                 }
 
-                // Devolver la factura no pagada con vencimiento más próximo
+                // Filtrar facturas no pagadas dentro del rango
+                const facturasNoPagadas = facturasEnRango.filter(f => !f.pagada);
+
+                // Si no hay facturas pendientes en el rango, mostrar la más reciente del rango (incluso si está pagada)
+                if (facturasNoPagadas.length === 0) {
+                    return facturasEnRango.sort((a, b) => new Date(b.fecha) - new Date(a.fecha))[0];
+                }
+
+                // Devolver la factura no pagada con vencimiento más próximo dentro del rango
                 return facturasNoPagadas.sort((a, b) => new Date(a.fecha) - new Date(b.fecha))[0];
             }
 
@@ -3553,11 +3680,17 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA DeltaF VERSION 0.31
+    //                 NOTAS SISTEMA DeltaF VERSION 0.33
     // ====================================================================
     
      - CAMBIOS:
-     1) 
+     1) Max 30 caracteres al crear o editar un servicio
+     2) Si hay una factura vencida en el modal de facturas del servicio, 
+     ahora dice vencida
+     3) la lista de servicios ahora solo muestra las facturas del mes 
+     actual en adelante, la que vence primero
+     4) si no hay facturas por vencer en el mes actual pero si hay en otro mes,
+     el servicio agrega la etiqueta "sin facturas esta mes"
 
 
      - BUGS:
