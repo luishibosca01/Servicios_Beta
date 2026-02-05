@@ -1,6 +1,6 @@
 // Service Worker para DeltaF - Offline First
 // ⚠️ IMPORTANTE: Incrementa este número CADA VEZ que actualices el index.html
-const CACHE_VERSION = 'v0.39';
+const CACHE_VERSION = 'v0.41';
 const CACHE_NAME = `deltaf-${CACHE_VERSION}`;
 
 // Lista de archivos a cachear
