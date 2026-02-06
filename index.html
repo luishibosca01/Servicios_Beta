@@ -49,15 +49,15 @@
 
         body.dark-mode {
             /* --- Variables de Color (Tema Oscuro) --- */
-            --bg-body: #111827;
-            --bg-card: #1f2937;
+            --bg-body: #000000;
+            --bg-card: #0f141b;
             --bg-header: rgba(17, 24, 39, 0.800);
             --text-main: #f9fafb;
             --text-muted: #d1d5db;
-            --border: #374151;
-            --input-bg: #374151;
-            --input-focus: #374151;
-            --c-gray-btn: #374151;
+            --border: #1f2836;
+            --input-bg: #1f2836;
+            --input-focus: #1f2836;
+            --c-gray-btn: #1f2836;
             --shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
         }
 
@@ -243,19 +243,22 @@
             opacity: 0.5;
         }
 
+        .btn-primary,
+        .btn-success,
+        .btn-danger {
+            color: var(--text-inv);
+        }
+
         .btn-primary {
             background: var(--c-blue);
-            color: var(--text-inv);
         }
 
         .btn-success {
             background: var(--c-green);
-            color: var(--text-inv);
         }
 
         .btn-danger {
             background: var(--c-red);
-            color: var(--text-inv);
         }
 
         .btn-add {
@@ -314,27 +317,24 @@
             transform: scale(0.99);
         }
 
-        .servicio-item.vencido {
+        .servicio-item[class*="vencido"],
+        .servicio-item[class*="urgente"] {
             border-left: 4px solid var(--c-red);
         }
 
-        .servicio-item.lejano {
+        .servicio-item[class*="lejano"] {
             border-left: 4px solid var(--c-blue);
         }
 
-        .servicio-item.proximo {
+        .servicio-item[class*="proximo"] {
             border-left: 4px solid var(--c-gold);
         }
 
-        .servicio-item.urgente {
-            border-left: 4px solid var(--c-red);
-        }
-
-        .servicio-item.pagado {
+        .servicio-item[class*="pagado"] {
             border-left: 4px solid var(--c-green);
         }
 
-        .servicio-item.sin-facturas-mes {
+        .servicio-item[class*="sin-facturas"] {
             border-left: 4px solid var(--c-purple);
         }
 
@@ -457,20 +457,28 @@
             margin-bottom: 1rem;
         }
 
+
+
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--input-focus);
+        }
+
+        input,
+        select,
         .form-group select {
             width: 100%;
-            padding: 0.875rem;
+            padding: 0.75rem;
             border: 1px solid var(--border);
             border-radius: var(--radius);
             font-size: 1rem;
             background: var(--input-bg);
             color: var(--text-main);
-            cursor: pointer;
         }
 
-        .form-group select:focus {
-            outline: none;
-            border-color: var(--input-focus);
+        .form-group select {
+            padding: 0.875rem;
+            cursor: pointer;
         }
 
         label {
@@ -479,18 +487,6 @@
             font-weight: 600;
             color: var(--text-muted);
             margin-bottom: 0.25rem;
-        }
-
-        input,
-        select {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            font-size: 1rem;
-            background: var(--input-bg);
-            color: var(--text-main);
-
         }
 
         input:focus,
@@ -1069,18 +1065,8 @@
         }
 
         /* --- Estilos Calculador --- */
-        .calculador-container {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .calculador-filtros {
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-        }
-
+        .calculador-container,
+        .calculador-filtros,
         .calculador-campo {
             display: flex;
             flex-direction: column;
@@ -1145,22 +1131,28 @@
         }
 
         /* Estado de factura */
-        .factura-estado-pagado {
-            color: var(--c-green);
-            font-size: 0.875rem;
+        .factura-estado-pagado,
+        .factura-estado-vencido,
+        .factura-estado-pendiente {
+            font-size: 0.8rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 5px;
+            font-weight: 600;
             margin-top: 0.25rem;
+            display: inline-block;
         }
 
-        .factura-estado-pendiente {
-            color: var(--c-gold);
-            font-size: 0.8rem;
-            margin-top: 0.25rem;
+        /* Variaciones de color */
+        .factura-estado-pagado {
+            color: var(--c-green);
         }
 
         .factura-estado-vencido {
             color: var(--c-red);
-            font-size: 0.875rem;
-            margin-top: 0.25rem;
+        }
+
+        .factura-estado-pendiente {
+            color: var(--c-gold);
         }
 
         .factura-info-clickable {
@@ -1700,7 +1692,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">Version 0.41</div> <!-- DeltaF -->
+            <div class="menu-version">Version 0.42</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -2260,6 +2252,42 @@
                         }, 100);
                     }
                 });
+            }
+
+            setupModalCloseListeners(modalId, closeButtonIds) {
+                closeButtonIds.forEach(btnId => {
+                    document.getElementById(btnId)?.addEventListener('click', () => {
+                        this.cerrarModal(modalId);
+                    });
+                });
+            }
+
+            validarMonto(monto, permitirNegativos = false) {
+                // Validar que sea un número
+                if (!monto && monto !== 0 || isNaN(monto)) {
+                    this.mostrarToast('El monto debe ser un número válido', 'error');
+                    return false;
+                }
+
+                // Validar que no sea cero
+                if (monto === 0) {
+                    this.mostrarToast('El monto no puede ser 0', 'error');
+                    return false;
+                }
+
+                // Validar que sea positivo (solo si no se permiten negativos)
+                if (!permitirNegativos && monto < 0) {
+                    this.mostrarToast('El monto debe ser positivo', 'error');
+                    return false;
+                }
+
+                // Validar tamaño máximo
+                if (Math.abs(monto) > 99999999) {
+                    this.mostrarToast('El monto es demasiado grande', 'error');
+                    return false;
+                }
+
+                return true;
             }
 
             setupEventListeners() {
@@ -2932,7 +2960,12 @@
                 // Crear opciones de servicios
                 let options = '<option value="">Seleccionar servicio...</option>';
 
-                this.servicios.forEach(servicio => {
+                // Ordenar servicios alfabéticamente por nombre
+                const serviciosOrdenados = [...this.servicios].sort((a, b) => {
+                    return a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' });
+                });
+
+                serviciosOrdenados.forEach(servicio => {
                     options += `<option value="${servicio.id}">${servicio.nombre}</option>`;
                 });
 
@@ -3055,6 +3088,31 @@
                         this.renderServicios();
                     }
                 }
+            }
+
+            obtenerEstadoFactura(factura) {
+                let estadoPago = '';
+                let claseMonto = 'factura-monto';
+
+                if (factura.monto < 0) {
+                    estadoPago = '<div class="factura-estado-pagado">Saldo a favor</div>';
+                    claseMonto = 'factura-monto factura-monto-favor';
+                } else if (factura.pagada) {
+                    estadoPago = '<div class="factura-estado-pagado">✓ Pagada</div>';
+                } else {
+                    const hoy = new Date();
+                    hoy.setHours(0, 0, 0, 0);
+                    const vencimiento = new Date(factura.fecha + 'T00:00:00');
+                    vencimiento.setHours(0, 0, 0, 0);
+
+                    if (vencimiento < hoy) {
+                        estadoPago = '<div class="factura-estado-vencido">⚠ Vencida</div>';
+                    } else {
+                        estadoPago = '<div class="factura-estado-pendiente">⏱ Pendiente</div>';
+                    }
+                }
+
+                return { estadoPago, claseMonto };
             }
 
             aplicarEstadoServicios(estado) {
@@ -3448,96 +3506,33 @@
                 const titulo = document.getElementById('modal-facturas-titulo');
                 const listaFacturas = document.getElementById('lista-facturas-modal');
 
-                titulo.textContent = `${servicio.nombre}`;
+                titulo.textContent = servicio.nombre;
 
-                // Generar HTML de facturas
                 if (servicio.facturas.length === 0) {
                     listaFacturas.innerHTML = '<p class="mensaje-sin-facturas">No hay facturas registradas</p>';
                 } else {
-                    // Ordenar facturas por fecha (más reciente primero)
-                    const facturasOrdenadas = [...servicio.facturas].sort((a, b) => {
-                        return new Date(b.fecha) - new Date(a.fecha);
-                    });
+                    const facturasOrdenadas = [...servicio.facturas].sort((a, b) =>
+                        new Date(b.fecha) - new Date(a.fecha)
+                    );
 
-                    // Agrupar facturas por año
-                    const facturasPorAno = {};
-                    facturasOrdenadas.forEach(factura => {
-                        const ano = new Date(factura.fecha).getFullYear();
-                        if (!facturasPorAno[ano]) {
-                            facturasPorAno[ano] = [];
-                        }
-                        facturasPorAno[ano].push(factura);
-                    });
+                    const grupos = this.agruparPorAno(facturasOrdenadas);
 
-                    // Ordenar años de más reciente a más antiguo
-                    const anosOrdenados = Object.keys(facturasPorAno).sort((a, b) => b - a);
+                    listaFacturas.innerHTML = grupos.map((grupo, index) => {
+                        const facturasHTML = grupo.items
+                            .map(f => this.generarHTMLFactura(f, `app.editarFactura('${f.id}')`))
+                            .join('');
 
-                    // Generar HTML agrupado por año
-                    listaFacturas.innerHTML = anosOrdenados.map((ano, index) => {
-                        const facturas = facturasPorAno[ano];
-                        const cantidadFacturas = facturas.length;
-
-                        const facturasHTML = facturas.map(factura => {
-                            let estadoPago = '';
-                            let claseMonto = 'factura-monto';
-
-                            // Saldo a favor (monto negativo)
-                            if (factura.monto < 0) {
-                                estadoPago = '<div class="factura-estado-pagado">Saldo a favor</div>';
-                                claseMonto = 'factura-monto factura-monto-favor';
-                            } else if (factura.pagada) {
-                                estadoPago = '<div class="factura-estado-pagado">✓ Pagada</div>';
-                            } else {
-                                const hoy = new Date();
-                                hoy.setHours(0, 0, 0, 0);
-                                const vencimiento = new Date(factura.fecha + 'T00:00:00');
-                                vencimiento.setHours(0, 0, 0, 0);
-
-                                if (vencimiento < hoy) {
-                                    estadoPago = '<div class="factura-estado-vencido">⚠ Vencida</div>';
-                                } else {
-                                    estadoPago = '<div class="factura-estado-pendiente">⏱ Pendiente</div>';
-                                }
-                            }
-
-                            return `
-                    <div class="factura-item" data-id="${factura.id}">
-                        <div class="factura-info" onclick="app.editarFactura('${factura.id}')">
-                            <div class="${claseMonto}">${this.formatearMoneda(factura.monto)}</div>
-                            <div class="factura-fecha">
-                                ${factura.tipo || 'mensual'} | Vence: ${this.formatearFecha(factura.fecha)}
-                            </div>
-                            ${estadoPago}
-                        </div>
-                    </div>
-                `;
-                        }).join('');
-
-                        // Solo el primer año (más reciente) está expandido por defecto
-                        const collapsed = index > 0 ? 'collapsed' : '';
-
-                        return `
-                <div class="facturas-grupo-ano">
-                    <div class="facturas-grupo-header" onclick="app.toggleGrupoAno(this)">
-                        <div class="facturas-grupo-header-info">
-                            <span class="facturas-grupo-ano-texto">${ano}</span>
-                            <span class="facturas-grupo-contador">${cantidadFacturas} factura${cantidadFacturas !== 1 ? 's' : ''}</span>
-                        </div>
-                        <svg class="icon facturas-grupo-chevron ${collapsed}" viewBox="0 0 24 24">
-                            <polyline points="6 9 12 15 18 9" class="icon-line" stroke="currentColor"></polyline>
-                        </svg>
-                    </div>
-                    <div class="facturas-grupo-contenido ${collapsed}">
-                        ${facturasHTML}
-                    </div>
-                </div>
-            `;
+                        return this.generarGrupoAno(
+                            grupo.ano,
+                            grupo.items,
+                            facturasHTML,
+                            'factura',
+                            index
+                        );
                     }).join('');
                 }
 
-                // Guardar el servicioId para el botón de agregar factura
                 modal.dataset.servicioId = servicioId;
-
                 this.abrirModal('modal-facturas-servicio');
             }
 
@@ -3545,8 +3540,25 @@
                 const chevron = headerElement.querySelector('.facturas-grupo-chevron');
                 const contenido = headerElement.nextElementSibling;
 
-                chevron.classList.toggle('collapsed');
-                contenido.classList.toggle('collapsed');
+                // Si el grupo actual está colapsado (lo vamos a abrir)
+                if (chevron.classList.contains('collapsed')) {
+                    // Cerrar todos los demás grupos abiertos
+                    const todosLosChevrons = document.querySelectorAll('.facturas-grupo-chevron:not(.collapsed)');
+                    const todosLosContenidos = document.querySelectorAll('.facturas-grupo-contenido:not(.collapsed)');
+
+                    todosLosChevrons.forEach(ch => ch.classList.add('collapsed'));
+                    todosLosContenidos.forEach(cont => cont.classList.add('collapsed'));
+
+                    // Pequeño delay antes de abrir el nuevo grupo
+                    setTimeout(() => {
+                        chevron.classList.remove('collapsed');
+                        contenido.classList.remove('collapsed');
+                    }, 200);
+                } else {
+                    // Si ya está abierto, simplemente cerrarlo sin delay
+                    chevron.classList.add('collapsed');
+                    contenido.classList.add('collapsed');
+                }
             }
 
             abrirModalServicio(servicioId = null) {
@@ -3571,6 +3583,65 @@
                 }
 
                 this.abrirModal('modal-servicio');
+            }
+
+            generarHTMLFactura(factura, onclick = null) {
+                const { estadoPago, claseMonto } = this.obtenerEstadoFactura(factura);
+                const clickHandler = onclick ? `onclick="${onclick}"` : '';
+
+                return `
+        <div class="factura-item" data-id="${factura.id}">
+            <div class="factura-info" ${clickHandler}>
+                <div class="${claseMonto}">${this.formatearMoneda(factura.monto)}</div>
+                <div class="factura-fecha">
+                    ${factura.tipo || 'mensual'} | Vence: ${this.formatearFecha(factura.fecha)}
+                </div>
+                ${estadoPago}
+            </div>
+        </div>
+    `;
+            }
+
+            agruparPorAno(items) {
+                const itemsPorAno = {};
+                items.forEach(item => {
+                    const ano = new Date(item.fecha).getFullYear();
+                    if (!itemsPorAno[ano]) {
+                        itemsPorAno[ano] = [];
+                    }
+                    itemsPorAno[ano].push(item);
+                });
+
+                return Object.keys(itemsPorAno)
+                    .sort((a, b) => b - a)
+                    .map(ano => ({
+                        ano,
+                        items: itemsPorAno[ano],
+                        cantidad: itemsPorAno[ano].length
+                    }));
+            }
+
+            generarGrupoAno(ano, items, itemHTML, tipoLabel = 'factura', index = 0) {
+                const collapsed = index > 0 ? 'collapsed' : '';
+                const cantidad = items.length;
+                const labelPlural = cantidad !== 1 ? `${tipoLabel}s` : tipoLabel;
+
+                return `
+        <div class="facturas-grupo-ano">
+            <div class="facturas-grupo-header" onclick="app.toggleGrupoAno(this)">
+                <div class="facturas-grupo-header-info">
+                    <span class="facturas-grupo-ano-texto">${ano}</span>
+                    <span class="facturas-grupo-contador">${cantidad} ${labelPlural}</span>
+                </div>
+                <svg class="icon facturas-grupo-chevron ${collapsed}" viewBox="0 0 24 24">
+                    <polyline points="6 9 12 15 18 9" class="icon-line" stroke="currentColor"></polyline>
+                </svg>
+            </div>
+            <div class="facturas-grupo-contenido ${collapsed}">
+                ${itemHTML}
+            </div>
+        </div>
+    `;
             }
 
             guardarServicio(e) {
@@ -3778,18 +3849,8 @@
                 const fechaPago = estaPagada ? document.getElementById('factura-fecha-pago').value : null;
                 const servicioSeleccionadoId = document.getElementById('factura-servicio').value;
 
-                if (!monto && monto !== 0 || isNaN(monto)) {
-                    this.mostrarToast('El monto debe ser un número válido', 'error');
-                    return;
-                }
-
-                if (monto === 0) {
-                    this.mostrarToast('El monto no puede ser 0', 'error');
-                    return;
-                }
-
-                if (Math.abs(monto) > 99999999) {
-                    this.mostrarToast('El monto es demasiado grande', 'error');
+                // Validar monto (permitir negativos para saldos a favor)
+                if (!this.validarMonto(monto, true)) {
                     return;
                 }
 
@@ -4618,40 +4679,19 @@
                 const servicio = this.servicios.find(s => s.id === servicioId);
                 if (!servicio) return;
 
-                const modal = document.getElementById('modal-ingresos-lista');
                 const lista = document.getElementById('lista-ingresos-modal');
 
                 if (servicio.facturas.length === 0) {
-                    lista.innerHTML = `
-            <div class="empty-state">
-                <p>No hay ingresos registrados</p>
-            </div>
-        `;
+                    lista.innerHTML = '<div class="empty-state"><p>No hay ingresos registrados</p></div>';
                 } else {
-                    // Ordenar ingresos por fecha (más reciente primero)
-                    const ingresosOrdenados = [...servicio.facturas].sort((a, b) => {
-                        return new Date(b.fecha) - new Date(a.fecha);
-                    });
+                    const ingresosOrdenados = [...servicio.facturas].sort((a, b) =>
+                        new Date(b.fecha) - new Date(a.fecha)
+                    );
 
-                    // Agrupar ingresos por año
-                    const ingresosPorAno = {};
-                    ingresosOrdenados.forEach(ingreso => {
-                        const ano = new Date(ingreso.fecha).getFullYear();
-                        if (!ingresosPorAno[ano]) {
-                            ingresosPorAno[ano] = [];
-                        }
-                        ingresosPorAno[ano].push(ingreso);
-                    });
+                    const grupos = this.agruparPorAno(ingresosOrdenados);
 
-                    // Ordenar años de más reciente a más antiguo
-                    const anosOrdenados = Object.keys(ingresosPorAno).sort((a, b) => b - a);
-
-                    // Generar HTML agrupado por año
-                    lista.innerHTML = anosOrdenados.map((ano, index) => {
-                        const ingresos = ingresosPorAno[ano];
-                        const cantidadIngresos = ingresos.length;
-
-                        const ingresosHTML = ingresos.map(ingreso => {
+                    lista.innerHTML = grupos.map((grupo, index) => {
+                        const ingresosHTML = grupo.items.map(ingreso => {
                             const tipoTexto = ingreso.tipo === 'complementario' ? 'Complementario' : 'Regular';
                             const tipoEmoji = ingreso.tipo === 'complementario' ? '💼' : '💵';
 
@@ -4659,33 +4699,13 @@
                     <div class="factura-item" data-id="${ingreso.id}">
                         <div class="factura-info" onclick="app.abrirModalIngreso('${ingreso.id}')">
                             <div class="factura-monto">${this.formatearMoneda(ingreso.monto)}</div>
-                            <div class="factura-fecha">
-                                ${tipoEmoji} ${tipoTexto} | Cobrado: ${this.formatearFecha(ingreso.fecha)}
-                            </div>
+                            <div class="factura-fecha">${tipoEmoji} ${tipoTexto} | Cobrado: ${this.formatearFecha(ingreso.fecha)}</div>
                         </div>
                     </div>
                 `;
                         }).join('');
 
-                        // Solo el primer año (más reciente) está expandido por defecto
-                        const collapsed = index > 0 ? 'collapsed' : '';
-
-                        return `
-                <div class="facturas-grupo-ano">
-                    <div class="facturas-grupo-header" onclick="app.toggleGrupoAno(this)">
-                        <div class="facturas-grupo-header-info">
-                            <span class="facturas-grupo-ano-texto">${ano}</span>
-                            <span class="facturas-grupo-contador">${cantidadIngresos} ingreso${cantidadIngresos !== 1 ? 's' : ''}</span>
-                        </div>
-                        <svg class="icon facturas-grupo-chevron ${collapsed}" viewBox="0 0 24 24">
-                            <polyline points="6 9 12 15 18 9" class="icon-line" stroke="currentColor"></polyline>
-                        </svg>
-                    </div>
-                    <div class="facturas-grupo-contenido ${collapsed}">
-                        ${ingresosHTML}
-                    </div>
-                </div>
-            `;
+                        return this.generarGrupoAno(grupo.ano, grupo.items, ingresosHTML, 'ingreso', index);
                     }).join('');
                 }
 
@@ -4744,13 +4764,8 @@
                 const tipo = document.getElementById('ingreso-tipo').value;
                 const fecha = document.getElementById('ingreso-fecha').value;
 
-                if (!monto || isNaN(monto) || monto <= 0) {
-                    this.mostrarToast('El monto debe ser mayor a 0', 'error');
-                    return;
-                }
-
-                if (monto > 99999999) {
-                    this.mostrarToast('El monto es demasiado grande', 'error');
+                // Validar monto (no permitir negativos en ingresos)
+                if (!this.validarMonto(monto, false)) {
                     return;
                 }
 
@@ -4855,7 +4870,7 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA DeltaF VERSION 0.40
+    //                 NOTAS SISTEMA DeltaF VERSION 0.42
     // ====================================================================
     
      - CAMBIOS:
