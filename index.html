@@ -1718,7 +1718,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">Version 0.46</div> <!-- DeltaF -->
+            <div class="menu-version">Version 0.48</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -2012,8 +2012,16 @@
             <form id="form-factura">
                 <div class="form-group">
                     <label for="factura-monto">Monto</label>
-                    <input type="number" id="factura-monto" required placeholder="$ (negativo = saldo a favor)"
-                        step="0.01">
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="number" id="factura-monto" required placeholder="$" step="0.01" style="flex: 1;">
+                        <button type="button" class="icon-btn" id="btn-toggle-negativo"
+                            onclick="app.toggleMontoNegativo('factura-monto')" title="Cambiar a saldo a favor">
+                            <svg class="icon" style="width: 1.5em; height: 1.5em;">
+                                <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="18"
+                                    font-weight="bold" fill="currentColor">±</text>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="factura-tipo">Tipo de factura</label>
@@ -2077,8 +2085,17 @@
             <form id="form-editar-factura">
                 <div class="form-group">
                     <label for="editar-factura-monto">Monto</label>
-                    <input type="number" id="editar-factura-monto" required placeholder="$ (negativo = saldo a favor)"
-                        step="0.01">
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="number" id="editar-factura-monto" required placeholder="$" step="0.01"
+                            style="flex: 1;">
+                        <button type="button" class="icon-btn" id="btn-editar-toggle-negativo"
+                            onclick="app.toggleMontoNegativo('editar-factura-monto')" title="Cambiar a saldo a favor">
+                            <svg class="icon" style="width: 1.5em; height: 1.5em;">
+                                <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="18"
+                                    font-weight="bold" fill="currentColor">±</text>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="editar-factura-tipo">Tipo de factura</label>
@@ -2141,7 +2158,13 @@
     <div class="modal" id="modal-facturas-servicio">
         <div class="modal-content modal-facturas-content">
             <div class="modal-header modal-facturas-header">
-                <h3 id="modal-facturas-titulo">Facturas del Servicio</h3>
+                <h3 id="modal-facturas-titulo"></h3>
+                <button class="icon-btn" id="btn-editar-servicio-desde-modal" onclick="app.editarServicioDesdeModal()"
+                    title="Editar servicio" style="margin-left: auto;">
+                    <svg class="icon">
+                        <use href="#icon-edit" />
+                    </svg>
+                </button>
             </div>
             <div class="facturas-lista custom-scroll" id="lista-facturas-modal">
                 <!-- Las facturas se cargarán aquí -->
@@ -2507,6 +2530,15 @@
                         select.value = this.ordenActual;
                     }
                     this.abrirModal('modal-ordenar');
+                });
+
+                // Listeners para sincronizar botón toggle de monto con el input
+                document.getElementById('factura-monto').addEventListener('input', (e) => {
+                    this.actualizarEstadoBotonToggle('factura-monto', 'btn-toggle-negativo');
+                });
+
+                document.getElementById('editar-factura-monto').addEventListener('input', (e) => {
+                    this.actualizarEstadoBotonToggle('editar-factura-monto', 'btn-editar-toggle-negativo');
                 });
 
                 // Inicializar indicador de ingresos
@@ -3084,9 +3116,10 @@
                                 return;
                             }
 
-                            // Saldos a favor (negativos): no afectan nada, solo se muestran
+                            // Saldos a favor (negativos): cuentan como pagadas pero no suman al monto
                             if (factura.monto < 0) {
-                                return; // No se cuenta en monto, ni en pendientes, ni en pagadas
+                                cantidadPagadas++; // Se cuenta como factura pagada
+                                return; // No suma al monto total
                             }
 
                             // Facturas normales (positivas)
@@ -3810,30 +3843,6 @@
                         }
                     });
 
-                    // Long press para editar (móvil) - solo para servicios normales
-                    if (!esIngresos) {
-                        let pressTimer;
-                        item.addEventListener('touchstart', (e) => {
-                            pressTimer = setTimeout(() => {
-                                const id = item.dataset.id;
-                                this.editarServicio(id);
-                            }, 500);
-                        });
-                        item.addEventListener('touchend', () => {
-                            clearTimeout(pressTimer);
-                        });
-                        item.addEventListener('touchmove', () => {
-                            clearTimeout(pressTimer);
-                        });
-
-                        // Right click para editar (desktop)
-                        item.addEventListener('contextmenu', (e) => {
-                            e.preventDefault();
-                            const id = item.dataset.id;
-                            this.editarServicio(id);
-                        });
-                    }
-
                     // Actualizar menú flotante
                     this.actualizarMenuAgregar();
                 });
@@ -4179,6 +4188,15 @@
                 this.abrirModalServicio(servicioId);
             }
 
+            editarServicioDesdeModal() {
+                const modal = document.getElementById('modal-facturas-servicio');
+                const servicioId = modal.dataset.servicioId;
+                if (servicioId) {
+                    this.cerrarModal('modal-facturas-servicio');
+                    this.editarServicio(servicioId);
+                }
+            }
+
             eliminarServicio() {
                 if (!this.servicioActual) return;
 
@@ -4221,6 +4239,11 @@
                     iconUse.setAttribute('href', '#icon-card');
                 }
 
+                // Resetear estado del botón toggle de monto (AGREGAR)
+                if (!esEditar) {
+                    this.actualizarEstadoBotonToggle('factura-monto', 'btn-toggle-negativo');
+                }
+
                 const serviciosOrdenados = [...this.servicios]
                     .filter(s => s.id !== this.SERVICIO_INGRESOS_ID)
                     .sort((a, b) =>
@@ -4239,6 +4262,9 @@
                         const factura = servicio.facturas.find(f => f.id === facturaId);
                         if (factura) {
                             document.getElementById('editar-factura-monto').value = factura.monto;
+                            // Actualizar estado del botón según el monto cargado (EDITAR)
+                            this.actualizarEstadoBotonToggle('editar-factura-monto', 'btn-editar-toggle-negativo');
+
                             document.getElementById('editar-factura-tipo').value = factura.tipo || 'mensual';
                             document.getElementById('editar-factura-fecha').value = factura.fecha;
                             selectServicio.value = servicioId;
@@ -4304,6 +4330,48 @@
                     inputFechaPago.disabled = false;
                     inputFechaPago.value = this.obtenerFechaLocal();
                     iconUse.setAttribute('href', '#icon-cancel');
+                }
+            }
+
+            toggleMontoNegativo(inputId) {
+                const input = document.getElementById(inputId);
+
+                if (!input) return;
+
+                const valor = parseFloat(input.value) || 0;
+
+                // Si el valor es 0, no hacer nada
+                if (valor === 0) {
+                    this.mostrarToast('Ingresa un monto primero', 'info');
+                    return;
+                }
+
+                // Cambiar el signo
+                input.value = -valor;
+
+                // Actualizar estado del botón
+                const btnId = inputId === 'factura-monto' ? 'btn-toggle-negativo' : 'btn-editar-toggle-negativo';
+                this.actualizarEstadoBotonToggle(inputId, btnId);
+            }
+
+            actualizarEstadoBotonToggle(inputId, btnId) {
+                const input = document.getElementById(inputId);
+                const btn = document.getElementById(btnId);
+
+                if (!input || !btn) return;
+
+                const valor = parseFloat(input.value) || 0;
+
+                if (valor < 0) {
+                    // Valor negativo
+                    btn.style.background = 'var(--c-green)';
+                    btn.style.color = 'white';
+                    btn.title = 'Cambiar a gasto normal';
+                } else {
+                    // Valor positivo o cero
+                    btn.style.background = 'var(--c-gray-btn)';
+                    btn.style.color = 'var(--text-main)';
+                    btn.title = 'Cambiar a saldo a favor';
                 }
             }
 
@@ -4412,6 +4480,11 @@
                 this.guardarDatos();
                 this.guardarEstado();
                 this.enModoBusqueda = false;
+
+                // Resetear botones antes de cerrar
+                this.actualizarEstadoBotonToggle('factura-monto', 'btn-toggle-negativo');
+                this.actualizarEstadoBotonToggle('editar-factura-monto', 'btn-editar-toggle-negativo');
+
                 this.cerrarModal(esEditar ? 'modal-editar-factura' : 'modal-agregar-factura');
 
                 // Re-renderizar todos los servicios para aplicar el ordenamiento
@@ -4492,6 +4565,17 @@
                 if (!servicio) return;
                 this.cerrarModal('modal-facturas-servicio');
                 this.abrirModalFactura(servicio.id, facturaId);
+                // Actualizar estado del botón según el signo del monto
+                const btnEditarToggle = document.getElementById('btn-editar-toggle-negativo');
+                if (btnEditarToggle && factura.monto < 0) {
+                    btnEditarToggle.style.background = 'var(--c-green)';
+                    btnEditarToggle.style.color = 'white';
+                    btnEditarToggle.title = 'Cambiar a gasto normal';
+                } else if (btnEditarToggle) {
+                    btnEditarToggle.style.background = 'var(--c-gray-btn)';
+                    btnEditarToggle.style.color = 'var(--text-main)';
+                    btnEditarToggle.title = 'Cambiar a saldo a favor';
+                }
             }
 
             establecerFechaHoy(modo = 'agregar') {
@@ -4519,6 +4603,10 @@
                 this.renderServicios();
                 this.enModoBusqueda = false;
                 this.actualizarResumenMes();
+
+                // Resetear botón antes de cerrar
+                this.actualizarEstadoBotonToggle('editar-factura-monto', 'btn-editar-toggle-negativo');
+
                 this.cerrarModal('modal-editar-factura');
                 this.mostrarToast('Factura eliminada', 'success');
             }
@@ -4896,9 +4984,10 @@
                             const facturas = datos.servicios.reduce((acc, s) => acc + s.facturas.length, 0);
 
                             if (modo === 'combinar') {
-                                // Modo combinar: agregar solo servicios y facturas nuevos
+                                // Modo combinar: agregar servicios y facturas nuevos, actualizar existentes
                                 let serviciosAgregados = 0;
                                 let facturasAgregadas = 0;
+                                let facturasActualizadas = 0;
 
                                 datos.servicios.forEach(servicioNuevo => {
                                     const servicioExistente = this.servicios.find(s => s.id === servicioNuevo.id);
@@ -4909,28 +4998,61 @@
                                         serviciosAgregados++;
                                         facturasAgregadas += servicioNuevo.facturas.length;
                                     } else {
-                                        // Servicio existe, agregar solo facturas nuevas
+                                        // Servicio existe, agregar facturas nuevas o actualizar existentes
                                         servicioNuevo.facturas.forEach(facturaNueva => {
-                                            const facturaExiste = servicioExistente.facturas.some(f => f.id === facturaNueva.id);
-                                            if (!facturaExiste) {
+                                            const facturaExistenteIndex = servicioExistente.facturas.findIndex(f => f.id === facturaNueva.id);
+
+                                            if (facturaExistenteIndex === -1) {
+                                                // Factura no existe, agregarla
                                                 servicioExistente.facturas.push(facturaNueva);
                                                 facturasAgregadas++;
+                                            } else {
+                                                // Factura existe, verificar si los datos son diferentes
+                                                const facturaExistente = servicioExistente.facturas[facturaExistenteIndex];
+                                                const sonDiferentes =
+                                                    facturaExistente.monto !== facturaNueva.monto ||
+                                                    facturaExistente.fecha !== facturaNueva.fecha ||
+                                                    facturaExistente.pagada !== facturaNueva.pagada ||
+                                                    facturaExistente.fechaPago !== facturaNueva.fechaPago ||
+                                                    facturaExistente.tipo !== facturaNueva.tipo;
+
+                                                if (sonDiferentes) {
+                                                    // Actualizar la factura existente con los nuevos datos
+                                                    servicioExistente.facturas[facturaExistenteIndex] = facturaNueva;
+                                                    facturasActualizadas++;
+                                                }
                                             }
                                         });
                                     }
                                 });
 
-                                if (serviciosAgregados === 0 && facturasAgregadas === 0) {
+                                // Construir mensaje según lo que se hizo
+                                if (serviciosAgregados === 0 && facturasAgregadas === 0 && facturasActualizadas === 0) {
                                     this.mostrarToast('No hay datos nuevos para agregar', 'info');
                                     document.getElementById('opciones-importacion').style.display = 'none';
                                     return;
                                 }
 
+                                let mensajePartes = [];
+                                if (serviciosAgregados > 0) {
+                                    mensajePartes.push(`${serviciosAgregados} servicio${serviciosAgregados !== 1 ? 's' : ''}`);
+                                }
+                                if (facturasAgregadas > 0) {
+                                    mensajePartes.push(`${facturasAgregadas} factura${facturasAgregadas !== 1 ? 's' : ''} nueva${facturasAgregadas !== 1 ? 's' : ''}`);
+                                }
+                                if (facturasActualizadas > 0) {
+                                    mensajePartes.push(`${facturasActualizadas} actualizada${facturasActualizadas !== 1 ? 's' : ''}`);
+                                }
+
+                                const mensajeFinal = mensajePartes.length > 0
+                                    ? `Importado: ${mensajePartes.join(', ')}`
+                                    : 'Importación completada';
+
                                 this.guardarDatos();
                                 this.guardarEstado();
                                 this.renderServicios();
                                 this.actualizarEstadisticas();
-                                this.mostrarToast(`Agregados: ${serviciosAgregados} servicios y ${facturasAgregadas} facturas`, 'success');
+                                this.mostrarToast(mensajeFinal, 'success');
 
                             } else {
                                 // Modo reemplazar: comportamiento original
@@ -5333,7 +5455,7 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA DeltaF VERSION 0.46
+    //                 NOTAS SISTEMA DeltaF VERSION 0.48
     // ====================================================================
     
      - CAMBIOS
