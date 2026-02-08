@@ -3277,31 +3277,53 @@
                 const select = document.getElementById('calculador-servicio');
                 if (!select) return;
 
-                // Crear opciones de servicios
-                let options = '<option value="">Seleccionar servicio...</option>';
+                const valorActual = select.value;
 
-                // Filtrar servicios según si ingresos está habilitado
-                let serviciosFiltrados = this.servicios;
-                if (!this.ingresosHabilitado()) {
-                    serviciosFiltrados = this.servicios.filter(s => s.id !== this.SERVICIO_INGRESOS_ID);
+                // Obtener servicios activos ordenados alfabéticamente
+                const serviciosActivos = this.servicios
+                    .filter(s => s.id !== this.SERVICIO_INGRESOS_ID)
+                    .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' }));
+
+                // Construir opciones
+                let html = '<option value="">Seleccionar servicio...</option>';
+
+                // Agregar servicios normales
+                serviciosActivos.forEach(servicio => {
+                    const selected = servicio.id === valorActual ? 'selected' : '';
+                    html += `<option value="${this.escaparAtributoHTML(servicio.id)}" ${selected}>${this.escaparHTML(servicio.nombre)}</option>`;
+                });
+
+                // Agregar servicio de ingresos si está habilitado
+                if (this.ingresosHabilitado()) {
+                    const servicioIngresos = this.servicios.find(s => s.id === this.SERVICIO_INGRESOS_ID);
+                    if (servicioIngresos) {
+                        const selected = this.SERVICIO_INGRESOS_ID === valorActual ? 'selected' : '';
+                        html += `<option value="${this.SERVICIO_INGRESOS_ID}" ${selected}>Ingresos</option>`;
+                    }
                 }
 
-                // Ordenar servicios alfabéticamente por nombre
-                const serviciosOrdenados = [...serviciosFiltrados].sort((a, b) => {
-                    return a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' });
-                });
+                select.innerHTML = html;
 
-                serviciosOrdenados.forEach(servicio => {
-                    options += `<option value="${servicio.id}">${servicio.nombre}</option>`;
-                });
-
-                select.innerHTML = options;
+                // Si el servicio seleccionado ya no existe, limpiar la selección y recalcular
+                if (valorActual && !this.servicios.find(s => s.id === valorActual)) {
+                    select.value = '';
+                    this.calcularPeriodo();
+                } else if (valorActual) {
+                    // Si hay un servicio seleccionado válido, recalcular
+                    this.calcularPeriodo();
+                }
             }
 
             calcularPeriodo() {
                 const selectServicio = document.getElementById('calculador-servicio');
                 const inputDesde = document.getElementById('calculador-desde');
                 const inputHasta = document.getElementById('calculador-hasta');
+                const resultadosContainer = document.getElementById('calculador-resultados');
+
+                // Validar que todos los elementos existan antes de continuar
+                if (!selectServicio || !inputDesde || !inputHasta || !resultadosContainer) {
+                    return; // Salir silenciosamente si los elementos no existen
+                }
 
                 const servicioId = selectServicio.value;
                 const desde = inputDesde.value;
@@ -3309,20 +3331,50 @@
 
                 // Si no hay servicio seleccionado, mostrar 0
                 if (!servicioId) {
-                    document.getElementById('calculador-total-registros').textContent = '0';
-                    document.getElementById('calculador-monto-total').textContent = '$0,00';
-                    document.getElementById('calculador-monto-promedio').textContent = '$0,00';
-                    document.getElementById('calculador-variacion').textContent = '0%';
+                    const resultadosHTML = `
+            <div class="calculador-resultado-item">
+                <span class="calculador-resultado-label">Registros</span>
+                <span class="calculador-resultado-valor">0</span>
+            </div>
+            <div class="calculador-resultado-item">
+                <span class="calculador-resultado-label">Monto Total</span>
+                <span class="calculador-resultado-valor">$0,00</span>
+            </div>
+            <div class="calculador-resultado-item">
+                <span class="calculador-resultado-label">Monto Promedio</span>
+                <span class="calculador-resultado-valor">$0,00</span>
+            </div>
+            <div class="calculador-resultado-item">
+                <span class="calculador-resultado-label">Variación</span>
+                <span class="calculador-resultado-valor">0%</span>
+            </div>
+        `;
+                    resultadosContainer.innerHTML = resultadosHTML;
                     return;
                 }
 
                 // Encontrar el servicio
                 const servicio = this.servicios.find(s => s.id === servicioId);
                 if (!servicio) {
-                    document.getElementById('calculador-total-registros').textContent = '0';
-                    document.getElementById('calculador-monto-total').textContent = '$0,00';
-                    document.getElementById('calculador-monto-promedio').textContent = '$0,00';
-                    document.getElementById('calculador-variacion').textContent = '0%';
+                    const resultadosHTML = `
+            <div class="calculador-resultado-item">
+                <span class="calculador-resultado-label">Registros</span>
+                <span class="calculador-resultado-valor">0</span>
+            </div>
+            <div class="calculador-resultado-item">
+                <span class="calculador-resultado-label">Monto Total</span>
+                <span class="calculador-resultado-valor">$0,00</span>
+            </div>
+            <div class="calculador-resultado-item">
+                <span class="calculador-resultado-label">Monto Promedio</span>
+                <span class="calculador-resultado-valor">$0,00</span>
+            </div>
+            <div class="calculador-resultado-item">
+                <span class="calculador-resultado-label">Variación</span>
+                <span class="calculador-resultado-valor">0%</span>
+            </div>
+        `;
+                    resultadosContainer.innerHTML = resultadosHTML;
                     return;
                 }
 
@@ -3412,25 +3464,24 @@
                 // Mostrar resultados (con animación igual que estadísticas)
                 const renderizarResultados = () => {
                     const resultadosHTML = `
-                        <div class="calculador-resultado-item">
-                            <span class="calculador-resultado-label">Registros</span>
-                            <span class="calculador-resultado-valor">${totalRegistros}</span>
-                        </div>
-                        <div class="calculador-resultado-item">
-                            <span class="calculador-resultado-label">Monto Total</span>
-                            <span class="calculador-resultado-valor">${this.formatearMoneda(montoTotal)}</span>
-                        </div>
-                        <div class="calculador-resultado-item">
-                            <span class="calculador-resultado-label">Monto Promedio</span>
-                            <span class="calculador-resultado-valor">${this.formatearMoneda(montoPromedio)}</span>
-                        </div>
-                        <div class="calculador-resultado-item">
-                            <span class="calculador-resultado-label">Variación</span>
-                            <span class="calculador-resultado-valor">${variacionTexto}</span>
-                        </div>
-                    `;
+            <div class="calculador-resultado-item">
+                <span class="calculador-resultado-label">Registros</span>
+                <span class="calculador-resultado-valor">${totalRegistros}</span>
+            </div>
+            <div class="calculador-resultado-item">
+                <span class="calculador-resultado-label">Monto Total</span>
+                <span class="calculador-resultado-valor">${this.formatearMoneda(montoTotal)}</span>
+            </div>
+            <div class="calculador-resultado-item">
+                <span class="calculador-resultado-label">Monto Promedio</span>
+                <span class="calculador-resultado-valor">${this.formatearMoneda(montoPromedio)}</span>
+            </div>
+            <div class="calculador-resultado-item">
+                <span class="calculador-resultado-label">Variación</span>
+                <span class="calculador-resultado-valor">${variacionTexto}</span>
+            </div>
+        `;
 
-                    const resultadosContainer = document.getElementById('calculador-resultados');
                     if (resultadosContainer) {
                         resultadosContainer.innerHTML = resultadosHTML;
                         // Trigger animación de entrada
@@ -3442,7 +3493,6 @@
                     }
                 };
 
-                const resultadosContainer = document.getElementById('calculador-resultados');
                 if (resultadosContainer) {
                     // Animación de salida
                     resultadosContainer.style.animation = 'slideUpFade 0.2s ease-out forwards';
@@ -3450,7 +3500,9 @@
                     // Después de la animación de salida, cambiar contenido y animar entrada
                     setTimeout(() => {
                         renderizarResultados();
-                    }, 190); // Un poco antes de que termine la animación
+                    }, 190);
+                } else {
+                    renderizarResultados();
                 }
             }
 
@@ -3791,13 +3843,12 @@
                     window.scrollTo(0, scrollPos);
                 });
 
-                // Solo actualizar resumen si no estamos filtrando por búsqueda
+                // Solo actualizar resumen y calculador si no estamos filtrando por búsqueda
                 if (!this.enModoBusqueda) {
                     this.actualizarResumenMes();
+                    this.actualizarSelectServicios();
+                    this.calcularPeriodo();
                 }
-
-                // Actualizar select del calculador
-                this.actualizarSelectServicios();
             }
 
             crearServicioIngresos() {
