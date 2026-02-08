@@ -1718,7 +1718,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">Version 0.43</div> <!-- DeltaF -->
+            <div class="menu-version">Version 0.46</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -3131,10 +3131,12 @@
             <span class="estadistica-label">Vencidas</span>
             <span class="estadistica-valor">${cantidadVencidas}</span>
         </div>
+        ${this.ingresosHabilitado() ? `
         <div class="estadistica-item" style="color: var(--c-green);">
             <span class="estadistica-label">Ingresos</span>
             <span class="estadistica-valor">${this.formatearMoneda(totalIngresos)}</span>
         </div>
+        ` : ''}
 `;
 
                     const lista = document.querySelector('#estadisticas-mes .estadisticas-lista');
@@ -3278,8 +3280,14 @@
                 // Crear opciones de servicios
                 let options = '<option value="">Seleccionar servicio...</option>';
 
+                // Filtrar servicios según si ingresos está habilitado
+                let serviciosFiltrados = this.servicios;
+                if (!this.ingresosHabilitado()) {
+                    serviciosFiltrados = this.servicios.filter(s => s.id !== this.SERVICIO_INGRESOS_ID);
+                }
+
                 // Ordenar servicios alfabéticamente por nombre
-                const serviciosOrdenados = [...this.servicios].sort((a, b) => {
+                const serviciosOrdenados = [...serviciosFiltrados].sort((a, b) => {
                     return a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' });
                 });
 
@@ -3401,11 +3409,49 @@
                     variacionTexto = 'Solo extras';
                 }
 
-                // Mostrar resultados
-                document.getElementById('calculador-total-registros').textContent = totalRegistros;
-                document.getElementById('calculador-monto-total').textContent = this.formatearMoneda(montoTotal);
-                document.getElementById('calculador-monto-promedio').textContent = this.formatearMoneda(montoPromedio);
-                document.getElementById('calculador-variacion').textContent = variacionTexto;
+                // Mostrar resultados (con animación igual que estadísticas)
+                const renderizarResultados = () => {
+                    const resultadosHTML = `
+                        <div class="calculador-resultado-item">
+                            <span class="calculador-resultado-label">Registros</span>
+                            <span class="calculador-resultado-valor">${totalRegistros}</span>
+                        </div>
+                        <div class="calculador-resultado-item">
+                            <span class="calculador-resultado-label">Monto Total</span>
+                            <span class="calculador-resultado-valor">${this.formatearMoneda(montoTotal)}</span>
+                        </div>
+                        <div class="calculador-resultado-item">
+                            <span class="calculador-resultado-label">Monto Promedio</span>
+                            <span class="calculador-resultado-valor">${this.formatearMoneda(montoPromedio)}</span>
+                        </div>
+                        <div class="calculador-resultado-item">
+                            <span class="calculador-resultado-label">Variación</span>
+                            <span class="calculador-resultado-valor">${variacionTexto}</span>
+                        </div>
+                    `;
+
+                    const resultadosContainer = document.getElementById('calculador-resultados');
+                    if (resultadosContainer) {
+                        resultadosContainer.innerHTML = resultadosHTML;
+                        // Trigger animación de entrada
+                        resultadosContainer.style.opacity = '0';
+                        setTimeout(() => {
+                            resultadosContainer.style.animation = 'slideDownFade 0.2s ease-out';
+                            resultadosContainer.style.opacity = '1';
+                        }, 10);
+                    }
+                };
+
+                const resultadosContainer = document.getElementById('calculador-resultados');
+                if (resultadosContainer) {
+                    // Animación de salida
+                    resultadosContainer.style.animation = 'slideUpFade 0.2s ease-out forwards';
+
+                    // Después de la animación de salida, cambiar contenido y animar entrada
+                    setTimeout(() => {
+                        renderizarResultados();
+                    }, 190); // Un poco antes de que termine la animación
+                }
             }
 
             toggleServicios() {
@@ -4916,6 +4962,16 @@
 
                 this.mostrarToast(`Registro de ingresos ${nuevoEstado ? 'habilitado' : 'deshabilitado'}`, 'success');
                 this.cerrarMenuAjustes();
+
+                // Actualizar calculador
+                this.actualizarSelectServicios();
+
+                // Si el servicio de ingresos estaba seleccionado y se deshabilitó, limpiar
+                const selectServicio = document.getElementById('calculador-servicio');
+                if (!nuevoEstado && selectServicio && selectServicio.value === this.SERVICIO_INGRESOS_ID) {
+                    selectServicio.value = '';
+                    this.calcularPeriodo();
+                }
             }
 
             ingresosHabilitado() {
@@ -5226,7 +5282,7 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA DeltaF VERSION 0.43
+    //                 NOTAS SISTEMA DeltaF VERSION 0.46
     // ====================================================================
     
      - CAMBIOS
