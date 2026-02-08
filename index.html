@@ -1053,16 +1053,14 @@
         .estadisticas-lista {
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
             transition: all 0.3s ease;
+            gap: 1rem;
         }
 
         .estadistica-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1rem 0;
-            border-bottom: 1px solid var(--border);
             transition: all 0.3s ease;
         }
 
@@ -1101,40 +1099,17 @@
             flex-direction: column;
             gap: 0.5rem;
             margin-top: 0.5rem;
-            padding-top: 1rem;
-            border-top: 1px solid var(--border);
         }
 
         .calculador-resultado-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0.75rem 0;
+            padding: 0.5rem;
         }
-
-
 
         .calculador-resultado-valor {
-            font-size: 1rem;
-            font-weight: 600;
             color: var(--text-main);
-        }
-
-        .calculador-resultado-destacado {
-            padding: 1rem;
-            border-radius: 8px;
-            margin-top: 0.5rem;
-        }
-
-        .calculador-resultado-destacado .calculador-resultado-label {
-            font-size: 0.875rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .calculador-resultado-destacado .calculador-resultado-valor {
-            font-size: 1.5rem;
         }
 
         /* Estado de factura */
@@ -1743,7 +1718,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">Version 0.44</div> <!-- DeltaF -->
+            <div class="menu-version">Version 0.43</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -1765,7 +1740,7 @@
                                     d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z" />
                                 <path d="M7 12h2v5H7zm4-3h2v8h-2zm4-3h2v11h-2z" />
                             </svg>
-                            Estadísticas
+                            Estadística Mensual
                         </span>
                         <svg class="icon chevron-icon" id="estadisticas-chevron" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1788,7 +1763,7 @@
                                 <circle cx="15" cy="18" r="1.5" fill="currentColor" />
                                 <circle cx="11" cy="18" r="1.5" fill="currentColor" />
                             </svg>
-                            Calculador
+                            Estadística Individual
                         </span>
                         <svg class="icon chevron-icon" id="calculador-chevron" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1845,7 +1820,7 @@
                                     <span class="calculador-resultado-valor" id="calculador-monto-promedio">$0,00</span>
                                 </div>
                                 <div class="calculador-resultado-item">
-                                    <span class="calculador-resultado-label">Variación</span>
+                                    <span class="calculador-resultado-label">Variación del Período</span>
                                     <span class="calculador-resultado-valor" id="calculador-variacion">0%</span>
                                 </div>
                             </div>
@@ -3628,7 +3603,7 @@
                 } else {
                     // Cuando obtenerUltimaFactura retorna null
                     if (servicio.facturas && servicio.facturas.length > 0) {
-                        estado = 'Sin facturas este mes';
+                        estado = 'Sin facturas de este mes';
                         claseEstado = 'sin-facturas-mes';
                     } else {
                         estado = 'Sin facturas';
@@ -5251,7 +5226,7 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA DeltaF VERSION 0.44
+    //                 NOTAS SISTEMA DeltaF VERSION 0.43
     // ====================================================================
     
      - CAMBIOS
