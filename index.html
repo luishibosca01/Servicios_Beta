@@ -277,6 +277,19 @@
             animation: slideUp 1s ease-in-out 1;
         }
 
+        .btn-add.modo-calculadora {
+            background: var(--c-red);
+        }
+
+        .btn-add #btn-add-icon {
+            display: inline-block;
+            transition: transform 0.3s;
+        }
+
+        .btn-add.modo-calculadora #btn-add-icon {
+            transform: rotate(135deg);
+        }
+
         #btn-filter,
         #btn-undo,
         #btn-redo,
@@ -301,6 +314,10 @@
         @media (max-width: 767px) {
             .servicios-lista {
                 min-height: 400px;
+            }
+
+            .btn-add {
+                bottom: 8rem;
             }
         }
 
@@ -648,6 +665,18 @@
             to {
                 opacity: 0;
                 transform: translateY(-20px);
+            }
+        }
+
+        @keyframes slideUp2 {
+            from {
+                transform: translateX(-50%) translateY(100px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
             }
         }
 
@@ -1449,6 +1478,42 @@
             font-style: normal;
         }
 
+        /* Calculadora flotante */
+        .calculadora-flotante {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--c-blue);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 50px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            z-index: 998;
+            animation: slideUp2 0.3s ease-out;
+        }
+
+        .calculadora-total {
+            font-size: 1.5rem;
+            font-weight: 700;
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .calculadora-contador {
+            font-size: 0.85rem;
+            opacity: 0.9;
+            font-weight: 500;
+        }
+
+        /* Servicio seleccionado para calcular */
+        .servicio-item.calculando {
+            background: rgba(41, 151, 255, 0.5);
+        }
+
         /* --- codigo css --- */
     </style>
     <script>
@@ -1731,7 +1796,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">Version 0.48</div> <!-- DeltaF -->
+            <div class="menu-version">Version 0.51</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -1903,34 +1968,46 @@
     </div>
 
     <!-- Botón Agregar -->
-    <button class="btn-add" id="btn-agregar-servicio" aria-label="Agregar">+</button>
+    <button class="btn-add" id="btn-agregar-servicio" aria-label="Agregar">
+        <span id="btn-add-icon">+</span>
+    </button>
+
+    <!-- Calculadora flotante -->
+    <div class="calculadora-flotante" id="calculadora-flotante" style="display: none;">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 0.25rem;">
+            <div class="calculadora-total" id="calculadora-total">$0,00</div>
+            <div class="calculadora-contador" id="calculadora-contador">0 facturas</div>
+        </div>
+    </div>
 
     <!-- Overlay del menú agregar -->
     <div class="menu-agregar-overlay" id="menu-agregar-overlay"></div>
 
     <!-- Menú Emergente Agregar -->
     <div class="menu-agregar" id="menu-agregar">
-        <div class="menu-agregar-item" id="menu-agregar-servicio">
+        <div class="menu-item" id="menu-agregar-calcular">
             <svg class="icon">
-                <use href="#icon-calendar" />
+                <use href="#icon-stats" />
             </svg>
-            <span>Agregar Servicio</span>
+            <span>Calcular</span>
         </div>
-        <div class="menu-agregar-item" id="menu-agregar-factura">
-            <svg class="icon" viewBox="0 0 24 24">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" class="icon-line"
-                    stroke="currentColor"></path>
-                <polyline points="14 2 14 8 20 8" class="icon-line" stroke="currentColor"></polyline>
-                <line x1="12" y1="18" x2="12" y2="12" class="icon-line" stroke="currentColor"></line>
-                <line x1="9" y1="15" x2="15" y2="15" class="icon-line" stroke="currentColor"></line>
+        <div class="menu-item" id="menu-agregar-servicio">
+            <svg class="icon">
+                <use href="#icon-briefcase" />
             </svg>
-            <span>Agregar Factura</span>
+            <span>Nuevo servicio</span>
         </div>
-        <div class="menu-agregar-item" id="menu-agregar-recibo" style="display: none;">
+        <div class="menu-item" id="menu-agregar-factura">
+            <svg class="icon">
+                <use href="#icon-card" />
+            </svg>
+            <span>Nueva factura</span>
+        </div>
+        <div class="menu-item" id="menu-agregar-recibo">
             <svg class="icon">
                 <use href="#icon-dollar" />
             </svg>
-            <span>Agregar Ingreso</span>
+            <span>Nuevo ingreso</span>
         </div>
     </div>
 
@@ -2534,6 +2611,11 @@
                 this.facturaActual = null;
                 this.origenModalFactura = null; // 'menu' o 'servicio'
 
+                // Modo calculadora - NUEVO
+                this.modoCalculadora = false;
+                this.serviciosSeleccionados = new Set();
+                this.servicioContextual = null;
+
                 // Historial undo/redo
                 this.historial = [];
                 this.historialIndex = -1;
@@ -3012,6 +3094,109 @@
                 input.click();
             }
 
+            // ========================================
+            // MENÚ CONTEXTUAL Y CALCULADORA
+            // ========================================
+
+            activarModoCalculadora() {
+                this.modoCalculadora = true;
+                this.serviciosSeleccionados.clear();
+
+                // Cambiar apariencia del botón add
+                const btnAdd = document.getElementById('btn-agregar-servicio');
+                btnAdd.classList.add('modo-calculadora');
+
+                this.actualizarCalculadora();
+                this.renderServicios();
+
+                // Mostrar calculadora flotante
+                document.getElementById('calculadora-flotante').style.display = 'flex';
+
+            }
+
+            desactivarModoCalculadora() {
+                this.modoCalculadora = false;
+                this.serviciosSeleccionados.clear();
+
+                // Restaurar apariencia del botón add
+                const btnAdd = document.getElementById('btn-agregar-servicio');
+                btnAdd.classList.remove('modo-calculadora');
+
+                this.actualizarCalculadora();
+                this.renderServicios();
+
+                // Ocultar calculadora flotante
+                document.getElementById('calculadora-flotante').style.display = 'none';
+                this.mostrarToast('Calculadora Desactivada', 'info');
+            }
+
+            toggleServicioCalculadora(servicioId) {
+                if (!this.modoCalculadora) return;
+
+                if (this.serviciosSeleccionados.has(servicioId)) {
+                    this.serviciosSeleccionados.delete(servicioId);
+
+                    // Si no quedan servicios seleccionados, salir del modo
+                    if (this.serviciosSeleccionados.size === 0) {
+                        this.desactivarModoCalculadora();
+                        return;
+                    }
+                } else {
+                    this.serviciosSeleccionados.add(servicioId);
+                }
+
+                this.actualizarCalculadora();
+                this.renderServicios();
+            }
+
+            // FUNCIÓN MODIFICADA - Reemplazar en el archivo HTML
+
+            actualizarCalculadora() {
+                if (!this.modoCalculadora) return;
+
+                let total = 0;
+                let contadorFacturas = 0;
+
+                // Obtener fecha actual
+                const ahora = new Date();
+                const mesActual = ahora.getMonth(); // 0-11
+                const anioActual = ahora.getFullYear();
+
+                // Calcular mes siguiente
+                const mesSiguiente = mesActual === 11 ? 0 : mesActual + 1;
+                const anioSiguiente = mesActual === 11 ? anioActual + 1 : anioActual;
+
+                this.serviciosSeleccionados.forEach(servicioId => {
+                    const servicio = this.servicios.find(s => s.id === servicioId);
+                    if (!servicio) return;
+
+                    // Calcular solo facturas pendientes del mes actual o siguiente
+                    servicio.facturas.forEach(factura => {
+                        if (!factura.pagada && factura.monto > 0) {
+                            // Obtener mes y año de la factura
+                            const fechaFactura = new Date(factura.fecha + 'T00:00:00');
+                            const mesFactura = fechaFactura.getMonth();
+                            const anioFactura = fechaFactura.getFullYear();
+
+                            // Verificar si es del mes actual o del mes siguiente
+                            const esMesActual = (mesFactura === mesActual && anioFactura === anioActual);
+                            const esMesSiguiente = (mesFactura === mesSiguiente && anioFactura === anioSiguiente);
+
+                            if (esMesActual || esMesSiguiente) {
+                                total += factura.monto;
+                                contadorFacturas++;
+                            }
+                        }
+                    });
+                });
+
+                document.getElementById('calculadora-total').textContent = this.formatearMoneda(total);
+
+                // Actualizar contador con plural correcto
+                const textoFacturas = contadorFacturas === 1 ? 'factura' : 'facturas';
+                document.getElementById('calculadora-contador').textContent = `${contadorFacturas} ${textoFacturas}`;
+            }
+
             setupModalCloseListeners(modalId, closeButtonIds) {
                 closeButtonIds.forEach(btnId => {
                     document.getElementById(btnId)?.addEventListener('click', () => {
@@ -3050,7 +3235,14 @@
 
             setupEventListeners() {
                 // Botones principales
-                document.getElementById('btn-agregar-servicio').addEventListener('click', () => this.toggleMenuAgregar());
+                document.getElementById('btn-agregar-servicio').addEventListener('click', () => {
+                    // Si está en modo calculadora, desactivar
+                    if (this.modoCalculadora) {
+                        this.desactivarModoCalculadora();
+                    } else {
+                        this.toggleMenuAgregar();
+                    }
+                });
                 document.getElementById('btn-ajustes').addEventListener('click', () => this.toggleMenuAjustes());
                 document.getElementById('menu-overlay').addEventListener('click', () => this.cerrarMenuAjustes());
                 document.getElementById('btn-cerrar-menu').addEventListener('click', () => this.cerrarMenuAjustes());
@@ -3081,6 +3273,10 @@
                 document.getElementById('menu-agregar-recibo').addEventListener('click', () => {
                     this.cerrarMenuAgregar();
                     this.abrirModalIngreso(null, true);
+                });
+                document.getElementById('menu-agregar-calcular').addEventListener('click', () => {
+                    this.cerrarMenuAgregar();
+                    this.activarModoCalculadora();
                 });
 
                 // Modales
@@ -3168,9 +3364,13 @@
 
                 // Atajos de teclado
                 document.addEventListener('keydown', (e) => {
-                    // ESC para cerrar modales
+                    // ESC para cerrar modales o salir del modo calculadora
                     if (e.key === 'Escape') {
-                        this.cerrarTodosLosModales();
+                        if (this.modoCalculadora) {
+                            this.desactivarModoCalculadora();
+                        } else {
+                            this.cerrarTodosLosModales();
+                        }
                         return;
                     }
 
@@ -4218,10 +4418,11 @@
                 // Renderizar servicios normales
                 let html = serviciosOrdenados.map(servicio => {
                     const { estado, claseEstado, montoTexto, fechaTexto } = this.calcularEstadoServicio(servicio);
+                    const claseCalculando = this.serviciosSeleccionados.has(servicio.id) ? 'calculando' : '';
 
                     return `
-                   <div class="servicio-wrapper" data-id="${this.escaparAtributoHTML(servicio.id)}">
-                      <div class="servicio-item ${claseEstado}" data-id="${this.escaparAtributoHTML(servicio.id)}">
+   <div class="servicio-wrapper" data-id="${this.escaparAtributoHTML(servicio.id)}">
+      <div class="servicio-item ${claseEstado} ${claseCalculando}" data-id="${this.escaparAtributoHTML(servicio.id)}">
                           <div class="servicio-nombre">${this.escaparHTML(servicio.nombre)}</div>
                            <div class="servicio-info">
                               <span class="servicio-monto">${montoTexto}</span>
@@ -4249,9 +4450,11 @@
                     if (ingresos) {
                         const { estado, claseEstado, montoTexto, fechaTexto } = this.calcularEstadoServicio(ingresos);
 
+                        const claseCalculandoIngresos = this.serviciosSeleccionados.has(ingresos.id) ? 'calculando' : '';
+
                         html += `
-                       <div class="servicio-wrapper" data-id="${this.escaparAtributoHTML(ingresos.id)}">
-                          <div class="servicio-item ${claseEstado}" data-id="${this.escaparAtributoHTML(ingresos.id)}">
+   <div class="servicio-wrapper" data-id="${this.escaparAtributoHTML(ingresos.id)}">
+      <div class="servicio-item ${claseEstado} ${claseCalculandoIngresos}" data-id="${this.escaparAtributoHTML(ingresos.id)}">
                               <div class="servicio-nombre">${this.escaparHTML(ingresos.nombre)}</div>
                                <div class="servicio-info">
                                   <span class="servicio-monto">${montoTexto}</span>
@@ -4274,6 +4477,12 @@
                     item.addEventListener('click', (e) => {
                         // Evitar que se dispare si se hace click en un botón
                         if (e.target.closest('button')) return;
+
+                        // Si está en modo calculadora, toggle selección
+                        if (this.modoCalculadora) {
+                            this.toggleServicioCalculadora(servicioId);
+                            return;
+                        }
 
                         if (esIngresos) {
                             this.abrirModalIngresosLista(servicioId);
@@ -5868,7 +6077,7 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA DeltaF VERSION 0.48
+    //                 NOTAS SISTEMA DeltaF VERSION 0.51
     // ====================================================================
     
      - CAMBIOS
