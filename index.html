@@ -102,27 +102,9 @@
             gap: 0 1rem;
         }
 
-        @media (min-width: 768px) {
-            .main-grid {
-                grid-template-columns: 400px 1fr;
-                align-items: start;
-            }
-
-            .sidebar-left {
-                display: flex;
-                flex-direction: column;
-                gap: 1rem;
-                top: 70px;
-            }
-
-            .sidebar-left .card {
-                margin-bottom: 0;
-            }
-        }
-
         .header {
             background: var(--bg-header);
-            backdrop-filter: blur(4px);
+            backdrop-filter: blur(5px);
             padding: 0.6rem;
             box-shadow: var(--shadow);
             position: sticky;
@@ -161,6 +143,11 @@
             justify-content: center;
             cursor: pointer;
             transition: all 0.2s;
+        }
+
+        .icon-btn.transparent {
+            background: transparent;
+            border: none;
         }
 
         .icon-btn:active {
@@ -273,7 +260,7 @@
             bottom: 3rem;
             right: 2rem;
             box-shadow: 0 0 5px 2px rgba(106, 159, 252, 0.503);
-            z-index: 80;
+            z-index: 110;
             animation: slideUp 1s ease-in-out 1;
         }
 
@@ -308,17 +295,6 @@
             overflow: hidden;
             margin-top: 1rem;
             transition: all 0.3s;
-        }
-
-        /* Evitar saltos de scroll en móviles durante búsqueda */
-        @media (max-width: 767px) {
-            .servicios-lista {
-                min-height: 400px;
-            }
-
-            .btn-add {
-                bottom: 8rem;
-            }
         }
 
         .servicio-item {
@@ -422,8 +398,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-
-            z-index: 100;
+            z-index: 200;
             align-items: center;
             justify-content: center;
             padding: 1rem;
@@ -737,23 +712,11 @@
             background: var(--bg-card);
             box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
             transition: right 0.3s;
-            z-index: 102;
+            z-index: 120;
             padding: 1rem;
             overscroll-behavior: contain;
             display: flex;
             flex-direction: column;
-        }
-
-        @media (max-width: 480px) {
-            .menu-ajustes {
-                right: -75vw;
-                width: 60vw;
-                max-width: 280px;
-            }
-
-            .menu-ajustes.active {
-                right: 0;
-            }
         }
 
         .menu-ajustes.active {
@@ -891,7 +854,7 @@
         /* --- Menú Emergente Agregar --- */
         .menu-agregar {
             position: fixed;
-            bottom: 100px;
+            bottom: 7rem;
             right: 2rem;
             background: var(--bg-card);
             border-radius: var(--radius);
@@ -900,7 +863,7 @@
             display: none;
             flex-direction: column;
             gap: 0.5rem;
-            z-index: 90;
+            z-index: 110;
             min-width: 200px;
             animation: slideUp 0.2s ease;
         }
@@ -917,7 +880,6 @@
             border-radius: var(--radius);
             cursor: pointer;
             transition: all 0.2s;
-            background: transparent;
             color: var(--text-main);
         }
 
@@ -936,7 +898,10 @@
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: 85;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
         }
 
         .menu-agregar-overlay.active {
@@ -1214,8 +1179,7 @@
         }
 
         .collapsible-content {
-            max-height: 2000px;
-            overflow: hidden;
+            max-height: 1000px;
             transition: all 0.3s;
             opacity: 0;
             visibility: hidden;
@@ -1226,13 +1190,16 @@
             visibility: visible;
         }
 
+        #servicios-content:not(.collapsed) {
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
         .collapsible-content.collapsed {
             max-height: 0;
             opacity: 0;
 
         }
-
-
 
         /* Estados de la tarjeta de servicios (3 estados) */
         .servicios-actions {
@@ -1512,6 +1479,61 @@
         /* Servicio seleccionado para calcular */
         .servicio-item.calculando {
             background: rgba(41, 151, 255, 0.5);
+        }
+
+        /* moviles */
+        @media (max-width: 768px) {
+            .servicios-lista {
+                min-height: 400px;
+            }
+
+            .btn-add {
+                bottom: 8rem;
+            }
+
+            .menu-ajustes {
+                right: -75vw;
+                width: 60vw;
+                max-width: 280px;
+            }
+
+            .menu-ajustes.active {
+                right: 0;
+            }
+
+            .menu-agregar {
+                bottom: 12rem;
+                right: 2rem;
+            }
+
+            .collapsible-content {
+                max-height: 5000px;
+            }
+
+        }
+
+        @media (min-width: 768px) {
+            .main-grid {
+                grid-template-columns: 400px 1fr;
+                align-items: start;
+            }
+
+            .sidebar-left {
+                display: flex;
+                flex-direction: column;
+                gap: 1rem;
+                top: 70px;
+            }
+
+            .sidebar-left .card {
+                margin-bottom: 0;
+            }
+
+            .servicios-lista,
+            .search-container {
+                padding-right: 8px;
+            }
+
         }
 
         /* --- codigo css --- */
@@ -1923,8 +1945,7 @@
                             <polyline points="6 9 12 15 18 9"></polyline>
                         </svg>
                     </h2>
-
-                    <div id="servicios-content" class="collapsible-content collapsed">
+                    <div id="servicios-content" class="collapsible-content custom-scroll collapsed">
                         <div class="card-actions servicios-actions" id="servicios-actions">
                             <button class="icon-btn" id="btn-sort" title="Ordenar servicios">
                                 <svg class="icon">
@@ -2063,8 +2084,8 @@
                 <div class="form-actions2">
                     <button type="button" class="button" id="modal-editar-servicio-close">
                         <svg class="icon">
-                            <use href="#icon-cancel" />
-                        </svg> Cerrar
+                            <use href="#icon-undo" />
+                        </svg> Volver
                     </button>
                 </div>
             </form>
@@ -2249,8 +2270,8 @@
         <div class="modal-content modal-facturas-content">
             <div class="modal-header modal-facturas-header">
                 <h3 id="modal-facturas-titulo"></h3>
-                <button class="icon-btn" id="btn-editar-servicio-desde-modal" onclick="app.editarServicioDesdeModal()"
-                    title="Editar servicio" style="margin-left: auto;">
+                <button class="icon-btn transparent" id="btn-editar-servicio-desde-modal"
+                    onclick="app.editarServicioDesdeModal()" title="Editar servicio" style="margin-left: auto;">
                     <svg class="icon">
                         <use href="#icon-edit" />
                     </svg>
@@ -2411,7 +2432,7 @@
                             <svg class="icon" style="width: 18px; height: 18px;">
                                 <use href="#icon-plus" />
                             </svg>
-                            Crear nuevo perfil
+                            Crear perfil
                         </button>
                         <button type="button" onclick="app.cerrarModal('modal-perfiles')">
                             <svg class="icon">
@@ -2445,7 +2466,7 @@
                             </svg>Guardar</button>
                         <button type="button" class="btn btn-secondary" onclick="app.cancelarEditarPerfil()">
                             <svg class="icon">
-                                <use href="#icon-cancel" />
+                                <use href="#icon-undo" />
                             </svg>Volver
                         </button>
                     </div>
@@ -2570,14 +2591,6 @@
                         Solo extras = Todos los ingresos son complementarios
                     </div>
                 </div>
-
-                <div class="info-section"
-                    style="border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 1rem;">
-                    <p style="color: var(--text-muted); font-size: 0.85rem; text-align: center;">
-                        📍 Este método sigue las prácticas estándar de análisis financiero recomendadas
-                        por las NIIF (Normas Internacionales de Información Financiera).
-                    </p>
-                </div>
             </div>
 
             <div class="form-actions">
@@ -2619,7 +2632,7 @@
                 // Historial undo/redo
                 this.historial = [];
                 this.historialIndex = -1;
-                this.maxHistorial = 50;
+                this.maxHistorial = 20;
 
                 // Configuración
                 this.STORAGE_KEY = 'gestion_servicios_data';
@@ -2793,9 +2806,14 @@
                         // Guardar array vacío para que no se confunda con datos viejos
                         localStorage.setItem(key, JSON.stringify([]));
                     }
+
+                    // NUEVO: Inicializar historial con el estado cargado
+                    this.inicializarHistorial();
+
                 } catch (error) {
                     console.error('Error al cargar datos del perfil:', error);
                     this.servicios = [];
+                    this.inicializarHistorial(); // También inicializar en caso de error
                 }
             }
 
@@ -2820,7 +2838,7 @@
                 localStorage.setItem('gestion_servicios_perfil_activo', perfilId);
 
                 // Cargar datos del nuevo perfil
-                this.cargarDatosPerfilActivo();
+                this.cargarDatosPerfilActivo(); // Esta función ahora también inicializa el historial
 
                 // Actualizar interfaz
                 this.renderServicios();
@@ -2842,7 +2860,7 @@
                 const perfilesArray = Object.values(this.perfiles);
 
                 const btnCrear = document.getElementById('btn-crear-perfil');
-                if (perfilesArray.length >= 3) {
+                if (perfilesArray.length >= 4) {
                     btnCrear.disabled = true;
                     btnCrear.style.opacity = '0.5';
                     btnCrear.style.cursor = 'not-allowed';
@@ -2959,8 +2977,8 @@
                     this.mostrarToast('Perfil actualizado', 'success');
                 } else {
                     // Crear nuevo perfil
-                    if (Object.keys(this.perfiles).length >= 3) {
-                        this.mostrarToast('Máximo 3 perfiles permitidos', 'error');
+                    if (Object.keys(this.perfiles).length >= 4) {
+                        this.mostrarToast('Máximo 4 perfiles permitidos', 'error');
                         return;
                     }
 
@@ -3281,7 +3299,13 @@
 
                 // Modales
                 document.getElementById('modal-servicio-close').addEventListener('click', () => this.cerrarModal('modal-agregar-servicio'));
-                document.getElementById('modal-editar-servicio-close').addEventListener('click', () => this.cerrarModal('modal-editar-servicio'));
+                document.getElementById('modal-editar-servicio-close').addEventListener('click', () => {
+                    this.cerrarModal('modal-editar-servicio');
+                    // Volver al modal de facturas si venimos desde ahí
+                    if (this.servicioActual) {
+                        this.abrirModalFacturasServicio(this.servicioActual);
+                    }
+                });
                 document.getElementById('modal-factura-close').addEventListener('click', () => {
                     this.cerrarModal('modal-agregar-factura');
                     // Solo reabrir el modal de servicio si vino desde ahí
@@ -4809,6 +4833,10 @@
                         if (servicio.nombre === nombre) {
                             this.mostrarToast('Sin cambios', 'info');
                             this.cerrarModal('modal-editar-servicio');
+                            // Volver al modal de facturas
+                            if (this.servicioActual) {
+                                this.abrirModalFacturasServicio(this.servicioActual);
+                            }
                             return;
                         }
                         servicio.nombre = nombre;
@@ -4830,6 +4858,10 @@
                 this.enModoBusqueda = false;
                 this.renderServicios();
                 this.cerrarModal(esEditar ? 'modal-editar-servicio' : 'modal-agregar-servicio');
+                // Volver al modal de facturas después de guardar
+                if (esEditar && this.servicioActual) {
+                    this.abrirModalFacturasServicio(this.servicioActual);
+                }
             }
 
             editarServicio(servicioId) {
@@ -4857,6 +4889,7 @@
                     this.renderServicios();
                     this.actualizarResumenMes();
                     this.cerrarModal('modal-editar-servicio');
+                    // No volver al modal de facturas porque eliminamos el servicio
                     this.mostrarToast('Servicio eliminado', 'success');
                 }
             }
@@ -5318,6 +5351,21 @@
                     this.historial.shift();
                 } else {
                     this.historialIndex++;
+                }
+
+                this.actualizarBotonesHistorial();
+            }
+
+            inicializarHistorial() {
+                // Limpiar historial anterior
+                this.historial = [];
+                this.historialIndex = -1;
+
+                // Guardar el estado inicial actual
+                if (this.servicios && this.servicios.length >= 0) {
+                    const estadoInicial = JSON.parse(JSON.stringify(this.servicios));
+                    this.historial.push(estadoInicial);
+                    this.historialIndex = 0;
                 }
 
                 this.actualizarBotonesHistorial();
