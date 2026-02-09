@@ -90,7 +90,7 @@
 
         /* --- Layout & Contenedores --- */
         .container {
-            max-width: 1400px;
+            max-width: 1000px;
             margin: 0 auto;
             padding: 1rem;
         }
@@ -171,13 +171,6 @@
             color: var(--text-main);
         }
 
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
         .card-actions {
             display: flex;
             gap: 0.5rem;
@@ -230,27 +223,9 @@
             opacity: 0.5;
         }
 
-        .btn-primary,
-        .btn-success,
-        .btn-danger {
-            color: var(--text-inv);
-        }
-
-        .btn-primary {
-            background: var(--c-blue);
-        }
-
-        .btn-success {
-            background: var(--c-green);
-        }
-
-        .btn-danger {
-            background: var(--c-red);
-        }
-
         .btn-add {
-            width: 50px;
-            height: 50px;
+            width: 60px;
+            height: 60px;
             border-radius: 50%;
             font-size: 1.5rem;
             padding: 0;
@@ -450,8 +425,6 @@
             margin-bottom: 1rem;
         }
 
-
-
         .form-group select:focus {
             outline: none;
             border-color: var(--input-focus);
@@ -508,11 +481,9 @@
         .form-actions2 {
             display: flex;
             margin-top: 0.5rem;
-
         }
 
         /* --- Facturas --- */
-        /* Modal de facturas con header y footer sticky */
         .modal-facturas-content {
             display: flex;
             flex-direction: column;
@@ -599,14 +570,7 @@
             border-radius: var(--radius);
         }
 
-        .btn-small {
-            width: auto;
-            padding: 0.5rem 0.75rem;
-            font-size: 0.85rem;
-        }
-
         /* --- Animaciones --- */
-
         @keyframes slideUp {
             from {
                 opacity: 0;
@@ -908,20 +872,6 @@
             display: block;
         }
 
-        .resumen-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-
-        .resumen-item {
-            background: var(--input-bg);
-            padding: 1rem;
-            border-radius: var(--radius);
-            text-align: center;
-        }
-
         .resumen-valor {
             font-size: 1.5rem;
             font-weight: 700;
@@ -1129,10 +1079,6 @@
 
         .factura-estado-pendiente {
             color: var(--c-gold);
-        }
-
-        .factura-info-clickable {
-            cursor: pointer;
         }
 
         .mensaje-sin-facturas {
@@ -1818,7 +1764,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">Version 0.51</div> <!-- DeltaF -->
+            <div class="menu-version">Version 0.52</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -3215,14 +3161,6 @@
                 document.getElementById('calculadora-contador').textContent = `${contadorFacturas} ${textoFacturas}`;
             }
 
-            setupModalCloseListeners(modalId, closeButtonIds) {
-                closeButtonIds.forEach(btnId => {
-                    document.getElementById(btnId)?.addEventListener('click', () => {
-                        this.cerrarModal(modalId);
-                    });
-                });
-            }
-
             validarMonto(monto, permitirNegativos = false) {
                 // Validar que sea un número
                 if (!monto && monto !== 0 || isNaN(monto)) {
@@ -3295,6 +3233,13 @@
                 document.getElementById('menu-agregar-calcular').addEventListener('click', () => {
                     this.cerrarMenuAgregar();
                     this.activarModoCalculadora();
+                });
+
+                // Listener para toggle de resumen (solo una vez)
+                document.addEventListener('click', (e) => {
+                    if (e.target.closest('#resumen-toggle')) {
+                        this.toggleResumen();
+                    }
                 });
 
                 // Modales
@@ -3394,6 +3339,7 @@
                             this.desactivarModoCalculadora();
                         } else {
                             this.cerrarTodosLosModales();
+                            this.cerrarMenuAjustes()
                         }
                         return;
                     }
@@ -3652,11 +3598,6 @@
                         cardResumen.classList.add(colorBorde);
                     }
                 }
-
-                // Agregar event listener
-                document.getElementById('resumen-toggle').addEventListener('click', () => {
-                    this.toggleResumen();
-                });
             }
 
             mostrarPagadoEnResumen() {
@@ -3698,11 +3639,6 @@
                         cardResumen.classList.add(colorBorde);
                     }
                 }
-
-                // Agregar event listener
-                document.getElementById('resumen-toggle').addEventListener('click', () => {
-                    this.toggleResumen();
-                });
             }
 
             toggleResumen() {
@@ -6125,7 +6061,7 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA DeltaF VERSION 0.51
+    //                 NOTAS SISTEMA DeltaF VERSION 0.52
     // ====================================================================
     
      - CAMBIOS
