@@ -234,13 +234,15 @@
             position: fixed;
             bottom: 3rem;
             right: 2rem;
-            box-shadow: 0 0 5px 2px rgba(106, 159, 252, 0.503);
+            box-shadow: 0 0 5px 2px rgba(106, 159, 252, 0.5);
             z-index: 110;
             animation: slideUp 1s ease-in-out 1;
         }
 
         .btn-add.modo-calculadora {
             background: var(--c-red);
+            box-shadow: 0 0 5px 2px rgba(252, 106, 106, 0.5);
+
         }
 
         .btn-add #btn-add-icon {
@@ -707,7 +709,6 @@
 
         .menu-item {
             padding: 1rem 0;
-            border-bottom: 1px solid var(--border);
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -823,36 +824,16 @@
             background: var(--bg-card);
             border-radius: var(--radius);
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-            padding: 0.5rem;
+            padding: 1rem;
             display: none;
             flex-direction: column;
             gap: 0.5rem;
             z-index: 110;
-            min-width: 200px;
             animation: slideUp 0.2s ease;
         }
 
         .menu-agregar.active {
             display: flex;
-        }
-
-        .menu-agregar-item {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.875rem;
-            border-radius: var(--radius);
-            cursor: pointer;
-            transition: all 0.2s;
-            color: var(--text-main);
-        }
-
-        .menu-agregar-item:hover {
-            color: var(--text-muted);
-        }
-
-        .menu-agregar-item:active {
-            transform: scale(0.98);
         }
 
         .menu-agregar-overlay {
@@ -1764,7 +1745,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">Version 0.52</div> <!-- DeltaF -->
+            <div class="menu-version">Version 0.54</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -2598,6 +2579,12 @@
 
                 // Timer para el toast
                 this.toastTimeout = null;
+
+                // Cache para animaciones condicionales
+                this.ultimoEstadoEstadisticas = null;
+                this.ultimoEstadoCalculador = null;
+                this.ultimoEstadoResumen = null;
+
                 this.INGRESOS_KEY = 'ingresos-habilitado';
                 this.SERVICIO_INGRESOS_ID = 'servicio-ingresos-especial';
 
@@ -3574,8 +3561,24 @@
                     ? (totalPagado / this.datosResumen.totalPeriodo) * 100
                     : 0;
 
+                // Crear estado actual para comparación
+                const estadoActual = {
+                    tipo: 'pendiente',
+                    valor: this.datosResumen.pendiente,
+                    porcentaje: porcentajePagado,
+                    colorBorde: colorBorde,
+                    fecha: fechaFormateada
+                };
+
+                // Verificar si cambió
+                const estadoCambio = !this.ultimoEstadoResumen ||
+                    JSON.stringify(this.ultimoEstadoResumen) !== JSON.stringify(estadoActual);
+
+                // Determinar si usar animación
+                const animacion = estadoCambio ? 'animation: slideDownFade 0.2s ease-out;' : '';
+
                 const resumenHTML = `
-        <div class="resumen-monto" id="resumen-toggle" style="animation: slideDownFade 0.2s ease-out;">
+        <div class="resumen-monto" id="resumen-toggle" style="${animacion}">
             <div class="resumen-titulo">Resumen de Facturas</div>
             <div class="resumen-valor">${this.formatearMoneda(this.datosResumen.pendiente)}</div>
             <div class="resumen-label">Pendiente de pago</div>
@@ -3587,6 +3590,9 @@
     `;
                 document.getElementById('resumen-mes').innerHTML = resumenHTML;
                 localStorage.setItem('resumen-mostrar-pagado', 'false');
+
+                // Guardar estado actual
+                this.ultimoEstadoResumen = estadoActual;
 
                 // Aplicar clase de borde a la CARD padre
                 const cardResumen = document.getElementById('resumen-mes').closest('.card');
@@ -3615,8 +3621,24 @@
                     ? (this.datosResumen.pagadoMes / this.datosResumen.totalPeriodo) * 100
                     : 0;
 
+                // Crear estado actual para comparación
+                const estadoActual = {
+                    tipo: 'pagado',
+                    valor: this.datosResumen.pagadoMes,
+                    porcentaje: porcentajePagado,
+                    colorBorde: colorBorde,
+                    fecha: fechaFormateada
+                };
+
+                // Verificar si cambió
+                const estadoCambio = !this.ultimoEstadoResumen ||
+                    JSON.stringify(this.ultimoEstadoResumen) !== JSON.stringify(estadoActual);
+
+                // Determinar si usar animación
+                const animacion = estadoCambio ? 'animation: slideDownFade 0.2s ease-out;' : '';
+
                 const resumenHTML = `
-        <div class="resumen-monto" id="resumen-toggle" style="animation: slideDownFade 0.2s ease-out;">
+        <div class="resumen-monto" id="resumen-toggle" style="${animacion}">
             <div class="resumen-titulo">Resumen de Pagos</div>
             <div class="resumen-valor">${this.formatearMoneda(this.datosResumen.pagadoMes)}</div>
             <div class="resumen-label">Pagado este mes</div>
@@ -3628,6 +3650,9 @@
     `;
                 document.getElementById('resumen-mes').innerHTML = resumenHTML;
                 localStorage.setItem('resumen-mostrar-pagado', 'true');
+
+                // Guardar estado actual
+                this.ultimoEstadoResumen = estadoActual;
 
                 // Aplicar clase de borde a la CARD padre
                 const cardResumen = document.getElementById('resumen-mes').closest('.card');
@@ -3733,6 +3758,21 @@
                     });
                 });
 
+                // Crear un hash del estado actual para comparación
+                const estadoActual = {
+                    totalMes,
+                    cantidadPendientes,
+                    cantidadPagadas,
+                    cantidadVencidas,
+                    totalIngresos,
+                    mesSeleccionado,
+                    añoSeleccionado
+                };
+
+                // Comparar con el estado anterior
+                const estadoCambio = !this.ultimoEstadoEstadisticas ||
+                    JSON.stringify(this.ultimoEstadoEstadisticas) !== JSON.stringify(estadoActual);
+
                 // Función para renderizar el contenido
                 const renderizarContenido = () => {
                     const itemsHTML = `
@@ -3767,12 +3807,14 @@
                     const lista = document.querySelector('#estadisticas-mes .estadisticas-lista');
                     if (lista) {
                         lista.innerHTML = itemsHTML;
-                        // Trigger animación de entrada
-                        lista.style.opacity = '0';
-                        setTimeout(() => {
-                            lista.style.animation = 'slideDownFade 0.2s ease-out';
-                            lista.style.opacity = '1';
-                        }, 10);
+                        // Solo animar si hubo cambio
+                        if (estadoCambio) {
+                            lista.style.opacity = '0';
+                            setTimeout(() => {
+                                lista.style.animation = 'slideDownFade 0.2s ease-out';
+                                lista.style.opacity = '1';
+                            }, 10);
+                        }
                     }
                 };
 
@@ -3802,6 +3844,7 @@
 
                     // Renderizar contenido inicial
                     renderizarContenido();
+                    this.ultimoEstadoEstadisticas = estadoActual;
                 } else {
                     // Si hay datos y el selector ya existe, solo actualizar las opciones
                     const selectActual = document.getElementById('select-mes-estadisticas');
@@ -3815,16 +3858,20 @@
                         }
                     }
 
-                    // Ya existe, animar salida y entrada
+                    // Solo animar si el estado cambió
                     const lista = document.querySelector('#estadisticas-mes .estadisticas-lista');
-                    if (lista) {
+                    if (lista && estadoCambio) {
                         // Animación de salida
                         lista.style.animation = 'slideUpFade 0.2s ease-out forwards';
 
-                        // Después de la animación de salida, cambiar contenido mientras está invisible
+                        // Después de la animación de salida, cambiar contenido
                         setTimeout(() => {
                             renderizarContenido();
-                        }, 190); // Un poco antes de que termine la animación
+                            this.ultimoEstadoEstadisticas = estadoActual;
+                        }, 190);
+                    } else if (lista && !estadoCambio) {
+                        // No animar, pero actualizar contenido por si hay cambios de formato
+                        renderizarContenido();
                     }
                 }
             }
@@ -4086,7 +4133,22 @@
                     variacionTexto = 'Solo extras';
                 }
 
-                // Mostrar resultados (con animación igual que estadísticas)
+                // Crear hash del estado para comparación
+                const estadoCalculador = {
+                    servicioId,
+                    desde,
+                    hasta,
+                    totalRegistros,
+                    montoTotal,
+                    montoPromedio,
+                    variacionTexto
+                };
+
+                // Comparar con estado anterior
+                const calculadorCambio = !this.ultimoEstadoCalculador ||
+                    JSON.stringify(this.ultimoEstadoCalculador) !== JSON.stringify(estadoCalculador);
+
+                // Mostrar resultados
                 const renderizarResultados = () => {
                     const resultadosHTML = `
             <div class="calculador-resultado-item">
@@ -4109,27 +4171,32 @@
 
                     if (resultadosContainer) {
                         resultadosContainer.innerHTML = resultadosHTML;
-                        // Trigger animación de entrada
-                        resultadosContainer.style.opacity = '0';
-                        setTimeout(() => {
-                            resultadosContainer.style.animation = 'slideDownFade 0.2s ease-out';
-                            resultadosContainer.style.opacity = '1';
-                        }, 10);
+                        // Solo animar si hubo cambio
+                        if (calculadorCambio) {
+                            resultadosContainer.style.opacity = '0';
+                            setTimeout(() => {
+                                resultadosContainer.style.animation = 'slideDownFade 0.2s ease-out';
+                                resultadosContainer.style.opacity = '1';
+                            }, 10);
+                        }
                     }
                 };
 
-                if (resultadosContainer) {
-                    // Animación de salida
+                if (resultadosContainer && calculadorCambio) {
+                    // Animación de salida solo si cambió
                     resultadosContainer.style.animation = 'slideUpFade 0.2s ease-out forwards';
 
-                    // Después de la animación de salida, cambiar contenido y animar entrada
+                    // Después de la animación de salida, cambiar contenido
                     setTimeout(() => {
                         renderizarResultados();
+                        this.ultimoEstadoCalculador = estadoCalculador;
                     }, 190);
-                } else {
+                } else if (resultadosContainer) {
+                    // No cambió, solo actualizar sin animar
                     renderizarResultados();
                 }
             }
+
 
             toggleServicios() {
                 // Si estamos en expanded y hay timer activo (clic rápido después de abrir botones)
@@ -4823,7 +4890,6 @@
                     this.guardarEstado();
                     this.enModoBusqueda = false;
                     this.renderServicios();
-                    this.actualizarResumenMes();
                     this.cerrarModal('modal-editar-servicio');
                     // No volver al modal de facturas porque eliminamos el servicio
                     this.mostrarToast('Servicio eliminado', 'success');
@@ -5141,8 +5207,6 @@
                         this.abrirModalFacturasServicio(servicioId);
                     }
                 }
-
-                this.actualizarResumenMes();
                 this.mostrarToast('Factura marcada como pagada', 'success');
             }
 
@@ -5172,8 +5236,6 @@
                         this.abrirModalFacturasServicio(servicioId);
                     }
                 }
-
-                this.actualizarResumenMes();
                 this.mostrarToast('Factura marcada como no pagada', 'success');
             }
             editarFactura(facturaId) {
@@ -5219,9 +5281,6 @@
                 this.guardarEstado();
                 this.renderServicios();
                 this.enModoBusqueda = false;
-                this.actualizarResumenMes();
-
-                // Resetear botón antes de cerrar
                 this.actualizarEstadoBotonToggle('editar-factura-monto', 'btn-editar-toggle-negativo');
 
                 this.cerrarModal('modal-editar-factura');
@@ -5693,7 +5752,7 @@
             }
 
             limpiarDatos() {
-                if (confirm('¿Estás seguro de eliminar TODOS los datos? Esta acción no se puede deshacer.')) {
+                if (confirm('¿Estás seguro de eliminar todos los datos?')) {
                     {
                         this.servicios = [];
                         this.guardarDatos();
@@ -6061,7 +6120,7 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA DeltaF VERSION 0.52
+    //                 NOTAS SISTEMA DeltaF VERSION 0.54
     // ====================================================================
     
      - CAMBIOS
