@@ -1740,7 +1740,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">Version 0.55</div> <!-- DeltaF -->
+            <div class="menu-version">Version 0.56</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -1829,22 +1829,7 @@
                                 </div>
                             </div>
                             <div id="calculador-resultados" class="calculador-resultados">
-                                <div class="calculador-resultado-item">
-                                    <span class="calculador-resultado-label">Registros</span>
-                                    <span class="calculador-resultado-valor" id="calculador-total-registros">0</span>
-                                </div>
-                                <div class="calculador-resultado-item">
-                                    <span class="calculador-resultado-label">Monto Total</span>
-                                    <span class="calculador-resultado-valor" id="calculador-monto-total">$0,00</span>
-                                </div>
-                                <div class="calculador-resultado-item">
-                                    <span class="calculador-resultado-label">Monto Promedio</span>
-                                    <span class="calculador-resultado-valor" id="calculador-monto-promedio">$0,00</span>
-                                </div>
-                                <div class="calculador-resultado-item">
-                                    <span class="calculador-resultado-label">Variación del Período</span>
-                                    <span class="calculador-resultado-valor" id="calculador-variacion">0%</span>
-                                </div>
+                                <!-- Los resultados se cargarán dinámicamente -->
                             </div>
                         </div>
                     </div>
@@ -3992,143 +3977,98 @@
 
                 // Validar que todos los elementos existan antes de continuar
                 if (!selectServicio || !inputDesde || !inputHasta || !resultadosContainer) {
-                    return; // Salir silenciosamente si los elementos no existen
+                    return;
                 }
 
                 const servicioId = selectServicio.value;
                 const desde = inputDesde.value;
                 const hasta = inputHasta.value;
 
-                // Si no hay servicio seleccionado, mostrar 0
-                if (!servicioId) {
-                    const resultadosHTML = `
-            <div class="calculador-resultado-item">
-                <span class="calculador-resultado-label">Registros</span>
-                <span class="calculador-resultado-valor">0</span>
-            </div>
-            <div class="calculador-resultado-item">
-                <span class="calculador-resultado-label">Monto Total</span>
-                <span class="calculador-resultado-valor">$0,00</span>
-            </div>
-            <div class="calculador-resultado-item">
-                <span class="calculador-resultado-label">Monto Promedio</span>
-                <span class="calculador-resultado-valor">$0,00</span>
-            </div>
-            <div class="calculador-resultado-item">
-                <span class="calculador-resultado-label">Variación</span>
-                <span class="calculador-resultado-valor">0%</span>
-            </div>
-        `;
-                    resultadosContainer.innerHTML = resultadosHTML;
-                    return;
-                }
-
-                // Encontrar el servicio
-                const servicio = this.servicios.find(s => s.id === servicioId);
-                if (!servicio) {
-                    const resultadosHTML = `
-            <div class="calculador-resultado-item">
-                <span class="calculador-resultado-label">Registros</span>
-                <span class="calculador-resultado-valor">0</span>
-            </div>
-            <div class="calculador-resultado-item">
-                <span class="calculador-resultado-label">Monto Total</span>
-                <span class="calculador-resultado-valor">$0,00</span>
-            </div>
-            <div class="calculador-resultado-item">
-                <span class="calculador-resultado-label">Monto Promedio</span>
-                <span class="calculador-resultado-valor">$0,00</span>
-            </div>
-            <div class="calculador-resultado-item">
-                <span class="calculador-resultado-label">Variación</span>
-                <span class="calculador-resultado-valor">0%</span>
-            </div>
-        `;
-                    resultadosContainer.innerHTML = resultadosHTML;
-                    return;
-                }
-
-                // Verificar si es el servicio de ingresos
-                const esServicioIngresos = servicioId === this.SERVICIO_INGRESOS_ID;
-
-                // Filtrar facturas por rango de fechas
-                let facturasFiltradas = servicio.facturas;
-
-                if (desde) {
-                    const fechaDesde = new Date(desde + 'T00:00:00');
-                    facturasFiltradas = facturasFiltradas.filter(f => {
-                        const fechaFactura = new Date(f.fecha + 'T00:00:00');
-                        return fechaFactura >= fechaDesde;
-                    });
-                }
-
-                if (hasta) {
-                    const fechaHasta = new Date(hasta + 'T00:00:00');
-                    facturasFiltradas = facturasFiltradas.filter(f => {
-                        const fechaFactura = new Date(f.fecha + 'T00:00:00');
-                        return fechaFactura <= fechaHasta;
-                    });
-                }
-
-                // Ordenar por fecha (más antiguas primero)
-                facturasFiltradas.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
-
-                // Calcular totales básicos (incluye complementarios)
-                const totalRegistros = facturasFiltradas.length;
-                const montoTotal = facturasFiltradas.reduce((sum, f) => sum + f.monto, 0);
-                const montoPromedio = totalRegistros > 0 ? montoTotal / totalRegistros : 0;
-
-                // Para cálculo de variación: excluir complementarios si es servicio de ingresos
-                let facturasParaVariacion = facturasFiltradas;
-                if (esServicioIngresos) {
-                    facturasParaVariacion = facturasFiltradas.filter(f => f.tipo !== 'complementario');
-                }
-
-                // Calcular variación de forma adaptativa
-                let variacion = 0;
+                // Valores por defecto
+                let totalRegistros = 0;
+                let montoTotal = 0;
+                let montoPromedio = 0;
                 let variacionTexto = '0%';
-                const totalParaVariacion = facturasParaVariacion.length;
 
-                if (totalParaVariacion >= 2) {
-                    let promedioPrimeros, promedioUltimos;
+                // Si hay servicio seleccionado, calcular
+                if (servicioId) {
+                    const servicio = this.servicios.find(s => s.id === servicioId);
 
-                    if (totalParaVariacion <= 3) {
-                        // Con 2-3 registros: comparar primero vs último
-                        promedioPrimeros = facturasParaVariacion[0].monto;
-                        promedioUltimos = facturasParaVariacion[totalParaVariacion - 1].monto;
-                    } else if (totalParaVariacion <= 8) {
-                        // Con 4-8 registros: comparar primera mitad vs segunda mitad
-                        const mitad = Math.floor(totalParaVariacion / 2);
-                        const primerasMitad = facturasParaVariacion.slice(0, mitad);
-                        const ultimasMitad = facturasParaVariacion.slice(-mitad);
+                    if (servicio) {
+                        const esServicioIngresos = servicioId === this.SERVICIO_INGRESOS_ID;
 
-                        promedioPrimeros = primerasMitad.reduce((sum, f) => sum + f.monto, 0) / mitad;
-                        promedioUltimos = ultimasMitad.reduce((sum, f) => sum + f.monto, 0) / mitad;
-                    } else {
-                        // Con 9+ registros: usar 30% de cada extremo (min 3, max 6)
-                        const cantidadGrupo = Math.min(6, Math.max(3, Math.floor(totalParaVariacion * 0.3)));
+                        // Filtrar facturas por rango de fechas
+                        let facturasFiltradas = servicio.facturas;
 
-                        const primerosRegistros = facturasParaVariacion.slice(0, cantidadGrupo);
-                        const ultimosRegistros = facturasParaVariacion.slice(-cantidadGrupo);
+                        if (desde) {
+                            const fechaDesde = new Date(desde + 'T00:00:00');
+                            facturasFiltradas = facturasFiltradas.filter(f => {
+                                const fechaFactura = new Date(f.fecha + 'T00:00:00');
+                                return fechaFactura >= fechaDesde;
+                            });
+                        }
 
-                        promedioPrimeros = primerosRegistros.reduce((sum, f) => sum + f.monto, 0) / cantidadGrupo;
-                        promedioUltimos = ultimosRegistros.reduce((sum, f) => sum + f.monto, 0) / cantidadGrupo;
+                        if (hasta) {
+                            const fechaHasta = new Date(hasta + 'T00:00:00');
+                            facturasFiltradas = facturasFiltradas.filter(f => {
+                                const fechaFactura = new Date(f.fecha + 'T00:00:00');
+                                return fechaFactura <= fechaHasta;
+                            });
+                        }
+
+                        // Ordenar por fecha (más antiguas primero)
+                        facturasFiltradas.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+
+                        // Calcular totales básicos (incluye complementarios)
+                        totalRegistros = facturasFiltradas.length;
+                        montoTotal = facturasFiltradas.reduce((sum, f) => sum + f.monto, 0);
+                        montoPromedio = totalRegistros > 0 ? montoTotal / totalRegistros : 0;
+
+                        // Para cálculo de variación: excluir complementarios si es servicio de ingresos
+                        let facturasParaVariacion = facturasFiltradas;
+                        if (esServicioIngresos) {
+                            facturasParaVariacion = facturasFiltradas.filter(f => f.tipo !== 'complementario');
+                        }
+
+                        // Calcular variación de forma adaptativa
+                        const totalParaVariacion = facturasParaVariacion.length;
+
+                        if (totalParaVariacion >= 2) {
+                            let promedioPrimeros, promedioUltimos;
+
+                            if (totalParaVariacion <= 3) {
+                                promedioPrimeros = facturasParaVariacion[0].monto;
+                                promedioUltimos = facturasParaVariacion[totalParaVariacion - 1].monto;
+                            } else if (totalParaVariacion <= 8) {
+                                const mitad = Math.floor(totalParaVariacion / 2);
+                                const primerasMitad = facturasParaVariacion.slice(0, mitad);
+                                const ultimasMitad = facturasParaVariacion.slice(-mitad);
+
+                                promedioPrimeros = primerasMitad.reduce((sum, f) => sum + f.monto, 0) / mitad;
+                                promedioUltimos = ultimasMitad.reduce((sum, f) => sum + f.monto, 0) / mitad;
+                            } else {
+                                const cantidadGrupo = Math.min(6, Math.max(3, Math.floor(totalParaVariacion * 0.3)));
+                                const primerosRegistros = facturasParaVariacion.slice(0, cantidadGrupo);
+                                const ultimosRegistros = facturasParaVariacion.slice(-cantidadGrupo);
+
+                                promedioPrimeros = primerosRegistros.reduce((sum, f) => sum + f.monto, 0) / cantidadGrupo;
+                                promedioUltimos = ultimosRegistros.reduce((sum, f) => sum + f.monto, 0) / cantidadGrupo;
+                            }
+
+                            // Calcular porcentaje de variación
+                            if (promedioPrimeros !== 0) {
+                                const variacion = ((promedioUltimos - promedioPrimeros) / Math.abs(promedioPrimeros)) * 100;
+                                const signo = variacion > 0 ? '+' : '';
+                                variacionTexto = `${signo}${variacion.toFixed(1)}%`;
+                            } else {
+                                variacionTexto = promedioUltimos > 0 ? '+∞' : '0%';
+                            }
+                        } else if (totalParaVariacion === 1) {
+                            variacionTexto = 'N/A';
+                        } else if (totalParaVariacion === 0 && esServicioIngresos && totalRegistros > 0) {
+                            variacionTexto = 'Solo extras';
+                        }
                     }
-
-                    // Calcular porcentaje de variación
-                    if (promedioPrimeros !== 0) {
-                        variacion = ((promedioUltimos - promedioPrimeros) / Math.abs(promedioPrimeros)) * 100;
-                        const signo = variacion > 0 ? '+' : '';
-                        variacionTexto = `${signo}${variacion.toFixed(1)}%`;
-                    } else {
-                        // Si el promedio inicial es 0, mostrar variación absoluta
-                        variacionTexto = promedioUltimos > 0 ? '+∞' : '0%';
-                    }
-                } else if (totalParaVariacion === 1) {
-                    variacionTexto = 'N/A';
-                } else if (totalParaVariacion === 0 && esServicioIngresos && totalRegistros > 0) {
-                    // Todos los registros son complementarios
-                    variacionTexto = 'Solo extras';
                 }
 
                 // Crear hash del estado para comparación
@@ -4146,55 +4086,58 @@
                 const calculadorCambio = !this.ultimoEstadoCalculador ||
                     JSON.stringify(this.ultimoEstadoCalculador) !== JSON.stringify(estadoCalculador);
 
-                // Mostrar resultados
-                const renderizarResultados = () => {
-                    const resultadosHTML = `
-            <div class="calculador-resultado-item">
-                <span class="calculador-resultado-label">Registros</span>
-                <span class="calculador-resultado-valor">${totalRegistros}</span>
-            </div>
-            <div class="calculador-resultado-item">
-                <span class="calculador-resultado-label">Monto Total</span>
-                <span class="calculador-resultado-valor">${this.formatearMoneda(montoTotal)}</span>
-            </div>
-            <div class="calculador-resultado-item">
-                <span class="calculador-resultado-label">Monto Promedio</span>
-                <span class="calculador-resultado-valor">${this.formatearMoneda(montoPromedio)}</span>
-            </div>
-            <div class="calculador-resultado-item">
-                <span class="calculador-resultado-label">Variación</span>
-                <span class="calculador-resultado-valor">${variacionTexto}</span>
-            </div>
-        `;
+                // 👇 FUNCIÓN HELPER PARA GENERAR HTML (UNA SOLA VEZ)
+                const generarResultadosHTML = (registros, total, promedio, variacion) => `
+        <div class="calculador-resultado-item">
+            <span class="calculador-resultado-label">Facturas</span>
+            <span class="calculador-resultado-valor">${registros}</span>
+        </div>
+        <div class="calculador-resultado-item">
+            <span class="calculador-resultado-label">Monto Total</span>
+            <span class="calculador-resultado-valor">${this.formatearMoneda(total)}</span>
+        </div>
+        <div class="calculador-resultado-item">
+            <span class="calculador-resultado-label">Monto Promedio</span>
+            <span class="calculador-resultado-valor">${this.formatearMoneda(promedio)}</span>
+        </div>
+        <div class="calculador-resultado-item">
+            <span class="calculador-resultado-label">Variación</span>
+            <span class="calculador-resultado-valor">${variacion}</span>
+        </div>
+    `;
 
-                    if (resultadosContainer) {
-                        resultadosContainer.innerHTML = resultadosHTML;
-                        // Solo animar si hubo cambio
-                        if (calculadorCambio) {
-                            resultadosContainer.style.opacity = '0';
-                            setTimeout(() => {
-                                resultadosContainer.style.animation = 'slideDownFade 0.2s ease-out';
-                                resultadosContainer.style.opacity = '1';
-                            }, 10);
-                        }
+                // Renderizar resultados
+                const renderizarResultados = () => {
+                    resultadosContainer.innerHTML = generarResultadosHTML(
+                        totalRegistros,
+                        montoTotal,
+                        montoPromedio,
+                        variacionTexto
+                    );
+
+                    // Solo animar si hubo cambio
+                    if (calculadorCambio) {
+                        resultadosContainer.style.opacity = '0';
+                        setTimeout(() => {
+                            resultadosContainer.style.animation = 'slideDownFade 0.2s ease-out';
+                            resultadosContainer.style.opacity = '1';
+                        }, 10);
                     }
                 };
 
-                if (resultadosContainer && calculadorCambio) {
+                if (calculadorCambio) {
                     // Animación de salida solo si cambió
                     resultadosContainer.style.animation = 'slideUpFade 0.2s ease-out forwards';
 
-                    // Después de la animación de salida, cambiar contenido
                     setTimeout(() => {
                         renderizarResultados();
                         this.ultimoEstadoCalculador = estadoCalculador;
                     }, 190);
-                } else if (resultadosContainer) {
+                } else {
                     // No cambió, solo actualizar sin animar
                     renderizarResultados();
                 }
             }
-
 
             toggleServicios() {
                 // Si estamos en expanded y hay timer activo (clic rápido después de abrir botones)
@@ -6176,7 +6119,7 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA DeltaF VERSION 0.55
+    //                 NOTAS SISTEMA DeltaF VERSION 0.56
     // ====================================================================
     
      - CAMBIOS
