@@ -251,7 +251,7 @@
         }
 
         .btn-add.modo-calculadora #btn-add-icon {
-            transform: rotate(135deg);
+            transform: rotate(45deg);
         }
 
         #btn-filter,
@@ -267,9 +267,10 @@
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
-            max-height: 5000px;
+            max-height: 800px;
             opacity: 1;
-            overflow: hidden;
+            overflow-y: auto;
+            overflow-x: hidden;
             margin-top: 1rem;
             transition: all 0.3s;
         }
@@ -1118,7 +1119,7 @@
         }
 
         #servicios-content:not(.collapsed) {
-            overflow-y: auto;
+            overflow-y: visible;
             overflow-x: hidden;
         }
 
@@ -1137,6 +1138,7 @@
             opacity: 1;
             overflow: hidden;
             transition: all 0.3s;
+            background: var(--bg-card);
         }
 
         .servicios-actions.hidden {
@@ -1168,6 +1170,7 @@
             opacity: 1;
             overflow: visible;
             transition: all 0.3s;
+            background: var(--bg-card);
         }
 
         #servicios-content.semi-collapsed .search-container {
@@ -1408,9 +1411,10 @@
         }
 
         /* moviles */
-        @media (max-width: 768px) {
+        @media (max-width: 767px) {
             .servicios-lista {
                 min-height: 400px;
+                max-height: 5000px;
             }
 
             .btn-add {
@@ -1740,7 +1744,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">Version 0.56</div> <!-- DeltaF -->
+            <div class="menu-version">Version 0.57</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -1886,7 +1890,7 @@
                             </button>
                         </div>
 
-                        <div class="servicios-lista" id="servicios-lista">
+                        <div class="servicios-lista custom-scroll" id="servicios-lista">
                             <!-- Los servicios se cargarán aquí -->
                         </div>
                     </div>
@@ -2084,9 +2088,9 @@
                         </svg> Guardar</button>
                     <button type="button" class="btn-secondary" id="modal-factura-close" style="width: 100%;"><svg
                             class="icon">
-                            <use href="#icon-undo" />
+                            <use href="#icon-cancel" />
                         </svg>
-                        Volver
+                        Cerrar
                     </button>
                 </div>
             </form>
@@ -2251,7 +2255,8 @@
                     <label for="ingreso-fecha">Fecha de cobro</label>
                     <div style="display: flex; gap: 0.5rem;">
                         <input type="date" id="ingreso-fecha" required style="flex: 1;">
-                        <button type="button" class="icon-btn" id="btn-ingreso-fecha-hoy" title="Fecha de hoy">
+                        <button type="button" class="icon-btn" id="btn-ingreso-fecha-hoy"
+                            title="Fecha de hoy / Limpiar">
                             <svg class="icon">
                                 <use href="#icon-calendar" />
                             </svg>
@@ -2265,8 +2270,8 @@
                     </button>
                     <button type="button" class="btn-secondary" id="modal-ingreso-close" style="width: 100%;"><svg
                             class="icon">
-                            <use href="#icon-undo" />
-                        </svg> Volver
+                            <use href="#icon-cancel" />
+                        </svg> Cerrar
                     </button>
                 </div>
             </form>
@@ -2295,7 +2300,8 @@
                     <label for="editar-ingreso-fecha">Fecha de cobro</label>
                     <div style="display: flex; gap: 0.5rem;">
                         <input type="date" id="editar-ingreso-fecha" required style="flex: 1;">
-                        <button type="button" class="icon-btn" id="btn-editar-ingreso-fecha-hoy" title="Fecha de hoy">
+                        <button type="button" class="icon-btn" id="btn-editar-ingreso-fecha-hoy"
+                            title="Fecha de hoy / Limpiar">
                             <svg class="icon">
                                 <use href="#icon-calendar" />
                             </svg>
@@ -2946,88 +2952,6 @@
                 this.renderListaPerfiles();
             }
 
-            exportarPerfil(perfilId) {
-                try {
-                    const perfil = this.perfiles[perfilId];
-                    const key = `gestion_servicios_datos_${perfilId}`;
-                    const servicios = JSON.parse(localStorage.getItem(key) || '[]');
-
-                    const datos = {
-                        version: '1.0',
-                        fecha: new Date().toISOString(),
-                        perfil: perfil.nombre,
-                        servicios: servicios
-                    };
-
-                    const json = JSON.stringify(datos, null, 2);
-                    const blob = new Blob([json], { type: 'application/json' });
-                    const url = URL.createObjectURL(blob);
-
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `perfil_${perfil.nombre}_${this.obtenerFechaLocal()}.json`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-
-                    this.mostrarToast('Perfil exportado', 'success');
-                } catch (error) {
-                    console.error('Error al exportar perfil:', error);
-                    this.mostrarToast('Error al exportar perfil', 'error');
-                }
-            }
-
-            importarPerfil(perfilId) {
-                const input = document.createElement('input');
-                input.type = 'file';
-                input.accept = 'application/json';
-
-                input.addEventListener('change', (e) => {
-                    const file = e.target.files[0];
-                    if (!file) return;
-
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                        try {
-                            const datos = JSON.parse(event.target.result);
-
-                            if (!datos.servicios || !Array.isArray(datos.servicios)) {
-                                throw new Error('Formato de archivo inválido');
-                            }
-
-                            if (!this.validarDatos(datos.servicios)) {
-                                throw new Error('Datos inválidos en el archivo');
-                            }
-
-                            if (!confirm(`¿Reemplazar todos los datos del perfil "${this.perfiles[perfilId].nombre}"?`)) {
-                                return;
-                            }
-
-                            // Guardar datos en el perfil
-                            const key = `gestion_servicios_datos_${perfilId}`;
-                            localStorage.setItem(key, JSON.stringify(datos.servicios));
-
-                            // Si es el perfil activo, recargar
-                            if (perfilId === this.perfilActivo) {
-                                this.cargarDatosPerfilActivo();
-                                this.renderServicios();
-                            }
-
-                            this.mostrarToast('Datos importados al perfil', 'success');
-                            this.renderListaPerfiles();
-                        } catch (error) {
-                            console.error('Error al importar:', error);
-                            this.mostrarToast('Error: ' + error.message, 'error');
-                        }
-                    };
-
-                    reader.readAsText(file);
-                });
-
-                input.click();
-            }
-
             // ========================================
             // MENÚ CONTEXTUAL Y CALCULADORA
             // ========================================
@@ -3082,8 +3006,6 @@
                 this.actualizarCalculadora();
                 this.renderServicios();
             }
-
-            // FUNCIÓN MODIFICADA - Reemplazar en el archivo HTML
 
             actualizarCalculadora() {
                 if (!this.modoCalculadora) return;
@@ -3258,8 +3180,8 @@
                 document.getElementById('form-factura').addEventListener('submit', (e) => this.guardarFactura(e));
                 document.getElementById('form-editar-factura').addEventListener('submit', (e) => this.guardarFactura(e));
                 document.getElementById('btn-eliminar-servicio').addEventListener('click', () => this.eliminarServicio());
-                document.getElementById('btn-fecha-hoy').addEventListener('click', () => this.establecerFechaHoy());
-                document.getElementById('btn-editar-fecha-hoy').addEventListener('click', () => this.establecerFechaHoy('editar'));
+                document.getElementById('btn-fecha-hoy').addEventListener('click', () => this.establecerFechaHoy('factura'));
+                document.getElementById('btn-editar-fecha-hoy').addEventListener('click', () => this.establecerFechaHoy('factura', 'editar'));
                 document.getElementById('btn-eliminar-factura-modal').addEventListener('click', () => this.eliminarFacturaDesdeModal());
 
                 // Formulario de ingresos
@@ -3267,10 +3189,10 @@
                 document.getElementById('form-editar-ingreso').addEventListener('submit', (e) => this.guardarIngreso(e));
                 document.getElementById('btn-eliminar-ingreso').addEventListener('click', () => this.eliminarIngreso());
                 document.getElementById('btn-ingreso-fecha-hoy').addEventListener('click', () => {
-                    document.getElementById('ingreso-fecha').value = this.obtenerFechaLocal();
+                    this.establecerFechaHoy('ingreso');
                 });
                 document.getElementById('btn-editar-ingreso-fecha-hoy').addEventListener('click', () => {
-                    document.getElementById('editar-ingreso-fecha').value = this.obtenerFechaLocal();
+                    this.establecerFechaHoy('ingreso', 'editar');
                 });
 
                 document.getElementById('modal-ingreso-close').addEventListener('click', () => {
@@ -3409,7 +3331,8 @@
 
                 let totalAPagar = 0;
                 let totalPagadoMes = 0;
-                let totalFacturasMesActual = 0; // Total de facturas del mes actual
+                let totalPagadoDelMesActual = 0;
+                let totalFacturasMesActual = 0;
 
                 this.servicios.filter(s => s.id !== this.SERVICIO_INGRESOS_ID).forEach(servicio => {
                     servicio.facturas.forEach(factura => {
@@ -3421,19 +3344,21 @@
 
                         // Calcular total del mes actual
                         if (esDelMesActual) {
-                            // Saldos a favor (negativos): no afectan nada, solo se muestran
                             if (factura.monto < 0) {
-                                return; // No sumar a total, ni a pendiente, ni a pagado
+                                return;
                             }
 
                             totalFacturasMesActual += factura.monto;
 
                             if (!factura.pagada) {
                                 totalAPagar += factura.monto;
+                            } else {
+                                // 👇 NUEVO: Contar pagos de facturas del mes actual
+                                totalPagadoDelMesActual += factura.monto;
                             }
                         }
 
-                        // Calcular pagado este mes (solo facturas positivas)
+                        // Calcular pagado este mes (TODAS las facturas)
                         if (factura.pagada && factura.fechaPago && factura.monto > 0) {
                             const fechaPago = new Date(factura.fechaPago + 'T00:00:00');
                             if (fechaPago.getMonth() === mesActual && fechaPago.getFullYear() === añoActual) {
@@ -3443,10 +3368,11 @@
                     });
                 });
 
-                // Guardar datos para el toggle
+                // Guardar datos
                 this.datosResumen = {
                     pendiente: totalAPagar,
                     pagadoMes: totalPagadoMes,
+                    pagadoDelMesActual: totalPagadoDelMesActual,
                     totalPeriodo: totalFacturasMesActual
                 };
 
@@ -3560,10 +3486,16 @@
                 // Determinar si usar animación
                 const animacion = estadoCambio ? 'animation: slideDownFade 0.2s ease-out;' : '';
 
+                // DETERMINAR QUÉ MOSTRAR: "Al día" o el monto
+                const estaAlDia = this.datosResumen.pendiente === 0;
+                const valorMostrar = estaAlDia
+                    ? '<span style=>Al día</span>'
+                    : this.formatearMoneda(this.datosResumen.pendiente);
+
                 const resumenHTML = `
         <div class="resumen-monto" id="resumen-toggle" style="${animacion}">
-            <div class="resumen-titulo">Resumen de Facturas</div>
-            <div class="resumen-valor">${this.formatearMoneda(this.datosResumen.pendiente)}</div>
+            <div class="resumen-titulo">Resumen de Servicios</div>
+            <div class="resumen-valor">${valorMostrar}</div>
             <div class="resumen-label">Pendiente de pago</div>
             <div class="resumen-progreso">
                 <div class="resumen-progreso-barra" style="width: ${porcentajePagado}%"></div>
@@ -3599,9 +3531,9 @@
 
                 const colorBorde = this.obtenerColorBordeMasPrioritario();
 
-                // Calcular porcentaje de pago (en esta vista mostramos lo pagado del total)
+                // Calcular porcentaje: pagado del mes actual / total del mes actual
                 const porcentajePagado = this.datosResumen.totalPeriodo > 0
-                    ? (this.datosResumen.pagadoMes / this.datosResumen.totalPeriodo) * 100
+                    ? (this.datosResumen.pagadoDelMesActual / this.datosResumen.totalPeriodo) * 100
                     : 0;
 
                 // Crear estado actual para comparación
@@ -5247,15 +5179,12 @@
                 }
             }
 
-            establecerFechaHoy(modo = 'agregar') {
-                const campoId = modo === 'editar' ? 'editar-factura-fecha' : 'factura-fecha';
+            establecerFechaHoy(tipo = 'factura', modo = 'agregar') {
+                const campoId = modo === 'editar' ? `editar-${tipo}-fecha` : `${tipo}-fecha`;
                 const inputFecha = document.getElementById(campoId);
-                if (inputFecha.value) {
-                    // Si hay valor, limpiar
-                    inputFecha.value = '';
-                } else {
-                    // Si no hay valor, pegar fecha actual
-                    inputFecha.value = this.obtenerFechaLocal();
+
+                if (inputFecha) {
+                    inputFecha.value = inputFecha.value ? '' : this.obtenerFechaLocal();
                 }
             }
 
@@ -5719,7 +5648,7 @@
                                     this.guardarEstado();
                                     this.renderServicios();
                                     this.actualizarEstadisticas();
-                                    this.mostrarToast(`Importados ${cantidad} servicios`, 'success');
+                                    this.mostrarToast(`Importados ${cantidad} servicios y ${facturas} facturas.`, 'success');
                                 }
                             }
                         } catch (error) {
@@ -6119,11 +6048,11 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA DeltaF VERSION 0.56
+    //                 NOTAS SISTEMA DeltaF VERSION 0.57
     // ====================================================================
     
      - CAMBIOS
-     1)
+     1) 
 
 
      - BUGS CONOCIDOS:
