@@ -6,8 +6,9 @@ const CACHE_NAME = `deltaf-${CACHE_VERSION}`;
 // Lista de archivos a cachear
 const urlsToCache = [
   './',
-  './index.html',  // Tu archivo principal (que renombras de DeltaF_vX_XX.html)
-  './manifest.json'
+  './index.html',
+  './manifest.json',
+  './icon.svg'
 ];
 
 // Instalación del Service Worker
