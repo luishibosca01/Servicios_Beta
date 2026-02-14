@@ -1,9 +1,4 @@
-// Service Worker para DeltaF - Offline First
-// ⚠️ IMPORTANTE: Incrementa este número CADA VEZ que actualices el index.html
-const CACHE_VERSION = 'v0.58';
-const CACHE_NAME = `deltaf-${CACHE_VERSION}`;
-
-// Lista de archivos a cachear
+const CACHE_NAME = 'deltaF-v0.58-cache';
 const urlsToCache = [
   './',
   './index.html',
@@ -11,143 +6,67 @@ const urlsToCache = [
   './icon.svg'
 ];
 
-// Instalación del Service Worker
-self.addEventListener('install', (event) => {
-  console.log('[SW] 🔧 Instalando versión:', CACHE_VERSION);
-  
+// Instalación
+self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('[SW] 📦 Cacheando archivos con versión:', CACHE_VERSION);
-        // Agregar timestamp para forzar descarga fresca
-        const urlsWithVersion = urlsToCache.map(url => {
-          if (url.includes('.html')) {
-            return `${url}?v=${CACHE_VERSION}`;
-          }
-          return url;
+      .then(cache => {
+        console.log('Abriendo cache');
+        return cache.addAll(urlsToCache).catch(err => {
+            console.error('CRÍTICO: Falló la carga de archivos en el install:', err);
+            throw err; 
         });
-        return cache.addAll(urlsWithVersion);
-      })
-      .then(() => {
-        console.log('[SW] ✅ Instalación completa');
-        // NO hacer skipWaiting() aquí - esperar confirmación del usuario
       })
   );
+  self.skipWaiting();
 });
 
-// Activación del Service Worker
-self.addEventListener('activate', (event) => {
-  console.log('[SW] 🚀 Activando versión:', CACHE_VERSION);
-  
+// Activación
+self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys()
-      .then((cacheNames) => {
-        // Eliminar TODAS las caches antiguas que no coincidan con la versión actual
-        const deletePromises = cacheNames.map((cacheName) => {
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => {
           if (cacheName !== CACHE_NAME) {
-            console.log('[SW] 🗑️  Eliminando cache antigua:', cacheName);
+            console.log('Borrando cache viejo:', cacheName);
             return caches.delete(cacheName);
           }
-        });
-        return Promise.all(deletePromises);
-      })
-      .then(() => {
-        console.log('[SW] 👑 Tomando control de las páginas');
-        return self.clients.claim();
-      })
-      .then(() => {
-        // Notificar a todos los clientes activos
-        return self.clients.matchAll().then((clients) => {
-          clients.forEach((client) => {
-            client.postMessage({
-              type: 'SW_ACTIVATED',
-              version: CACHE_VERSION,
-              timestamp: Date.now()
-            });
-          });
-        });
-      })
+        })
+      );
+    })
   );
+  return self.clients.claim();
 });
 
-// Estrategia CACHE FIRST con validación de versión
-self.addEventListener('fetch', (event) => {
+// Fetch
+self.addEventListener('fetch', event => {
+  if (event.request.method !== 'GET') return;
+
   const url = new URL(event.request.url);
-  
-  // Solo cachear recursos del mismo origen
-  if (url.origin !== location.origin) {
-    event.respondWith(fetch(event.request));
-    return;
-  }
+  if (url.origin !== location.origin) return;
 
   event.respondWith(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        return cache.match(event.request)
-          .then((cachedResponse) => {
-            // Si está en cache, retornarlo inmediatamente
-            if (cachedResponse) {
-              console.log('[SW] 📂 Sirviendo desde cache:', event.request.url);
-              
-              // En segundo plano, verificar si hay actualizaciones
-              // (pero no esperar por ellas)
-              fetch(event.request)
-                .then((networkResponse) => {
-                  if (networkResponse && networkResponse.status === 200) {
-                    cache.put(event.request, networkResponse.clone());
-                  }
-                })
-                .catch(() => {
-                  // Ignorar errores de red en background
-                });
-              
-              return cachedResponse;
+    caches.match(event.request)
+      .then(response => {
+        if (response) {
+          return response;
+        }
+        return fetch(event.request)
+          .then(networkResponse => {
+            if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
+              return networkResponse;
             }
-            
-            // Si no está en cache, intentar red
-            console.log('[SW] 🌐 Descargando desde red:', event.request.url);
-            return fetch(event.request)
-              .then((networkResponse) => {
-                // Cachear respuesta válida
-                if (networkResponse && networkResponse.status === 200) {
-                  cache.put(event.request, networkResponse.clone());
-                }
-                return networkResponse;
-              })
-              .catch((error) => {
-                console.error('[SW] ❌ Error de red:', event.request.url);
-                
-                // Si es navegación y falla, intentar servir index.html del cache
-                if (event.request.mode === 'navigate') {
-                  return cache.match('./index.html')
-                    .then((fallbackResponse) => {
-                      if (fallbackResponse) {
-                        return fallbackResponse;
-                      }
-                      throw error;
-                    });
-                }
-                
-                throw error;
-              });
+            const responseClone = networkResponse.clone();
+            caches.open(CACHE_NAME).then(cache => {
+              cache.put(event.request, responseClone);
+            });
+            return networkResponse;
+          })
+          .catch(() => {
+            if (event.request.mode === 'navigate') {
+              return caches.match('./index.html');
+            }
           });
       })
   );
-});
-
-// Escuchar mensajes del cliente
-self.addEventListener('message', (event) => {
-  console.log('[SW] 📨 Mensaje recibido:', event.data);
-  
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    console.log('[SW] ⚡ Activación forzada por el usuario');
-    self.skipWaiting();
-  }
-  
-  if (event.data && event.data.type === 'GET_VERSION') {
-    event.ports[0].postMessage({
-      version: CACHE_VERSION,
-      cacheName: CACHE_NAME
-    });
-  }
 });
