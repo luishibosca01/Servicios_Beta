@@ -311,9 +311,9 @@
         }
 
         .servicio-nombre {
-            font-weight: 600;
             font-size: 1.1rem;
             margin-bottom: 0.5rem;
+            font-weight: 600;
         }
 
         .servicio-info {
@@ -325,13 +325,12 @@
         }
 
         .servicio-monto {
-            font-weight: 600;
             color: var(--text-main);
             font-size: 1rem;
         }
 
         .servicio-fecha {
-            font-size: 0.85rem;
+            font-size: 0.9rem;
         }
 
         .servicio-estado {
@@ -339,15 +338,12 @@
             padding: 0.25rem 0.5rem;
             border-radius: var(--radius);
             font-size: 0.75rem;
-            font-weight: 600;
+            font-weight: 550;
             margin-top: 0.5rem;
             color: var(--c-white);
         }
 
-        .estado-vencido {
-            background: var(--c-red);
-        }
-
+        .estado-vencido,
         .estado-urgente {
             background: var(--c-red);
         }
@@ -1516,13 +1512,16 @@
         (function () {
             try {
                 var tema = localStorage.getItem('gestion_servicios_theme');
-                if (tema === 'dark') {
+                if (tema === 'dark' || tema === null) {
+                    // Si es dark O primera vez (null), activar modo oscuro
                     document.body.classList.add('dark-mode');
                 } else if (tema === 'light') {
                     document.body.classList.remove('dark-mode');
                 }
-                // Si tema es null (primera vez), modo claro por defecto
-            } catch (e) { }
+            } catch (e) {
+                // En caso de error, modo oscuro por defecto
+                document.body.classList.add('dark-mode');
+            }
         })();
     </script>
 
@@ -1727,7 +1726,7 @@
                     <use href="#icon-dollar" />
                 </svg>
                 <span>Ingresos</span>
-                <span id="ingresos-indicator" style="margin-left: auto; font-weight: 600;">✓</span>
+                <span id="ingresos-indicator" style="margin-left: auto"></span>
             </div>
             <div class="menu-item" id="menu-informacion">
                 <svg class="icon">
@@ -2518,7 +2517,6 @@
 
     <!-- Toast de notificaciones -->
     <div class="toast" id="toast"></div>
-    <script src="./sw-register.js"></script>
     <script>
         // ============================================
         // APLICACIÓN DE GESTIÓN DE SERVICIOS
@@ -2637,7 +2635,7 @@
                 const ingresosHabilitado = this.ingresosHabilitado();
                 const indicator = document.getElementById('ingresos-indicator');
                 if (indicator) {
-                    indicator.textContent = ingresosHabilitado ? '✓' : '✗';
+                    indicator.textContent = ingresosHabilitado ? 'SI' : 'NO';
                 }
 
                 // Buscador
@@ -5743,8 +5741,13 @@
 
             cargarTema() {
                 const tema = localStorage.getItem(this.THEME_KEY);
-                if (tema === 'dark') {
+                if (tema === 'dark' || tema === null) {
+                    // Si es dark O primera vez (null), activar modo oscuro
                     document.body.classList.add('dark-mode');
+                    // Guardar preferencia si es la primera vez
+                    if (tema === null) {
+                        localStorage.setItem(this.THEME_KEY, 'dark');
+                    }
                 }
             }
 
@@ -5764,7 +5767,7 @@
 
                 // Actualizar indicador visual
                 const indicator = document.getElementById('ingresos-indicator');
-                indicator.textContent = nuevoEstado ? '✓' : '✗';
+                indicator.textContent = nuevoEstado ? 'SI' : 'NO';
 
                 // Re-renderizar servicios
                 this.renderServicios();
@@ -6091,9 +6094,42 @@
                 }, 150);
             }
         }
+        // Inicializar aplicación (global para Service Worker)
+        window.app = new GestionServicios();
+    </script>
+    <script>
+        // Registro del Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(registration => {
+                        console.log('✅ Service Worker registrado:', registration.scope);
 
-        // Inicializar aplicación
-        const app = new GestionServicios();
+                        // Detectar actualizaciones
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    // Hay una nueva versión disponible
+                                    // Usamos el método mostrarToast de la app
+                                    if (window.app && typeof window.app.mostrarToast === 'function') {
+                                        window.app.mostrarToast('Nueva versión disponible. Recarga la página.', 'info');
+                                    } else {
+                                        // Fallback si app no está lista aún
+                                        console.log('ℹ️ Nueva versión disponible. Recarga la página.');
+                                    }
+                                }
+                            });
+                        });
+                    })
+                    .catch(err => {
+                        console.error('❌ Error al registrar Service Worker:', err);
+                    });
+            });
+        } else {
+            console.log('⚠️ Service Worker no soportado en este navegador');
+        }
     </script>
 </body>
 
