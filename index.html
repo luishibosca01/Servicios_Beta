@@ -1743,7 +1743,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">Version no deberia actualizarse</div> <!-- DeltaF -->
+            <div class="menu-version">Version 1.00</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -6098,34 +6098,37 @@
         window.app = new GestionServicios();
     </script>
     <script>
-        // Registro del Service Worker
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(registration => {
-                        console.log('Service Worker registrado:', registration.scope);
-                        registration.addEventListener('updatefound', () => {
-                            const newWorker = registration.installing;
-                            newWorker.addEventListener('statechange', () => {
-                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                     if (window.app && typeof window.app.mostrarToast === 'function') {
-                                        window.app.mostrarToast('Nueva versión disponible. Recarga la página.', 'info');
-                                    } else {
-                                        // Fallback si app no está lista aún
-                                        console.log('ℹNueva versión disponible. Recarga la página.');
-                                    }
+    // Registro del Service Worker
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(registration => {
+                    console.log('✅ Service Worker registrado:', registration.scope);
+                    
+                    // Detectar actualizaciones
+                    registration.addEventListener('updatefound', () => {
+                        const newWorker = registration.installing;
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                // Hay una nueva versión disponible
+                                if (window.app && typeof window.app.mostrarToast === 'function') {
+                                    window.app.mostrarToast('Nueva versión disponible. Recarga la página.', 'info');
+                                } else {
+                                    console.log('Nueva versión disponible. Recarga la página.');
                                 }
-                            });
+                                setTimeout(() => {
+                                    window.location.reload(true); // true = hard reload
+                                }, 3000);
+                            }
                         });
-                    })
-                    .catch(err => {
-                        console.error('❌ Error al registrar Service Worker:', err);
                     });
-            });
-        } else {
-            console.log('⚠️ Service Worker no soportado en este navegador');
-        }
-    </script>
+                })
+                .catch(err => console.error('❌ Error SW:', err));
+        });
+    } else {
+        console.log('⚠️ Service Worker no soportado en este navegador');
+    }
+</script>
 </body>
 
 </html>
