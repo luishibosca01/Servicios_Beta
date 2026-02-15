@@ -1743,7 +1743,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">Version 1.00</div> <!-- DeltaF -->
+            <div class="menu-version">Version 1.01</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -6103,21 +6103,16 @@
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js')
                     .then(registration => {
-                        console.log('✅ Service Worker registrado:', registration.scope);
-
-                        // Detectar actualizaciones
+                        console.log('Service Worker registrado:', registration.scope);
                         registration.addEventListener('updatefound', () => {
                             const newWorker = registration.installing;
-
                             newWorker.addEventListener('statechange', () => {
                                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                    // Hay una nueva versión disponible
-                                    // Usamos el método mostrarToast de la app
-                                    if (window.app && typeof window.app.mostrarToast === 'function') {
+                                     if (window.app && typeof window.app.mostrarToast === 'function') {
                                         window.app.mostrarToast('Nueva versión disponible. Recarga la página.', 'info');
                                     } else {
                                         // Fallback si app no está lista aún
-                                        console.log('ℹ️ Nueva versión disponible. Recarga la página.');
+                                        console.log('ℹNueva versión disponible. Recarga la página.');
                                     }
                                 }
                             });
@@ -6136,11 +6131,11 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA DeltaF VERSION 0.58
+    //                 NOTAS SISTEMA DeltaF VERSION 1.00
     // ====================================================================
     
      - CAMBIOS
-     1) 
+     1) Se agrega el script del sw en la pagina
 
 
      - BUGS CONOCIDOS:
