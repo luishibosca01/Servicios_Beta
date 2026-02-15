@@ -4,11 +4,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#ffffff">
     <meta name="description" content="Gestión de servicios y facturas">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; 
+                 script-src 'self' 'unsafe-inline'; 
+                 style-src 'self' 'unsafe-inline'; 
+                 img-src 'self' data: https:; 
+                 font-src 'self' data:; 
+                 connect-src 'self'; 
+                 object-src 'none'; 
+                 base-uri 'self'; 
+                 form-action 'self'; 
+                 frame-ancestors 'none'; 
+                 upgrade-insecure-requests;">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block">
     <title>Gestión de Servicios</title>
     <link rel="manifest" href="./manifest.json">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d
@@ -1743,7 +1756,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">Version 1.20</div> <!-- DeltaF -->
+            <div class="menu-version">Version 1.00</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -6098,60 +6111,45 @@
         window.app = new GestionServicios();
     </script>
     <script>
-        // Registro del Service Worker
+        // Registro del Service Worker Optimizado
         if ('serviceWorker' in navigator) {
-            // Detectar cuando el SW cambia y recargar
-            let refreshing = false;
-            navigator.serviceWorker.addEventListener('controllerchange', () => {
-                if (refreshing) return;
-                refreshing = true;
-                console.log('🔄 Nuevo SW activo, recargando...');
-                window.location.reload();
-            });
+            let newWorker;
 
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js')
                     .then(registration => {
-                        console.log('✅ Service Worker registrado:', registration.scope);
+                        console.log('✅ SW registrado:', registration.scope);
 
-                        // Chequear actualizaciones cada 60 segundos
-                        setInterval(() => {
-                            registration.update();
-                        }, 60000);
-
-                        // Detectar actualizaciones
+                        // Detectar si hay una actualización esperando
                         registration.addEventListener('updatefound', () => {
-                            const newWorker = registration.installing;
-                            if (!newWorker) return;
+                            newWorker = registration.installing;
 
                             newWorker.addEventListener('statechange', () => {
-                                console.log('SW state:', newWorker.state);
-
-                                if (newWorker.state === 'installed') {
-                                    if (navigator.serviceWorker.controller) {
-                                        // Nueva versión disponible
-                                        console.log('🔄 Nueva versión detectada');
-
-                                        if (window.app && typeof window.app.mostrarToast === 'function') {
-                                            window.app.mostrarToast('Nueva versión detectada. Actualizando...', 'info');
-                                        }
-
-                                        // Esperar 2 segundos y activar el nuevo SW
-                                        setTimeout(() => {
-                                            newWorker.postMessage({ type: 'SKIP_WAITING' });
-                                        }, 2000);
-                                    } else {
-                                        // Primera instalación
-                                        console.log('✅ SW instalado por primera vez');
+                                // Cuando el nuevo SW está instalado
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    console.log('🚀 Nueva versión disponible. Actualizando...');
+                                    // Notificar al usuario (opcional) o forzar la actualización
+                                    if (window.app && typeof window.app.mostrarToast === 'function') {
+                                        window.app.mostrarToast('Actualizando aplicación...', 'info');
                                     }
+                                    // No necesitamos enviar mensaje SKIP_WAITING porque el SW nuevo 
+                                    // ya tiene self.skipWaiting() en la fase de install.
                                 }
                             });
                         });
                     })
-                    .catch(err => console.error('❌ Error SW:', err));
+                    .catch(err => console.error('❌ Error registro SW:', err));
             });
-        } else {
-            console.log('⚠️ Service Worker no soportado');
+
+            // Escuchar cuando el controlador cambia (cuando el nuevo SW toma el control)
+            // Esto sucede después de que el nuevo SW se activa
+            let refreshing = false;
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (refreshing) return;
+                refreshing = true;
+                console.log('🔄 Controlador cambiado, recargando página...');
+                window.location.reload();
+            });
         }
     </script>
 </body>
