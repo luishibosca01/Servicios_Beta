@@ -1,4 +1,4 @@
-const CACHE_NAME = 'deltaF-v1.01-cache';
+const CACHE_NAME = 'deltaF-v0.60-cache';
 const urlsToCache = [
   './',
   './index.html',
@@ -6,27 +6,31 @@ const urlsToCache = [
   './icon.svg'
 ];
 
+// Instalación
 self.addEventListener('install', event => {
+  console.log('📦 SW instalando...');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        console.log('Abriendo cache');
-        return cache.addAll(urlsToCache).catch(err => {
-            console.error('CRÍTICO: Falló la carga de archivos en el install:', err);
-            throw err; 
-        });
+        console.log('✅ Cache abierto:', CACHE_NAME);
+        return cache.addAll(urlsToCache);
+      })
+      .catch(err => {
+        console.error('❌ Error cacheando:', err);
+        throw err;
       })
   );
-  self.skipWaiting();
 });
 
+// Activación
 self.addEventListener('activate', event => {
+  console.log('🔄 SW activando...');
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cacheName => {
           if (cacheName !== CACHE_NAME) {
-            console.log('Borrando cache viejo:', cacheName);
+            console.log('🗑️ Borrando cache viejo:', cacheName);
             return caches.delete(cacheName);
           }
         })
@@ -36,7 +40,15 @@ self.addEventListener('activate', event => {
   return self.clients.claim();
 });
 
-// Fetch: cache-first normal (como Horarios)
+// Mensaje para activar el nuevo SW
+self.addEventListener('message', event => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    console.log('⏭️ SKIP_WAITING recibido');
+    self.skipWaiting();
+  }
+});
+
+// Fetch
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
 
