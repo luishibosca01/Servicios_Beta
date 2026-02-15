@@ -1,4 +1,4 @@
-const CACHE_NAME = 'deltaF-v1.20-cache';
+const CACHE_NAME = 'deltaF-v1.21-cache';
 const urlsToCache = [
   './',
   './index.html',
