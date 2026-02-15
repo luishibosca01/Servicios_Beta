@@ -1,4 +1,4 @@
-const CACHE_NAME = 'deltaF-v0.60-cache';
+const CACHE_NAME = 'deltaF-v0.70-cache';
 const urlsToCache = [
   './',
   './index.html',
@@ -6,7 +6,6 @@ const urlsToCache = [
   './icon.svg'
 ];
 
-// Instalación
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -18,10 +17,9 @@ self.addEventListener('install', event => {
         });
       })
   );
-  // SIN skipWaiting aquí
+  self.skipWaiting();
 });
 
-// Activación
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(cacheNames => {
@@ -38,19 +36,34 @@ self.addEventListener('activate', event => {
   return self.clients.claim();
 });
 
-// Fetch (sin cambios)
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
 
   const url = new URL(event.request.url);
   if (url.origin !== location.origin) return;
 
+  // Para navegación: siempre ir a la red
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request, { cache: 'no-store' })
+        .then(response => {
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(event.request, responseClone);
+          });
+          return response;
+        })
+        .catch(() => caches.match('./index.html'))
+    );
+    return;
+  }
+
+  // Para otros recursos: cache-first
   event.respondWith(
     caches.match(event.request)
       .then(response => {
-        if (response) {
-          return response;
-        }
+        if (response) return response;
+        
         return fetch(event.request)
           .then(networkResponse => {
             if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
@@ -61,11 +74,6 @@ self.addEventListener('fetch', event => {
               cache.put(event.request, responseClone);
             });
             return networkResponse;
-          })
-          .catch(() => {
-            if (event.request.mode === 'navigate') {
-              return caches.match('./index.html');
-            }
           });
       })
   );
