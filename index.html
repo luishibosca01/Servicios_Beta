@@ -52,7 +52,7 @@
             /* --- Variables de Color (Tema Oscuro) --- */
             --bg-body: #000000;
             --bg-card: #0f141b;
-            --bg-header: rgba(17, 24, 39, 0.800);
+            --bg-header: rgba(0, 0, 0, 0.5);
             --text-main: #f9fafb;
             --text-muted: #d1d5db;
             --border: #1f2836;
@@ -105,8 +105,8 @@
 
         .header {
             background: var(--bg-header);
-            backdrop-filter: blur(5px);
-            padding: 0.6rem;
+            backdrop-filter: blur(10px);
+            padding: 0 0.6rem;
             box-shadow: var(--shadow);
             position: sticky;
             top: 0;
@@ -117,7 +117,7 @@
         }
 
         .header h1 {
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             color: var(--text-main);
             display: flex;
             align-items: center;
@@ -961,35 +961,30 @@
             transition: all 0.3s;
         }
 
-        /* Estadísticas */
+        /* Estadísticas Unificadas */
         .estadisticas-selector-container {
             margin-bottom: 1rem;
         }
 
         .estadisticas-selector {
             width: 100%;
-            border: 1px solid var(--border);
             background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            color: var(--text-main);
+            font-size: 1rem;
             cursor: pointer;
+            transition: all 0.2s;
         }
 
-        .estadisticas-lista {
+        .estadisticas-container {
+            animation: slideDownFade 0.3s ease;
+        }
+
+         .estadisticas-lista {
             display: flex;
             flex-direction: column;
-            transition: all 0.3s ease;
-            gap: 1rem;
-        }
-
-        .estadistica-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.3s ease;
-        }
-
-        .estadistica-label,
-        .estadistica-valor {
-            color: var(--text-main);
+            gap: 0.75rem;
         }
 
         /* --- Estilos Calculador --- */
@@ -998,23 +993,15 @@
         .calculador-campo {
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
+            padding-bottom: 1rem;
         }
 
         .calculador-label {
-            font-size: 0.875rem;
-            font-weight: 500;
             color: var(--text-muted);
         }
 
         .calculador-input {
             cursor: text;
-        }
-
-        .calculador-select:focus,
-        .calculador-input:focus {
-            outline: none;
-            border-color: var(--input-focus);
         }
 
         .calculador-resultados {
@@ -1247,35 +1234,9 @@
             pointer-events: none;
         }
 
-        /* Botón toggle de estado de pago */
-        .btn-toggle-pagada {
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            padding: 0.875rem;
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            background: var(--input-bg);
-            color: var(--text-main);
-            cursor: pointer;
-            transition: all 0.2s;
-            font-weight: 600;
-        }
-
-        .btn-toggle-pagada:hover {
-            background: var(--c-gray-btn);
-        }
-
-        .btn-toggle-pagada:active {
-            transform: scale(0.98);
-        }
-
-        .btn-toggle-pagada.pagada {
+        .icon-btn.pagada {
             background: var(--c-green);
-            color: var(--text-inv);
-            border-color: var(--c-green);
+            color: var(--text-main);
         }
 
         /* --- Grupos de Facturas por Año --- */
@@ -1407,6 +1368,14 @@
             background: rgba(41, 151, 255, 0.5);
         }
 
+        .estadistica-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            /* Opcional: línea divisoria */
+        }
+
         /* moviles */
         @media (max-width: 767px) {
             .servicios-lista {
@@ -1466,31 +1435,20 @@
         // Aplicar estado de tarjetas colapsables
         (function () {
             const estadisticasColapsadas = localStorage.getItem('estadisticas-collapsed') === 'true';
-            const calculadorColapsado = localStorage.getItem('calculador-collapsed') === 'true';
             const serviciosState = localStorage.getItem('servicios-collapse-state') || 'expanded';
 
             document.addEventListener('DOMContentLoaded', function () {
-                const estadisticasMes = document.getElementById('estadisticas-mes');
+                const estadisticasContent = document.getElementById('estadisticas-content');
                 const estadisticasChevron = document.getElementById('estadisticas-chevron');
-                const calculadorContent = document.getElementById('calculador-content');
-                const calculadorChevron = document.getElementById('calculador-chevron');
                 const serviciosContent = document.getElementById('servicios-content');
                 const serviciosChevron = document.getElementById('servicios-chevron');
 
                 // Aplicar estado de estadísticas
                 if (!estadisticasColapsadas) {
-                    estadisticasMes.classList.remove('collapsed');
+                    estadisticasContent.classList.remove('collapsed');
                 } else {
-                    estadisticasMes.classList.add('collapsed');
+                    estadisticasContent.classList.add('collapsed');
                     estadisticasChevron.classList.add('collapsed');
-                }
-
-                // Aplicar estado de calculador
-                if (!calculadorColapsado) {
-                    calculadorContent.classList.remove('collapsed');
-                } else {
-                    calculadorContent.classList.add('collapsed');
-                    calculadorChevron.classList.add('collapsed');
                 }
 
                 // Aplicar estado de servicios
@@ -1745,7 +1703,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">Version 1.00</div> <!-- DeltaF -->
+            <div class="menu-version">Version 1.02</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -1758,7 +1716,7 @@
                     <div id="resumen-mes"></div>
                 </div>
 
-                <!-- Tarjeta de Estadísticas -->
+                <!-- Tarjeta de Estadísticas Unificada -->
                 <div class="card card-fade-in" style="animation-delay: 0.1s;">
                     <h2 class="card-header-collapsible" id="estadisticas-header">
                         <span>
@@ -1767,38 +1725,29 @@
                                     d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z" />
                                 <path d="M7 12h2v5H7zm4-3h2v8h-2zm4-3h2v11h-2z" />
                             </svg>
-                            Estadística Mensual
+                            Estadísticas
                         </span>
                         <svg class="icon chevron-icon" id="estadisticas-chevron" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="6 9 12 15 18 9"></polyline>
                         </svg>
                     </h2>
-                    <div id="estadisticas-mes" class="collapsible-content collapsed"></div>
-                </div>
+                    <div id="estadisticas-content" class="collapsible-content collapsed">
+                        <!-- Selector de tipo de estadística -->
+                        <div class="estadisticas-selector-container">
+                            <label class="calculador-label">Tipo de estadística</label>
+                            <select id="estadisticas-tipo" class="estadisticas-selector">
+                                <option value="mensual">Mensual</option>
+                                <option value="individual">Individual</option>
+                            </select>
+                        </div>
 
-                <!-- Tarjeta de Calculador -->
-                <div class="card card-fade-in" style="animation-delay: 0.2s;">
-                    <h2 class="card-header-collapsible" id="calculador-header">
-                        <span>
-                            <svg class="icon" viewBox="0 0 24 24">
-                                <rect x="4" y="2" width="16" height="20" rx="2" stroke="currentColor" stroke-width="2"
-                                    fill="none" />
-                                <line x1="8" y1="6" x2="16" y2="6" stroke="currentColor" stroke-width="2" />
-                                <line x1="8" y1="10" x2="16" y2="10" stroke="currentColor" stroke-width="2" />
-                                <line x1="8" y1="14" x2="12" y2="14" stroke="currentColor" stroke-width="2" />
-                                <circle cx="15" cy="18" r="1.5" fill="currentColor" />
-                                <circle cx="11" cy="18" r="1.5" fill="currentColor" />
-                            </svg>
-                            Estadística Individual
-                        </span>
-                        <svg class="icon chevron-icon" id="calculador-chevron" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
-                    </h2>
-                    <div id="calculador-content" class="collapsible-content collapsed">
-                        <div class="calculador-container">
+                        <!-- Contenedor para estadísticas mensuales -->
+                        <div id="estadisticas-mensual-container" class="estadisticas-container"></div>
+
+                        <!-- Contenedor para estadísticas individuales -->
+                        <div id="estadisticas-individual-container" class="estadisticas-container"
+                            style="display: none;">
                             <div class="calculador-filtros">
                                 <div class="calculador-campo">
                                     <label class="calculador-label">Servicio</label>
@@ -1811,8 +1760,8 @@
                                     <div style="display: flex; gap: 0.5rem;">
                                         <input type="date" id="calculador-desde" class="calculador-input"
                                             style="flex: 1;">
-                                        <button type="button" id="btn-fecha-desde" class="icon-btn"
-                                            title="Fecha actual / Limpiar">
+                                        <button type="button" class="icon-btn" id="btn-calculador-desde-hoy"
+                                            title="Fecha de hoy / Limpiar">
                                             <svg class="icon">
                                                 <use href="#icon-calendar" />
                                             </svg>
@@ -1824,8 +1773,8 @@
                                     <div style="display: flex; gap: 0.5rem;">
                                         <input type="date" id="calculador-hasta" class="calculador-input"
                                             style="flex: 1;">
-                                        <button type="button" id="btn-fecha-hasta" class="icon-btn"
-                                            title="Fecha actual / Limpiar">
+                                        <button type="button" class="icon-btn" id="btn-calculador-hasta-hoy"
+                                            title="Fecha de hoy / Limpiar">
                                             <svg class="icon">
                                                 <use href="#icon-calendar" />
                                             </svg>
@@ -1833,9 +1782,8 @@
                                     </div>
                                 </div>
                             </div>
-                            <div id="calculador-resultados" class="calculador-resultados">
-                                <!-- Los resultados se cargarán dinámicamente -->
-                            </div>
+
+                            <div class="calculador-resultados" id="calculador-resultados"></div>
                         </div>
                     </div>
                 </div>
@@ -2573,6 +2521,9 @@
                 this.INGRESOS_KEY = 'ingresos-habilitado';
                 this.SERVICIO_INGRESOS_ID = 'servicio-ingresos-especial';
 
+                // Tipo de estadística seleccionado
+                this.tipoEstadisticaActual = localStorage.getItem('estadisticas-tipo') || 'mensual';
+
                 // Cargar datos del perfil activo - NUEVO
                 this.cargarDatosPerfilActivo();
 
@@ -2594,22 +2545,35 @@
                 this.renderServicios();
                 this.setupEventListeners();
                 this.actualizarBotonesHistorial();
+
+                // Inicializar indicador de ingresos
+                if (localStorage.getItem(this.INGRESOS_KEY) === null) {
+                    localStorage.setItem(this.INGRESOS_KEY, 'false');
+                }
+                const ingresosHabilitado = this.ingresosHabilitado();
+                const indicator = document.getElementById('ingresos-indicator');
+                if (indicator) {
+                    indicator.textContent = ingresosHabilitado ? 'SI' : 'NO';
+                }
+
                 // Restaurar estado de estadísticas colapsadas
                 const estadisticasColapsadas = localStorage.getItem('estadisticas-collapsed') === 'true';
                 if (estadisticasColapsadas) {
-                    document.getElementById('estadisticas-mes').classList.add('collapsed');
+                    document.getElementById('estadisticas-content').classList.add('collapsed');
                     document.getElementById('estadisticas-chevron').classList.add('collapsed');
+                } else {
+                    // Si está expandido, cargar el tipo guardado
+                    const tipoGuardado = localStorage.getItem('estadisticas-tipo') || 'mensual';
+                    this.tipoEstadisticaActual = tipoGuardado;
+                    document.getElementById('estadisticas-tipo').value = tipoGuardado;
+                    this.cambiarTipoEstadistica();
                 }
-                // Restaurar estado de calculador colapsado
-                const calculadorColapsado = localStorage.getItem('calculador-collapsed') === 'true';
-                if (calculadorColapsado) {
-                    document.getElementById('calculador-content').classList.add('collapsed');
-                    document.getElementById('calculador-chevron').classList.add('collapsed');
-                }
+
                 // Restaurar estado de servicios colapsados
-                const serviciosState = localStorage.getItem('servicios-collapse-state') || 'expanded';
+                const serviciosState = localStorage.getItem('servicios-collapse-state') || 'semi-collapsed';
                 this.serviciosCollapseState = serviciosState;
                 this.aplicarEstadoServicios(serviciosState);
+
                 // Botón ordenar
                 document.getElementById('btn-sort').addEventListener('click', () => {
                     // Sincronizar el select con el orden actual antes de abrir el modal
@@ -2628,17 +2592,6 @@
                 document.getElementById('editar-factura-monto').addEventListener('input', (e) => {
                     this.actualizarEstadoBotonToggle('editar-factura-monto', 'btn-editar-toggle-negativo');
                 });
-
-                // Inicializar indicador de ingresos
-                // Si es la primera vez (no existe en localStorage), establecer como false
-                if (localStorage.getItem(this.INGRESOS_KEY) === null) {
-                    localStorage.setItem(this.INGRESOS_KEY, 'false');
-                }
-                const ingresosHabilitado = this.ingresosHabilitado();
-                const indicator = document.getElementById('ingresos-indicator');
-                if (indicator) {
-                    indicator.textContent = ingresosHabilitado ? 'SI' : 'NO';
-                }
 
                 // Buscador
                 const searchInput = document.getElementById('search-input');
@@ -3255,21 +3208,24 @@
                     }
                 });
 
-                // Toggle de estadísticas colapsable
                 document.getElementById('estadisticas-header').addEventListener('click', () => {
                     this.toggleEstadisticas();
                 });
 
-                // Toggle de calculador colapsable
-                document.getElementById('calculador-header').addEventListener('click', () => {
-                    this.toggleCalculador();
+                // Selector de tipo de estadística
+                document.getElementById('estadisticas-tipo').addEventListener('change', (e) => {
+                    this.tipoEstadisticaActual = e.target.value;
+                    localStorage.setItem('estadisticas-tipo', e.target.value);
+                    this.cambiarTipoEstadistica();
                 });
+
+                // Inicializar calculador individual
+                this.inicializarCalculador();
 
                 // Toggle de servicios colapsable (3 estados)
                 document.getElementById('servicios-header').addEventListener('click', () => {
                     this.toggleServicios();
                 });
-
                 // Atajos de teclado
                 document.addEventListener('keydown', (e) => {
                     // ESC para cerrar modales o salir del modo calculadora
@@ -3305,9 +3261,6 @@
                 document.getElementById('modal-informacion-close').addEventListener('click', () => {
                     this.cerrarModal('modal-informacion');
                 });
-
-                // Inicializar calculador
-                this.inicializarCalculador();
 
                 // Atajo para escribir directamente en el buscador (solo desktop)
                 document.addEventListener('keydown', (e) => {
@@ -3363,7 +3316,6 @@
                         searchInput.dispatchEvent(inputEvent);
                     }
                 });
-
 
             }
 
@@ -3759,14 +3711,14 @@
             <span class="estadistica-valor">${cantidadVencidas}</span>
         </div>
         ${this.ingresosHabilitado() ? `
-        <div class="estadistica-item" style="color: var(--c-green);">
+        <div class="estadistica-item">
             <span class="estadistica-label">Ingresos</span>
             <span class="estadistica-valor">${this.formatearMoneda(totalIngresos)}</span>
         </div>
         ` : ''}
 `;
 
-                    const lista = document.querySelector('#estadisticas-mes .estadisticas-lista');
+                    const lista = document.querySelector('#estadisticas-mensual-container .estadisticas-lista');
                     if (lista) {
                         lista.innerHTML = itemsHTML;
                         // Solo animar si hubo cambio
@@ -3794,7 +3746,7 @@
     </div>
     <div class="estadisticas-lista"></div>
 `;
-                    document.getElementById('estadisticas-mes').innerHTML = estadisticasHTML;
+                    document.getElementById('estadisticas-mensual-container').innerHTML = estadisticasHTML;
 
                     // Agregar event listener al select
                     const select = document.getElementById('select-mes-estadisticas');
@@ -3821,7 +3773,7 @@
                     }
 
                     // Solo animar si el estado cambió
-                    const lista = document.querySelector('#estadisticas-mes .estadisticas-lista');
+                    const lista = document.querySelector('#estadisticas-mensual-container .estadisticas-lista');
                     if (lista && estadoCambio) {
                         // Animación de salida
                         lista.style.animation = 'slideUpFade 0.2s ease-out forwards';
@@ -3839,27 +3791,35 @@
             }
 
             toggleEstadisticas() {
-                const contenido = document.getElementById('estadisticas-mes');
+                const estadisticasContent = document.getElementById('estadisticas-content');
                 const chevron = document.getElementById('estadisticas-chevron');
 
-                contenido.classList.toggle('collapsed');
+                estadisticasContent.classList.toggle('collapsed');
                 chevron.classList.toggle('collapsed');
 
-                // Guardar estado en localStorage
-                const estaColapsado = contenido.classList.contains('collapsed');
+                const estaColapsado = estadisticasContent.classList.contains('collapsed');
                 localStorage.setItem('estadisticas-collapsed', estaColapsado);
+
+                if (!estaColapsado) {
+                    // Cargar el tipo seleccionado
+                    document.getElementById('estadisticas-tipo').value = this.tipoEstadisticaActual;
+                    this.cambiarTipoEstadistica();
+                }
             }
 
-            toggleCalculador() {
-                const contenido = document.getElementById('calculador-content');
-                const chevron = document.getElementById('calculador-chevron');
+            cambiarTipoEstadistica() {
+                const mensualContainer = document.getElementById('estadisticas-mensual-container');
+                const individualContainer = document.getElementById('estadisticas-individual-container');
 
-                contenido.classList.toggle('collapsed');
-                chevron.classList.toggle('collapsed');
-
-                // Guardar estado en localStorage
-                const estaColapsado = contenido.classList.contains('collapsed');
-                localStorage.setItem('calculador-collapsed', estaColapsado);
+                if (this.tipoEstadisticaActual === 'mensual') {
+                    mensualContainer.style.display = 'block';
+                    individualContainer.style.display = 'none';
+                    this.actualizarEstadisticas();
+                } else if (this.tipoEstadisticaActual === 'individual') {
+                    mensualContainer.style.display = 'none';
+                    individualContainer.style.display = 'block';
+                    this.calcularPeriodo();
+                }
             }
 
             // ========================================
@@ -3867,42 +3827,27 @@
             // ========================================
 
             inicializarCalculador() {
-                // Poblar select de servicios
+                const selectServicio = document.getElementById('calculador-servicio');
+                if (!selectServicio) return;
+
                 this.actualizarSelectServicios();
 
-                // Event listeners
-                const selectServicio = document.getElementById('calculador-servicio');
                 const inputDesde = document.getElementById('calculador-desde');
                 const inputHasta = document.getElementById('calculador-hasta');
-                const btnFechaDesde = document.getElementById('btn-fecha-desde');
-                const btnFechaHasta = document.getElementById('btn-fecha-hasta');
+                const btnDesde = document.getElementById('btn-calculador-desde-hoy');
+                const btnHasta = document.getElementById('btn-calculador-hasta-hoy');
 
                 selectServicio.addEventListener('change', () => this.calcularPeriodo());
                 inputDesde.addEventListener('change', () => this.calcularPeriodo());
                 inputHasta.addEventListener('change', () => this.calcularPeriodo());
 
-                // Botones de fecha actual/limpiar
-                btnFechaDesde.addEventListener('click', () => {
-                    if (inputDesde.value) {
-                        // Si hay valor, limpiar
-                        inputDesde.value = '';
-                    } else {
-                        // Si no hay valor, pegar fecha actual
-                        const hoy = new Date();
-                        inputDesde.value = hoy.toISOString().split('T')[0];
-                    }
+                btnDesde.addEventListener('click', () => {
+                    inputDesde.value = inputDesde.value ? '' : this.obtenerFechaLocal();
                     this.calcularPeriodo();
                 });
 
-                btnFechaHasta.addEventListener('click', () => {
-                    if (inputHasta.value) {
-                        // Si hay valor, limpiar
-                        inputHasta.value = '';
-                    } else {
-                        // Si no hay valor, pegar fecha actual
-                        const hoy = new Date();
-                        inputHasta.value = hoy.toISOString().split('T')[0];
-                    }
+                btnHasta.addEventListener('click', () => {
+                    inputHasta.value = inputHasta.value ? '' : this.obtenerFechaLocal();
                     this.calcularPeriodo();
                 });
             }
@@ -4945,7 +4890,6 @@
                 const btnTogglePagada = document.getElementById('btn-toggle-pagada');
                 const inputFechaPago = document.getElementById('factura-fecha-pago');
                 const iconUse = btnTogglePagada.querySelector('use');
-
                 const estaPagada = btnTogglePagada.classList.contains('pagada');
 
                 if (estaPagada) {
@@ -5216,6 +5160,8 @@
                 // Buscar el servicio que contiene esta factura
                 const servicio = this.servicios.find(s => s.facturas.some(f => f.id === facturaId));
                 if (!servicio) return;
+                const factura = servicio.facturas.find(f => f.id === facturaId);
+                if (!factura) return;
                 this.cerrarModal('modal-facturas-servicio');
                 this.abrirModalFactura(servicio.id, facturaId);
                 // Actualizar estado del botón según el signo del monto
@@ -6146,11 +6092,11 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA DeltaF VERSION 1.00
+    //                 NOTAS SISTEMA DeltaF VERSION 1.02
     // ====================================================================
     
      - CAMBIOS
-     1) Se agrega el script del sw en la pagina
+     1) Se unifican tarjetas de estadisticas
 
 
      - BUGS CONOCIDOS:
