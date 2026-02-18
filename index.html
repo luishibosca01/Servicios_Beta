@@ -981,7 +981,7 @@
             animation: slideDownFade 0.3s ease;
         }
 
-         .estadisticas-lista {
+        .estadisticas-lista {
             display: flex;
             flex-direction: column;
             gap: 0.75rem;
@@ -2987,11 +2987,15 @@
                             const mesFactura = fechaFactura.getMonth();
                             const anioFactura = fechaFactura.getFullYear();
 
-                            // Verificar si es del mes actual o del mes siguiente
+                            // Verificar si es del mes actual, anterior o siguiente
+                            const mesPasado = mesActual === 0 ? 11 : mesActual - 1;
+                            const anioPasado = mesActual === 0 ? anioActual - 1 : anioActual;
+
                             const esMesActual = (mesFactura === mesActual && anioFactura === anioActual);
                             const esMesSiguiente = (mesFactura === mesSiguiente && anioFactura === anioSiguiente);
+                            const esMesPasado = (mesFactura === mesPasado && anioFactura === anioPasado);
 
-                            if (esMesActual || esMesSiguiente) {
+                            if (esMesActual || esMesSiguiente || esMesPasado) {
                                 total += factura.monto;
                                 contadorFacturas++;
                             }
@@ -3740,7 +3744,8 @@
                 if (!yaExisteSelector || !hayDatos) {
                     const estadisticasHTML = `
     <div class="estadisticas-selector-container">
-        <select id="select-mes-estadisticas" class="estadisticas-selector">
+    <label class="calculador-label">Mes</label>
+    <select id="select-mes-estadisticas" class="estadisticas-selector">
             ${this.generarOpcionesMeses(mesSeleccionado, añoSeleccionado)}
         </select>
     </div>
@@ -6097,6 +6102,9 @@
     
      - CAMBIOS
      1) Se unifican tarjetas de estadisticas
+     2) el calculo de la calculadora del boton agregar, ahora tiene en cuenta el mes anterior tambien, quedando
+     en el calculo mes anterior, mes actual y mes siguiente
+     3) se agrega etiqueta "mes" en el campo correspondiente de la tarjeta de estadisticas
 
 
      - BUGS CONOCIDOS:
