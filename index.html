@@ -151,7 +151,9 @@
             border: none;
         }
 
-        .icon-btn:active {
+        .icon-btn:active,
+        .btn-moneda:active,
+        .search-clear:active {
             transform: scale(0.95);
         }
 
@@ -286,7 +288,8 @@
             position: relative;
         }
 
-        .servicio-item:active {
+        .servicio-item:active,
+        .facturas-grupo-header:active {
             transform: scale(0.99);
         }
 
@@ -751,10 +754,6 @@
             color: var(--text-main);
         }
 
-        .btn-cerrar-menu:active {
-            transform: scale(0.98);
-        }
-
         .menu-version {
             text-align: center;
             font-size: 0.875rem;
@@ -854,7 +853,6 @@
         .resumen-valor {
             font-size: 1.5rem;
             font-weight: 700;
-            margin-bottom: 0.25rem;
             color: var(--text-main);
         }
 
@@ -868,10 +866,6 @@
             text-align: center;
             cursor: pointer;
             transition: all 0.3s;
-        }
-
-        .resumen-monto:active {
-            transform: scale(0.98);
         }
 
         /* Barra de progreso en resumen */
@@ -1224,10 +1218,6 @@
             color: var(--text-main);
         }
 
-        .search-clear:active {
-            transform: scale(0.9);
-        }
-
         .search-clear .icon {
             width: 1.1rem;
             height: 1.1rem;
@@ -1235,8 +1225,9 @@
         }
 
         .icon-btn.pagada {
-            background: var(--c-green);
-            color: var(--text-main);
+            border-color: var(--c-green);
+            background: rgba(96, 172, 148, 0.1);
+            color: var(--c-green);
         }
 
         /* --- Grupos de Facturas por Año --- */
@@ -1252,10 +1243,6 @@
             margin: 0.25rem 1rem 0.25rem;
             transition: all 0.2s;
             justify-content: space-between;
-        }
-
-        .facturas-grupo-header:active {
-            transform: scale(0.98);
         }
 
         .facturas-grupo-header-info {
@@ -1427,6 +1414,83 @@
                 padding-right: 8px;
             }
 
+        }
+
+        /* --- Selector de Moneda --- */
+        /* --- Botón toggle de moneda (reemplaza al select) --- */
+        .btn-moneda {
+            flex-shrink: 0;
+            width: 52px;
+            min-height: 48px;
+            padding: 0;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--input-bg);
+            color: var(--text-muted);
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s, color 0.15s, border-color 0.15s;
+        }
+
+        /* Estadísticas duales: dos líneas apiladas */
+        .stat-dual-line {
+            display: flex;
+            flex-direction: column;
+            gap: 0.1rem;
+        }
+
+        .stat-dual-row {
+            display: flex;
+            align-items: baseline;
+            gap: 0.4rem;
+        }
+
+        .stat-dual-tag {
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            color: var(--text-muted);
+            min-width: 1.8rem;
+        }
+
+        .stat-dual-val {
+            font-size: 0.9rem;
+            color: var(--text-main);
+        }
+
+        /* Tarjeta resumen: monto USD como segunda línea, mismo tamaño */
+        .resumen-valor-usd {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-main);
+            text-align: left;
+            margin-bottom: 1rem;
+        }
+
+        /* Badge de moneda en lista de facturas */
+        .moneda-badge {
+            display: inline-block;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 0.1rem 0.35rem;
+            border-radius: 4px;
+            margin-left: 0.4rem;
+            vertical-align: middle;
+        }
+
+        .moneda-badge.usd {
+            background: rgba(96, 172, 148, 0.2);
+            color: var(--c-green);
+        }
+
+        .moneda-badge.ars {
+            background: rgba(83, 130, 230, 0.15);
+            color: var(--c-blue);
         }
 
         /* --- codigo css --- */
@@ -1703,7 +1767,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">Version 1.02</div> <!-- DeltaF -->
+            <div class="menu-version">Version 1.06</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -1857,6 +1921,7 @@
     <div class="calculadora-flotante" id="calculadora-flotante" style="display: none;">
         <div style="display: flex; flex-direction: column; align-items: center; gap: 0.25rem;">
             <div class="calculadora-total" id="calculadora-total">$0,00</div>
+            <div class="calculadora-total" id="calculadora-total-usd" style="display: none;"></div>
             <div class="calculadora-contador" id="calculadora-contador">0 facturas</div>
         </div>
     </div>
@@ -1982,8 +2047,13 @@
             <form id="form-factura">
                 <div class="form-group">
                     <label for="factura-monto">Monto</label>
-                    <div style="display: flex; gap: 0.5rem;">
-                        <input type="number" id="factura-monto" required placeholder="$" step="0.01" style="flex: 1;">
+                    <div style="display: flex; gap: 0.5rem; align-items: stretch;">
+                        <button type="button" class="btn-moneda" id="btn-factura-moneda"
+                            onclick="app.toggleMoneda('factura-moneda','btn-factura-moneda')"
+                            title="Cambiar moneda">ARS</button>
+                        <input type="hidden" id="factura-moneda" value="ars">
+                        <input type="number" id="factura-monto" required placeholder="0,00" step="0.01"
+                            style="flex: 1;">
                         <button type="button" class="icon-btn" id="btn-toggle-negativo"
                             onclick="app.toggleMontoNegativo('factura-monto')" title="Cambiar a saldo a favor">
                             <svg class="icon" style="width: 1.5em; height: 1.5em;">
@@ -2055,8 +2125,12 @@
             <form id="form-editar-factura">
                 <div class="form-group">
                     <label for="editar-factura-monto">Monto</label>
-                    <div style="display: flex; gap: 0.5rem;">
-                        <input type="number" id="editar-factura-monto" required placeholder="$" step="0.01"
+                    <div style="display: flex; gap: 0.5rem; align-items: stretch;">
+                        <button type="button" class="btn-moneda" id="btn-editar-factura-moneda"
+                            onclick="app.toggleMoneda('editar-factura-moneda','btn-editar-factura-moneda')"
+                            title="Cambiar moneda">ARS</button>
+                        <input type="hidden" id="editar-factura-moneda" value="ars">
+                        <input type="number" id="editar-factura-monto" required placeholder="0,00" step="0.01"
                             style="flex: 1;">
                         <button type="button" class="icon-btn" id="btn-editar-toggle-negativo"
                             onclick="app.toggleMontoNegativo('editar-factura-monto')" title="Cambiar a saldo a favor">
@@ -2098,7 +2172,8 @@
                     <div style="display: flex; gap: 0.5rem; align-items: center;">
                         <input type="date" id="editar-factura-fecha-pago" disabled style="flex: 1;">
                         <button type="button" id="btn-editar-toggle-pagada" class="icon-btn"
-                            onclick="app.toggleEstadoPagoEditar()" title="Marcar como pagada/no pagada">
+                            onclick="app.toggleEstadoPago('btn-editar-toggle-pagada', 'editar-factura-fecha-pago')"
+                            title="Marcar como pagada/no pagada">
                             <svg class="icon">
                                 <use href="#icon-card" />
                             </svg>
@@ -2191,7 +2266,14 @@
             <form id="form-ingreso">
                 <div class="form-group">
                     <label for="ingreso-monto">Monto</label>
-                    <input type="number" id="ingreso-monto" required placeholder="$" step="0.01" min="0">
+                    <div style="display: flex; gap: 0.5rem; align-items: stretch;">
+                        <button type="button" class="btn-moneda" id="btn-ingreso-moneda"
+                            onclick="app.toggleMoneda('ingreso-moneda','btn-ingreso-moneda')"
+                            title="Cambiar moneda">ARS</button>
+                        <input type="hidden" id="ingreso-moneda" value="ars">
+                        <input type="number" id="ingreso-monto" required placeholder="0,00" step="0.01" min="0"
+                            style="flex: 1;">
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="ingreso-tipo">Tipo</label>
@@ -2236,7 +2318,14 @@
             <form id="form-editar-ingreso">
                 <div class="form-group">
                     <label for="editar-ingreso-monto">Monto</label>
-                    <input type="number" id="editar-ingreso-monto" required placeholder="$" step="0.01" min="0">
+                    <div style="display: flex; gap: 0.5rem; align-items: stretch;">
+                        <button type="button" class="btn-moneda" id="btn-editar-ingreso-moneda"
+                            onclick="app.toggleMoneda('editar-ingreso-moneda','btn-editar-ingreso-moneda')"
+                            title="Cambiar moneda">ARS</button>
+                        <input type="hidden" id="editar-ingreso-moneda" value="ars">
+                        <input type="number" id="editar-ingreso-monto" required placeholder="0,00" step="0.01" min="0"
+                            style="flex: 1;">
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="editar-ingreso-tipo">Tipo</label>
@@ -2963,7 +3052,8 @@
             actualizarCalculadora() {
                 if (!this.modoCalculadora) return;
 
-                let total = 0;
+                let totalARS = 0;
+                let totalUSD = 0;
                 let contadorFacturas = 0;
 
                 // Obtener fecha actual
@@ -2996,14 +3086,28 @@
                             const esMesPasado = (mesFactura === mesPasado && anioFactura === anioPasado);
 
                             if (esMesActual || esMesSiguiente || esMesPasado) {
-                                total += factura.monto;
+                                if ((factura.moneda || 'ars') === 'usd') {
+                                    totalUSD += factura.monto;
+                                } else {
+                                    totalARS += factura.monto;
+                                }
                                 contadorFacturas++;
                             }
                         }
                     });
                 });
 
-                document.getElementById('calculadora-total').textContent = this.formatearMoneda(total);
+                // Mostrar ARS (siempre visible, aunque sea $0)
+                document.getElementById('calculadora-total').textContent = this.formatearMoneda(totalARS, 'ars');
+
+                // Mostrar USD solo si hay monto
+                const elUSD = document.getElementById('calculadora-total-usd');
+                if (totalUSD > 0) {
+                    elUSD.textContent = this.formatearMoneda(totalUSD, 'usd');
+                    elUSD.style.display = 'block';
+                } else {
+                    elUSD.style.display = 'none';
+                }
 
                 // Actualizar contador con plural correcto
                 const textoFacturas = contadorFacturas === 1 ? 'factura' : 'facturas';
@@ -3332,65 +3436,67 @@
                 const mesActual = hoy.getMonth();
                 const añoActual = hoy.getFullYear();
 
-                let totalAPagar = 0;
-                let totalPagadoMes = 0;
-                let totalPagadoDelMesActual = 0;
-                let totalFacturasMesActual = 0;
+                let totalAPagarARS = 0, totalAPagarUSD = 0;
+                let totalPagadoMesARS = 0, totalPagadoMesUSD = 0;
+                let totalPagadoDelMesActualARS = 0, totalPagadoDelMesActualUSD = 0;
+                let totalFacturasMesActualARS = 0, totalFacturasMesActualUSD = 0;
 
                 this.servicios.filter(s => s.id !== this.SERVICIO_INGRESOS_ID).forEach(servicio => {
                     servicio.facturas.forEach(factura => {
                         const fechaFactura = new Date(factura.fecha + 'T00:00:00');
                         const mesFactura = fechaFactura.getMonth();
                         const añoFactura = fechaFactura.getFullYear();
-
                         const esDelMesActual = mesFactura === mesActual && añoFactura === añoActual;
+                        const moneda = factura.moneda || 'ars';
 
-                        // Calcular total del mes actual
                         if (esDelMesActual) {
-                            if (factura.monto < 0) {
-                                return;
-                            }
-
-                            totalFacturasMesActual += factura.monto;
-
-                            if (!factura.pagada) {
-                                totalAPagar += factura.monto;
+                            if (factura.monto < 0) return;
+                            if (moneda === 'usd') {
+                                totalFacturasMesActualUSD += factura.monto;
+                                if (!factura.pagada) { totalAPagarUSD += factura.monto; }
+                                else { totalPagadoDelMesActualUSD += factura.monto; }
                             } else {
-                                // 👇 NUEVO: Contar pagos de facturas del mes actual
-                                totalPagadoDelMesActual += factura.monto;
+                                totalFacturasMesActualARS += factura.monto;
+                                if (!factura.pagada) { totalAPagarARS += factura.monto; }
+                                else { totalPagadoDelMesActualARS += factura.monto; }
                             }
                         }
 
-                        // Calcular pagado este mes (TODAS las facturas)
                         if (factura.pagada && factura.fechaPago && factura.monto > 0) {
                             const fechaPago = new Date(factura.fechaPago + 'T00:00:00');
                             if (fechaPago.getMonth() === mesActual && fechaPago.getFullYear() === añoActual) {
-                                totalPagadoMes += factura.monto;
+                                if (moneda === 'usd') { totalPagadoMesUSD += factura.monto; }
+                                else { totalPagadoMesARS += factura.monto; }
                             }
                         }
                     });
                 });
 
-                // Guardar datos
                 this.datosResumen = {
-                    pendiente: totalAPagar,
-                    pagadoMes: totalPagadoMes,
-                    pagadoDelMesActual: totalPagadoDelMesActual,
-                    totalPeriodo: totalFacturasMesActual
+                    pendienteARS: totalAPagarARS,
+                    pendienteUSD: totalAPagarUSD,
+                    pagadoMesARS: totalPagadoMesARS,
+                    pagadoMesUSD: totalPagadoMesUSD,
+                    pagadoDelMesActualARS: totalPagadoDelMesActualARS,
+                    pagadoDelMesActualUSD: totalPagadoDelMesActualUSD,
+                    totalPeriodoARS: totalFacturasMesActualARS,
+                    totalPeriodoUSD: totalFacturasMesActualUSD,
+                    // Compatibilidad legacy (usa ARS para la barra de progreso)
+                    pendiente: totalAPagarARS + totalAPagarUSD,
+                    pagadoMes: totalPagadoMesARS,
+                    pagadoDelMesActual: totalPagadoDelMesActualARS,
+                    totalPeriodo: totalFacturasMesActualARS
                 };
 
-                // CARGAR el estado guardado ANTES de mostrar
                 const estadoGuardado = localStorage.getItem('resumen-mostrar-pagado');
                 this.mostrandoPagadoMes = estadoGuardado === 'true';
 
-                // Mostrar según estado actual
                 if (this.mostrandoPagadoMes) {
                     this.mostrarPagadoEnResumen();
                 } else {
                     this.mostrarPendienteEnResumen();
                 }
 
-                // Actualizar estadísticas
                 this.actualizarEstadisticas();
             }
 
@@ -3458,7 +3564,6 @@
             }
 
             mostrarPendienteEnResumen() {
-                // Establecer el estado ANTES de obtener el color
                 this.mostrandoPagadoMes = false;
 
                 const fechaHoy = new Date();
@@ -3467,38 +3572,43 @@
 
                 const colorBorde = this.obtenerColorBordeMasPrioritario();
 
-                // Calcular porcentaje de pago
-                const totalPagado = this.datosResumen.totalPeriodo - this.datosResumen.pendiente;
-                const porcentajePagado = this.datosResumen.totalPeriodo > 0
-                    ? (totalPagado / this.datosResumen.totalPeriodo) * 100
-                    : 0;
+                const totalARS = this.datosResumen.totalPeriodoARS || 0;
+                const totalUSD = this.datosResumen.totalPeriodoUSD || 0;
+                const pendienteARS = this.datosResumen.pendienteARS || 0;
+                const pendienteUSD = this.datosResumen.pendienteUSD || 0;
 
-                // Crear estado actual para comparación
+                const pagadoARS = totalARS - pendienteARS;
+                const porcentajePagado = totalARS > 0 ? (pagadoARS / totalARS) * 100 : (pendienteUSD === 0 ? 100 : 0);
+
                 const estadoActual = {
                     tipo: 'pendiente',
-                    valor: this.datosResumen.pendiente,
-                    porcentaje: porcentajePagado,
-                    colorBorde: colorBorde,
-                    fecha: fechaFormateada
+                    pendienteARS, pendienteUSD, porcentajePagado, colorBorde, fecha: fechaFormateada
                 };
 
-                // Verificar si cambió
                 const estadoCambio = !this.ultimoEstadoResumen ||
                     JSON.stringify(this.ultimoEstadoResumen) !== JSON.stringify(estadoActual);
-
-                // Determinar si usar animación
                 const animacion = estadoCambio ? 'animation: slideDownFade 0.2s ease-out;' : '';
 
-                // DETERMINAR QUÉ MOSTRAR: "Al día" o el monto
-                const estaAlDia = this.datosResumen.pendiente === 0;
-                const valorMostrar = estaAlDia
-                    ? '<span style="font-size: 2rem;">😎 Al día</span>'
-                    : this.formatearMoneda(this.datosResumen.pendiente);
+                const estaAlDia = pendienteARS === 0 && pendienteUSD === 0;
+                const hayUSD = pendienteUSD > 0;
+                const hayARS = pendienteARS > 0;
+
+                let valorMostrar;
+                if (estaAlDia) {
+                    valorMostrar = '<span style="font-size: 2rem;">😎 Al día</span>';
+                } else if (hayARS && hayUSD) {
+                    valorMostrar = `<div class="resumen-valor">${this.formatearMoneda(pendienteARS, 'ars')}</div>
+                        <div class="resumen-valor-usd">${this.formatearMoneda(pendienteUSD, 'usd')}</div>`;
+                } else if (hayUSD) {
+                    valorMostrar = this.formatearMoneda(pendienteUSD, 'usd');
+                } else {
+                    valorMostrar = this.formatearMoneda(pendienteARS, 'ars');
+                }
 
                 const resumenHTML = `
         <div class="resumen-monto" id="resumen-toggle" style="${animacion}">
             <div class="resumen-titulo">Resumen de Servicios</div>
-            <div class="resumen-valor">${valorMostrar}</div>
+            ${(hayARS && hayUSD) ? valorMostrar : `<div class="resumen-valor">${valorMostrar}</div>`}
             <div class="resumen-label">Pendiente de pago</div>
             <div class="resumen-progreso">
                 <div class="resumen-progreso-barra" style="width: ${porcentajePagado}%"></div>
@@ -3508,24 +3618,16 @@
     `;
                 document.getElementById('resumen-mes').innerHTML = resumenHTML;
                 localStorage.setItem('resumen-mostrar-pagado', 'false');
-
-                // Guardar estado actual
                 this.ultimoEstadoResumen = estadoActual;
 
-                // Aplicar clase de borde a la CARD padre
                 const cardResumen = document.getElementById('resumen-mes').closest('.card');
                 if (cardResumen) {
-                    // Remover todas las clases de borde previas
                     cardResumen.classList.remove('borde-vencido', 'borde-urgente', 'borde-proximo', 'borde-lejano', 'borde-pagado');
-                    // Agregar la clase correspondiente
-                    if (colorBorde) {
-                        cardResumen.classList.add(colorBorde);
-                    }
+                    if (colorBorde) cardResumen.classList.add(colorBorde);
                 }
             }
 
             mostrarPagadoEnResumen() {
-                // Establecer el estado ANTES de obtener el color
                 this.mostrandoPagadoMes = true;
 
                 const fechaHoy = new Date();
@@ -3534,31 +3636,41 @@
 
                 const colorBorde = this.obtenerColorBordeMasPrioritario();
 
-                // Calcular porcentaje: pagado del mes actual / total del mes actual
-                const porcentajePagado = this.datosResumen.totalPeriodo > 0
-                    ? (this.datosResumen.pagadoDelMesActual / this.datosResumen.totalPeriodo) * 100
+                const totalARS = this.datosResumen.totalPeriodoARS || 0;
+                const pagadoMesARS = this.datosResumen.pagadoMesARS || 0;
+                const pagadoMesUSD = this.datosResumen.pagadoMesUSD || 0;
+                const pagadoDelMesActualARS = this.datosResumen.pagadoDelMesActualARS || 0;
+
+                const porcentajePagado = totalARS > 0
+                    ? (pagadoDelMesActualARS / totalARS) * 100
                     : 0;
 
-                // Crear estado actual para comparación
                 const estadoActual = {
                     tipo: 'pagado',
-                    valor: this.datosResumen.pagadoMes,
-                    porcentaje: porcentajePagado,
-                    colorBorde: colorBorde,
-                    fecha: fechaFormateada
+                    pagadoMesARS, pagadoMesUSD, porcentajePagado, colorBorde, fecha: fechaFormateada
                 };
 
-                // Verificar si cambió
                 const estadoCambio = !this.ultimoEstadoResumen ||
                     JSON.stringify(this.ultimoEstadoResumen) !== JSON.stringify(estadoActual);
-
-                // Determinar si usar animación
                 const animacion = estadoCambio ? 'animation: slideDownFade 0.2s ease-out;' : '';
+
+                const hayUSD = pagadoMesUSD > 0;
+                const hayARS = pagadoMesARS > 0;
+
+                let valorMostrar;
+                if (hayARS && hayUSD) {
+                    valorMostrar = `<div class="resumen-valor">${this.formatearMoneda(pagadoMesARS, 'ars')}</div>
+                        <div class="resumen-valor-usd">${this.formatearMoneda(pagadoMesUSD, 'usd')}</div>`;
+                } else if (hayUSD) {
+                    valorMostrar = this.formatearMoneda(pagadoMesUSD, 'usd');
+                } else {
+                    valorMostrar = this.formatearMoneda(pagadoMesARS, 'ars');
+                }
 
                 const resumenHTML = `
         <div class="resumen-monto" id="resumen-toggle" style="${animacion}">
             <div class="resumen-titulo">Resumen de Pagos</div>
-            <div class="resumen-valor">${this.formatearMoneda(this.datosResumen.pagadoMes)}</div>
+            ${(hayARS && hayUSD) ? valorMostrar : `<div class="resumen-valor">${valorMostrar}</div>`}
             <div class="resumen-label">Pagado este mes</div>
             <div class="resumen-progreso">
                 <div class="resumen-progreso-barra" style="width: ${porcentajePagado}%"></div>
@@ -3568,19 +3680,12 @@
     `;
                 document.getElementById('resumen-mes').innerHTML = resumenHTML;
                 localStorage.setItem('resumen-mostrar-pagado', 'true');
-
-                // Guardar estado actual
                 this.ultimoEstadoResumen = estadoActual;
 
-                // Aplicar clase de borde a la CARD padre
                 const cardResumen = document.getElementById('resumen-mes').closest('.card');
                 if (cardResumen) {
-                    // Remover todas las clases de borde previas
                     cardResumen.classList.remove('borde-vencido', 'borde-urgente', 'borde-proximo', 'borde-lejano', 'borde-pagado');
-                    // Agregar la clase correspondiente
-                    if (colorBorde) {
-                        cardResumen.classList.add(colorBorde);
-                    }
+                    if (colorBorde) cardResumen.classList.add(colorBorde);
                 }
             }
 
@@ -3634,8 +3739,8 @@
                 let cantidadPendientes = 0;
                 let cantidadPagadas = 0;
                 let cantidadVencidas = 0;
-                let totalMes = 0;
-                let totalIngresos = 0;
+                let totalMesARS = 0, totalMesUSD = 0;
+                let totalIngresosARS = 0, totalIngresosUSD = 0;
 
                 this.servicios.forEach(servicio => {
                     servicio.facturas.forEach(factura => {
@@ -3645,32 +3750,32 @@
 
                         // Solo contar facturas del mes seleccionado
                         if (mesFactura === mesSeleccionado && añoFactura === añoSeleccionado) {
+                            const moneda = factura.moneda || 'ars';
+
                             // Si es del servicio de ingresos, solo sumar al total de ingresos
                             if (servicio.id === this.SERVICIO_INGRESOS_ID) {
-                                totalIngresos += factura.monto;
+                                if (moneda === 'usd') totalIngresosUSD += factura.monto;
+                                else totalIngresosARS += factura.monto;
                                 return;
                             }
 
                             // Saldos a favor (negativos): cuentan como pagadas pero no suman al monto
                             if (factura.monto < 0) {
-                                cantidadPagadas++; // Se cuenta como factura pagada
-                                return; // No suma al monto total
+                                cantidadPagadas++;
+                                return;
                             }
 
                             // Facturas normales (positivas)
-                            totalMes += factura.monto;
+                            if (moneda === 'usd') totalMesUSD += factura.monto;
+                            else totalMesARS += factura.monto;
 
                             if (factura.pagada) {
                                 cantidadPagadas++;
                             } else {
                                 cantidadPendientes++;
-
-                                // Verificar si está vencida
                                 const vencimiento = new Date(factura.fecha + 'T00:00:00');
                                 vencimiento.setHours(0, 0, 0, 0);
-                                if (vencimiento < hoy) {
-                                    cantidadVencidas++;
-                                }
+                                if (vencimiento < hoy) cantidadVencidas++;
                             }
                         }
                     });
@@ -3678,11 +3783,11 @@
 
                 // Crear un hash del estado actual para comparación
                 const estadoActual = {
-                    totalMes,
+                    totalMesARS, totalMesUSD,
                     cantidadPendientes,
                     cantidadPagadas,
                     cantidadVencidas,
-                    totalIngresos,
+                    totalIngresosARS, totalIngresosUSD,
                     mesSeleccionado,
                     añoSeleccionado
                 };
@@ -3693,11 +3798,51 @@
 
                 // Función para renderizar el contenido
                 const renderizarContenido = () => {
+                    const hayUSDMes = totalMesUSD > 0;
+                    const hayARSMes = totalMesARS > 0;
+
+                    const montoHTML = hayARSMes
+                        ? this.formatearMoneda(totalMesARS, 'ars')
+                        : hayUSDMes
+                            ? this.formatearMoneda(totalMesUSD, 'usd')
+                            : this.formatearMoneda(0, 'ars');
+
+                    const montoUSDItem = hayUSDMes ? `
+    <div class="estadistica-item">
+        <span class="estadistica-label">Monto USD</span>
+        <span class="estadistica-valor">${this.formatearMoneda(totalMesUSD, 'usd')}</span>
+    </div>` : '';
+
+                    let ingresosHTML = '';
+                    if (this.ingresosHabilitado()) {
+                        const hayIngUSD = totalIngresosUSD > 0;
+                        const hayIngARS = totalIngresosARS > 0;
+                        const ingMontoHTML = hayIngARS
+                            ? this.formatearMoneda(totalIngresosARS, 'ars')
+                            : hayIngUSD
+                                ? this.formatearMoneda(totalIngresosUSD, 'usd')
+                                : this.formatearMoneda(0, 'ars');
+
+                        const ingUSDItem = hayIngUSD ? `
+    <div class="estadistica-item">
+        <span class="estadistica-label">Ingresos USD</span>
+        <span class="estadistica-valor">${this.formatearMoneda(totalIngresosUSD, 'usd')}</span>
+    </div>` : '';
+
+                        ingresosHTML = `
+    <div class="estadistica-item">
+        <span class="estadistica-label">Ingresos</span>
+        <span class="estadistica-valor">${ingMontoHTML}</span>
+    </div>
+    ${ingUSDItem}`;
+                    }
+
                     const itemsHTML = `
         <div class="estadistica-item">
-            <span class="estadistica-label">Monto</span>
-            <span class="estadistica-valor">${this.formatearMoneda(totalMes)}</span>
-        </div>
+        <span class="estadistica-label">Monto</span>
+        <span class="estadistica-valor">${montoHTML}</span>
+    </div>
+    ${montoUSDItem}
         <div class="estadistica-item">
             <span class="estadistica-label">Facturas</span>
             <span class="estadistica-valor">${cantidadPendientes + cantidadPagadas}</span>
@@ -3714,12 +3859,7 @@
             <span class="estadistica-label">Vencidas</span>
             <span class="estadistica-valor">${cantidadVencidas}</span>
         </div>
-        ${this.ingresosHabilitado() ? `
-        <div class="estadistica-item">
-            <span class="estadistica-label">Ingresos</span>
-            <span class="estadistica-valor">${this.formatearMoneda(totalIngresos)}</span>
-        </div>
-        ` : ''}
+        ${ingresosHTML}
 `;
 
                     const lista = document.querySelector('#estadisticas-mensual-container .estadisticas-lista');
@@ -3918,6 +4058,7 @@
                 let montoTotal = 0;
                 let montoPromedio = 0;
                 let variacionTexto = '0%';
+                let variacionUSDTexto = null;
 
                 // Si hay servicio seleccionado, calcular
                 if (servicioId) {
@@ -3948,10 +4089,17 @@
                         // Ordenar por fecha (más antiguas primero)
                         facturasFiltradas.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
-                        // Calcular totales básicos (incluye complementarios)
+                        // Calcular totales básicos separados por moneda
                         totalRegistros = facturasFiltradas.length;
-                        montoTotal = facturasFiltradas.reduce((sum, f) => sum + f.monto, 0);
-                        montoPromedio = totalRegistros > 0 ? montoTotal / totalRegistros : 0;
+                        const montoTotalARS = facturasFiltradas.filter(f => (f.moneda || 'ars') === 'ars').reduce((s, f) => s + f.monto, 0);
+                        const montoTotalUSD = facturasFiltradas.filter(f => (f.moneda || 'ars') === 'usd').reduce((s, f) => s + f.monto, 0);
+                        montoTotal = montoTotalARS + montoTotalUSD; // suma bruta para variación (solo ARS puro)
+                        // Promedio solo si moneda única
+                        const soloUSD = montoTotalARS === 0 && montoTotalUSD > 0;
+                        const soloARS = montoTotalUSD === 0;
+                        montoPromedio = totalRegistros > 0
+                            ? (soloUSD ? montoTotalUSD / totalRegistros : montoTotalARS / (facturasFiltradas.filter(f => (f.moneda || 'ars') === 'ars').length || 1))
+                            : 0;
 
                         // Para cálculo de variación: excluir complementarios si es servicio de ingresos
                         let facturasParaVariacion = facturasFiltradas;
@@ -3959,44 +4107,53 @@
                             facturasParaVariacion = facturasFiltradas.filter(f => f.tipo !== 'complementario');
                         }
 
-                        // Calcular variación de forma adaptativa
-                        const totalParaVariacion = facturasParaVariacion.length;
-
-                        if (totalParaVariacion >= 2) {
-                            let promedioPrimeros, promedioUltimos;
-
-                            if (totalParaVariacion <= 3) {
-                                promedioPrimeros = facturasParaVariacion[0].monto;
-                                promedioUltimos = facturasParaVariacion[totalParaVariacion - 1].monto;
-                            } else if (totalParaVariacion <= 8) {
-                                const mitad = Math.floor(totalParaVariacion / 2);
-                                const primerasMitad = facturasParaVariacion.slice(0, mitad);
-                                const ultimasMitad = facturasParaVariacion.slice(-mitad);
-
-                                promedioPrimeros = primerasMitad.reduce((sum, f) => sum + f.monto, 0) / mitad;
-                                promedioUltimos = ultimasMitad.reduce((sum, f) => sum + f.monto, 0) / mitad;
-                            } else {
-                                const cantidadGrupo = Math.min(6, Math.max(3, Math.floor(totalParaVariacion * 0.3)));
-                                const primerosRegistros = facturasParaVariacion.slice(0, cantidadGrupo);
-                                const ultimosRegistros = facturasParaVariacion.slice(-cantidadGrupo);
-
-                                promedioPrimeros = primerosRegistros.reduce((sum, f) => sum + f.monto, 0) / cantidadGrupo;
-                                promedioUltimos = ultimosRegistros.reduce((sum, f) => sum + f.monto, 0) / cantidadGrupo;
+                        // Helper para calcular variación dado un array de facturas
+                        const calcularVariacion = (facturas) => {
+                            const total = facturas.length;
+                            if (total >= 2) {
+                                let promPrim, promUlt;
+                                if (total <= 3) {
+                                    promPrim = facturas[0].monto;
+                                    promUlt = facturas[total - 1].monto;
+                                } else if (total <= 8) {
+                                    const mitad = Math.floor(total / 2);
+                                    promPrim = facturas.slice(0, mitad).reduce((s, f) => s + f.monto, 0) / mitad;
+                                    promUlt = facturas.slice(-mitad).reduce((s, f) => s + f.monto, 0) / mitad;
+                                } else {
+                                    const g = Math.min(6, Math.max(3, Math.floor(total * 0.3)));
+                                    promPrim = facturas.slice(0, g).reduce((s, f) => s + f.monto, 0) / g;
+                                    promUlt = facturas.slice(-g).reduce((s, f) => s + f.monto, 0) / g;
+                                }
+                                if (promPrim !== 0) {
+                                    const v = ((promUlt - promPrim) / Math.abs(promPrim)) * 100;
+                                    return `${v > 0 ? '+' : ''}${v.toFixed(1)}%`;
+                                } else {
+                                    return promUlt > 0 ? '+∞' : '0%';
+                                }
+                            } else if (total === 1) {
+                                return 'N/A';
                             }
+                            return null;
+                        };
 
-                            // Calcular porcentaje de variación
-                            if (promedioPrimeros !== 0) {
-                                const variacion = ((promedioUltimos - promedioPrimeros) / Math.abs(promedioPrimeros)) * 100;
-                                const signo = variacion > 0 ? '+' : '';
-                                variacionTexto = `${signo}${variacion.toFixed(1)}%`;
-                            } else {
-                                variacionTexto = promedioUltimos > 0 ? '+∞' : '0%';
-                            }
-                        } else if (totalParaVariacion === 1) {
-                            variacionTexto = 'N/A';
-                        } else if (totalParaVariacion === 0 && esServicioIngresos && totalRegistros > 0) {
+                        // Calcular variación ARS (solo registros ARS)
+                        const facturasVariacionARS = facturasParaVariacion.filter(f => (f.moneda || 'ars') === 'ars');
+                        const facturasVariacionUSD = facturasParaVariacion.filter(f => (f.moneda || 'ars') === 'usd');
+
+                        const varARS = calcularVariacion(facturasVariacionARS);
+                        const varUSD = calcularVariacion(facturasVariacionUSD);
+
+                        if (varARS !== null) {
+                            variacionTexto = varARS;
+                        } else if (facturasVariacionARS.length === 0 && facturasVariacionUSD.length > 0) {
+                            variacionTexto = null; // solo USD, no mostrar variación ARS
+                        } else if (facturasParaVariacion.length === 0 && esServicioIngresos && totalRegistros > 0) {
                             variacionTexto = 'Solo extras';
+                        } else if (facturasVariacionARS.length === 1) {
+                            variacionTexto = 'N/A';
                         }
+
+                        variacionUSDTexto = varUSD;
                     }
                 }
 
@@ -4008,39 +4165,85 @@
                     totalRegistros,
                     montoTotal,
                     montoPromedio,
-                    variacionTexto
+                    variacionTexto,
+                    variacionUSDTexto
                 };
 
                 // Comparar con estado anterior
                 const calculadorCambio = !this.ultimoEstadoCalculador ||
                     JSON.stringify(this.ultimoEstadoCalculador) !== JSON.stringify(estadoCalculador);
 
-                // 👇 FUNCIÓN HELPER PARA GENERAR HTML (UNA SOLA VEZ)
-                const generarResultadosHTML = (registros, total, promedio, variacion) => `
-        <div class="calculador-resultado-item">
-            <span class="calculador-resultado-label">Facturas</span>
-            <span class="calculador-resultado-valor">${registros}</span>
-        </div>
-        <div class="calculador-resultado-item">
-            <span class="calculador-resultado-label">Monto Total</span>
-            <span class="calculador-resultado-valor">${this.formatearMoneda(total)}</span>
-        </div>
-        <div class="calculador-resultado-item">
-            <span class="calculador-resultado-label">Monto Promedio</span>
-            <span class="calculador-resultado-valor">${this.formatearMoneda(promedio)}</span>
-        </div>
-        <div class="calculador-resultado-item">
-            <span class="calculador-resultado-label">Variación</span>
-            <span class="calculador-resultado-valor">${variacion}</span>
-        </div>
-    `;
+                // Recalcular vars de moneda para el HTML (necesitamos acceso al scope)
+                const _facturas = servicioId ? (this.servicios.find(s => s.id === servicioId) || { facturas: [] }).facturas : [];
+                const _filtradas = _facturas.filter(f => {
+                    if (desde && new Date(f.fecha + 'T00:00:00') < new Date(desde + 'T00:00:00')) return false;
+                    if (hasta && new Date(f.fecha + 'T00:00:00') > new Date(hasta + 'T00:00:00')) return false;
+                    return true;
+                });
+                const _arsTotal = _filtradas.filter(f => (f.moneda || 'ars') === 'ars').reduce((s, f) => s + f.monto, 0);
+                const _usdTotal = _filtradas.filter(f => (f.moneda || 'ars') === 'usd').reduce((s, f) => s + f.monto, 0);
+                const _arsCount = _filtradas.filter(f => (f.moneda || 'ars') === 'ars').length;
+                const _usdCount = _filtradas.filter(f => (f.moneda || 'ars') === 'usd').length;
+                const _hayARS = _arsTotal > 0;
+                const _hayUSD = _usdTotal > 0;
+                const _mixto = _hayARS && _hayUSD;
+
+                const _montoHTML = _hayARS
+                    ? this.formatearMoneda(_arsTotal, 'ars')
+                    : _hayUSD ? this.formatearMoneda(_usdTotal, 'usd') : this.formatearMoneda(0, 'ars');
+
+                const _montoUSDItem = _hayUSD ? `
+    <div class="calculador-resultado-item">
+        <span class="calculador-resultado-label">Monto Total USD</span>
+        <span class="calculador-resultado-valor">${this.formatearMoneda(_usdTotal, 'usd')}</span>
+    </div>` : '';
+
+                const _promARS = _arsCount > 0 ? _arsTotal / _arsCount : 0;
+                const _promUSD = _usdCount > 0 ? _usdTotal / _usdCount : 0;
+                const _promHTML = _hayARS
+                    ? this.formatearMoneda(_promARS, 'ars')
+                    : _hayUSD ? this.formatearMoneda(_promUSD, 'usd') : this.formatearMoneda(0, 'ars');
+
+                const _promUSDItem = _hayUSD ? `
+    <div class="calculador-resultado-item">
+        <span class="calculador-resultado-label">Monto Promedio USD</span>
+        <span class="calculador-resultado-valor">${this.formatearMoneda(_promUSD, 'usd')}</span>
+    </div>` : '';
+
+                // FUNCIÓN HELPER PARA GENERAR HTML
+                const _varUSDItem = variacionUSDTexto !== null && variacionUSDTexto !== undefined ? `
+    <div class="calculador-resultado-item">
+        <span class="calculador-resultado-label">Variación USD</span>
+        <span class="calculador-resultado-valor">${variacionUSDTexto}</span>
+    </div>` : '';
+
+                const generarResultadosHTML = (registros, variacion) => `
+    <div class="calculador-resultado-item">
+        <span class="calculador-resultado-label">Facturas</span>
+        <span class="calculador-resultado-valor">${registros}</span>
+    </div>
+    <div class="calculador-resultado-item">
+        <span class="calculador-resultado-label">Monto Total</span>
+        <span class="calculador-resultado-valor">${_montoHTML}</span>
+    </div>
+    ${_montoUSDItem}
+    <div class="calculador-resultado-item">
+        <span class="calculador-resultado-label">Monto Promedio</span>
+        <span class="calculador-resultado-valor">${_promHTML}</span>
+    </div>
+    ${_promUSDItem}
+    ${variacion !== null && variacion !== undefined ? `
+    <div class="calculador-resultado-item">
+        <span class="calculador-resultado-label">Variación</span>
+        <span class="calculador-resultado-valor">${variacion}</span>
+    </div>` : ''}
+    ${_varUSDItem}
+`;
 
                 // Renderizar resultados
                 const renderizarResultados = () => {
                     resultadosContainer.innerHTML = generarResultadosHTML(
                         totalRegistros,
-                        montoTotal,
-                        montoPromedio,
                         variacionTexto
                     );
 
@@ -4224,7 +4427,8 @@
                 let estado = '', claseEstado = '', montoTexto = '-', fechaTexto = '';
 
                 if (ultimaFactura) {
-                    montoTexto = this.formatearMoneda(ultimaFactura.monto);
+                    const moneda = ultimaFactura.moneda || 'ars';
+                    montoTexto = this.formatearMoneda(ultimaFactura.monto, moneda);
                     fechaTexto = this.formatearFecha(ultimaFactura.fecha);
 
                     if (ultimaFactura.pagada) {
@@ -4666,11 +4870,13 @@
             generarHTMLFactura(factura, onclick = null) {
                 const { estadoPago, claseMonto } = this.obtenerEstadoFactura(factura);
                 const clickHandler = onclick ? `onclick="${onclick}"` : '';
+                const moneda = factura.moneda || 'ars';
+                const badgeClass = moneda === 'usd' ? 'usd' : 'ars';
 
                 return `
         <div class="factura-item" data-id="${factura.id}">
             <div class="factura-info" ${clickHandler}>
-                <div class="${claseMonto}">${this.formatearMoneda(factura.monto)}</div>
+                <div class="${claseMonto}">${this.formatearMoneda(factura.monto, moneda)}<span class="moneda-badge ${badgeClass}">${moneda.toUpperCase()}</span></div>
                 <div class="factura-fecha">
                     ${factura.tipo || 'mensual'} | Vence: ${this.formatearFecha(factura.fecha)}
                 </div>
@@ -4844,6 +5050,7 @@
                 // Resetear estado del botón toggle de monto (AGREGAR)
                 if (!esEditar) {
                     this.actualizarEstadoBotonToggle('factura-monto', 'btn-toggle-negativo');
+                    this.setMonedaBtn('factura-moneda', 'btn-factura-moneda', 'ars');
                 }
 
                 const serviciosOrdenados = [...this.servicios]
@@ -4869,6 +5076,7 @@
 
                             document.getElementById('editar-factura-tipo').value = factura.tipo || 'mensual';
                             document.getElementById('editar-factura-fecha').value = factura.fecha;
+                            this.setMonedaBtn('editar-factura-moneda', 'btn-editar-factura-moneda', factura.moneda || 'ars');
                             selectServicio.value = servicioId;
 
                             if (factura.pagada) {
@@ -4891,42 +5099,18 @@
                 this.abrirModal(modalId);
             }
 
-            toggleEstadoPago() {
-                const btnTogglePagada = document.getElementById('btn-toggle-pagada');
-                const inputFechaPago = document.getElementById('factura-fecha-pago');
+            toggleEstadoPago(btnId = 'btn-toggle-pagada', inputId = 'factura-fecha-pago') {
+                const btnTogglePagada = document.getElementById(btnId);
+                const inputFechaPago = document.getElementById(inputId);
                 const iconUse = btnTogglePagada.querySelector('use');
                 const estaPagada = btnTogglePagada.classList.contains('pagada');
 
                 if (estaPagada) {
-                    // Cambiar a NO pagada
                     btnTogglePagada.classList.remove('pagada');
                     inputFechaPago.disabled = true;
                     inputFechaPago.value = '';
                     iconUse.setAttribute('href', '#icon-card');
                 } else {
-                    // Cambiar a pagada
-                    btnTogglePagada.classList.add('pagada');
-                    inputFechaPago.disabled = false;
-                    inputFechaPago.value = this.obtenerFechaLocal();
-                    iconUse.setAttribute('href', '#icon-cancel');
-                }
-            }
-
-            toggleEstadoPagoEditar() {
-                const btnTogglePagada = document.getElementById('btn-editar-toggle-pagada');
-                const inputFechaPago = document.getElementById('editar-factura-fecha-pago');
-                const iconUse = btnTogglePagada.querySelector('use');
-
-                const estaPagada = btnTogglePagada.classList.contains('pagada');
-
-                if (estaPagada) {
-                    // Cambiar a NO pagada
-                    btnTogglePagada.classList.remove('pagada');
-                    inputFechaPago.disabled = true;
-                    inputFechaPago.value = '';
-                    iconUse.setAttribute('href', '#icon-card');
-                } else {
-                    // Cambiar a pagada
                     btnTogglePagada.classList.add('pagada');
                     inputFechaPago.disabled = false;
                     inputFechaPago.value = this.obtenerFechaLocal();
@@ -4961,17 +5145,17 @@
 
                 if (!input || !btn) return;
 
+                // Limpiar estilos inline residuales
+                btn.style.background = '';
+                btn.style.color = '';
+
                 const valor = parseFloat(input.value) || 0;
 
                 if (valor < 0) {
-                    // Valor negativo
-                    btn.style.background = 'var(--c-green)';
-                    btn.style.color = 'white';
+                    btn.classList.add('pagada');
                     btn.title = 'Cambiar a gasto normal';
                 } else {
-                    // Valor positivo o cero
-                    btn.style.background = 'var(--c-gray-btn)';
-                    btn.style.color = 'var(--text-main)';
+                    btn.classList.remove('pagada');
                     btn.title = 'Cambiar a saldo a favor';
                 }
             }
@@ -4985,6 +5169,7 @@
                 const monto = parseFloat(document.getElementById(esEditar ? 'editar-factura-monto' : 'factura-monto').value);
                 const tipo = document.getElementById(esEditar ? 'editar-factura-tipo' : 'factura-tipo').value;
                 const fecha = document.getElementById(esEditar ? 'editar-factura-fecha' : 'factura-fecha').value;
+                const moneda = document.getElementById(esEditar ? 'editar-factura-moneda' : 'factura-moneda').value;
                 const btnTogglePagada = document.getElementById(esEditar ? 'btn-editar-toggle-pagada' : 'btn-toggle-pagada');
                 const estaPagada = btnTogglePagada.classList.contains('pagada');
                 const fechaPago = estaPagada ? document.getElementById(esEditar ? 'editar-factura-fecha-pago' : 'factura-fecha-pago').value : null;
@@ -5040,6 +5225,7 @@
                                 factura.fecha = fecha;
                                 factura.pagada = estaPagada;
                                 factura.fechaPago = fechaPago;
+                                factura.moneda = moneda;
 
                                 const servicioNuevo = this.servicios.find(s => s.id === servicioNuevoId);
                                 if (servicioNuevo) {
@@ -5052,7 +5238,8 @@
                                     factura.tipo === tipo &&
                                     factura.fecha === fecha &&
                                     factura.pagada === estaPagada &&
-                                    factura.fechaPago === fechaPago) {
+                                    factura.fechaPago === fechaPago &&
+                                    (factura.moneda || 'ars') === moneda) {
                                     this.mostrarToast('Sin cambios', 'info');
                                     this.cerrarModal('modal-editar-factura');
                                     this.abrirModalFacturasServicio(servicioAnteriorId);
@@ -5063,6 +5250,7 @@
                                 factura.fecha = fecha;
                                 factura.pagada = estaPagada;
                                 factura.fechaPago = fechaPago;
+                                factura.moneda = moneda;
                             }
                         }
                     }
@@ -5074,7 +5262,8 @@
                         tipo: tipo,
                         fecha: fecha,
                         pagada: estaPagada,
-                        fechaPago: fechaPago
+                        fechaPago: fechaPago,
+                        moneda: moneda
                     };
 
                     const servicioDestino = this.servicios.find(s => s.id === servicioNuevoId);
@@ -5170,16 +5359,7 @@
                 this.cerrarModal('modal-facturas-servicio');
                 this.abrirModalFactura(servicio.id, facturaId);
                 // Actualizar estado del botón según el signo del monto
-                const btnEditarToggle = document.getElementById('btn-editar-toggle-negativo');
-                if (btnEditarToggle && factura.monto < 0) {
-                    btnEditarToggle.style.background = 'var(--c-green)';
-                    btnEditarToggle.style.color = 'white';
-                    btnEditarToggle.title = 'Cambiar a gasto normal';
-                } else if (btnEditarToggle) {
-                    btnEditarToggle.style.background = 'var(--c-gray-btn)';
-                    btnEditarToggle.style.color = 'var(--text-main)';
-                    btnEditarToggle.title = 'Cambiar a saldo a favor';
-                }
+                this.actualizarEstadoBotonToggle('editar-factura-monto', 'btn-editar-toggle-negativo');
             }
 
             establecerFechaHoy(tipo = 'factura', modo = 'agregar') {
@@ -5848,11 +6028,43 @@
                 return Date.now().toString(36) + Math.random().toString(36).substr(2);
             }
 
-            formatearMoneda(monto) {
+            formatearMoneda(monto, moneda = 'ars') {
+                const esEntero = Number.isInteger(monto) || monto % 1 === 0;
+                const decimales = esEntero ? 0 : 2;
+                if (moneda === 'usd') {
+                    return 'u$s ' + new Intl.NumberFormat('es-AR', {
+                        minimumFractionDigits: decimales,
+                        maximumFractionDigits: decimales
+                    }).format(monto);
+                }
                 return new Intl.NumberFormat('es-AR', {
                     style: 'currency',
-                    currency: 'ARS'
+                    currency: 'ARS',
+                    minimumFractionDigits: decimales,
+                    maximumFractionDigits: decimales
                 }).format(monto);
+            }
+
+            // Alterna entre ARS y USD en los campos ocultos + actualiza el botón visual
+            toggleMoneda(hiddenId, btnId) {
+                const hidden = document.getElementById(hiddenId);
+                const btn = document.getElementById(btnId);
+                if (!hidden || !btn) return;
+                const nuevo = hidden.value === 'ars' ? 'usd' : 'ars';
+                hidden.value = nuevo;
+                btn.textContent = nuevo.toUpperCase();
+                btn.classList.toggle('activo-usd', nuevo === 'usd');
+            }
+
+            // Fija la moneda de un btn-moneda desde código (usado al cargar datos para editar)
+            setMonedaBtn(hiddenId, btnId, moneda) {
+                const hidden = document.getElementById(hiddenId);
+                const btn = document.getElementById(btnId);
+                if (!hidden || !btn) return;
+                const m = (moneda || 'ars').toLowerCase();
+                hidden.value = m;
+                btn.textContent = m.toUpperCase();
+                btn.classList.toggle('activo-usd', m === 'usd');
             }
 
             formatearFecha(fecha) {
@@ -5900,11 +6112,13 @@
                         const ingresosHTML = grupo.items.map(ingreso => {
                             const tipoTexto = ingreso.tipo === 'complementario' ? 'Complementario' : 'Regular';
                             const tipoEmoji = ingreso.tipo === 'complementario' ? '💼' : '💵';
+                            const monedaIngreso = ingreso.moneda || 'ars';
+                            const badgeClass = monedaIngreso === 'usd' ? 'usd' : 'ars';
 
                             return `
                     <div class="factura-item" data-id="${ingreso.id}">
                         <div class="factura-info" onclick="app.abrirModalIngreso('${ingreso.id}')">
-                            <div class="factura-monto">${this.formatearMoneda(ingreso.monto)}</div>
+                            <div class="factura-monto">${this.formatearMoneda(ingreso.monto, monedaIngreso)}<span class="moneda-badge ${badgeClass}">${monedaIngreso.toUpperCase()}</span></div>
                             <div class="factura-fecha">${tipoEmoji} ${tipoTexto} | Cobrado: ${this.formatearFecha(ingreso.fecha)}</div>
                         </div>
                     </div>
@@ -5932,12 +6146,14 @@
                             document.getElementById('editar-ingreso-monto').value = ingreso.monto;
                             document.getElementById('editar-ingreso-tipo').value = ingreso.tipo || 'regular';
                             document.getElementById('editar-ingreso-fecha').value = ingreso.fecha;
+                            this.setMonedaBtn('editar-ingreso-moneda', 'btn-editar-ingreso-moneda', ingreso.moneda || 'ars');
                         }
                     }
                     this.abrirModal('modal-editar-ingreso');
                 } else {
                     // Modo nuevo
                     document.getElementById('form-ingreso').reset();
+                    this.setMonedaBtn('ingreso-moneda', 'btn-ingreso-moneda', 'ars');
                     this.abrirModal('modal-agregar-ingreso');
                 }
             }
@@ -5951,6 +6167,7 @@
                 const monto = parseFloat(document.getElementById(esEditar ? 'editar-ingreso-monto' : 'ingreso-monto').value);
                 const tipo = document.getElementById(esEditar ? 'editar-ingreso-tipo' : 'ingreso-tipo').value;
                 const fecha = document.getElementById(esEditar ? 'editar-ingreso-fecha' : 'ingreso-fecha').value;
+                const moneda = document.getElementById(esEditar ? 'editar-ingreso-moneda' : 'ingreso-moneda').value;
 
                 // Validar monto (no permitir negativos en ingresos)
                 if (!this.validarMonto(monto, false)) {
@@ -5974,7 +6191,7 @@
                     const ingreso = servicio.facturas.find(f => f.id === this.ingresoActual);
                     if (ingreso) {
                         // Verificar si hubo cambios
-                        if (ingreso.monto === monto && ingreso.tipo === tipo && ingreso.fecha === fecha) {
+                        if (ingreso.monto === monto && ingreso.tipo === tipo && ingreso.fecha === fecha && (ingreso.moneda || 'ars') === moneda) {
                             this.mostrarToast('Sin cambios', 'info');
                             this.cerrarModal('modal-editar-ingreso');
                             this.abrirModalIngresosLista(this.SERVICIO_INGRESOS_ID);
@@ -5983,6 +6200,7 @@
                         ingreso.monto = monto;
                         ingreso.tipo = tipo;
                         ingreso.fecha = fecha;
+                        ingreso.moneda = moneda;
                     }
                 } else {
                     // Crear nuevo ingreso
@@ -5991,6 +6209,7 @@
                         monto: monto,
                         tipo: tipo,
                         fecha: fecha,
+                        moneda: moneda,
                         pagada: true // Los ingresos siempre están "pagados" (cobrados)
                     };
                     servicio.facturas.push(nuevoIngreso);
@@ -6097,14 +6316,11 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA DeltaF VERSION 1.02
+    //                 NOTAS SISTEMA DeltaF VERSION 1.06
     // ====================================================================
     
      - CAMBIOS
-     1) Se unifican tarjetas de estadisticas
-     2) el calculo de la calculadora del boton agregar, ahora tiene en cuenta el mes anterior tambien, quedando
-     en el calculo mes anterior, mes actual y mes siguiente
-     3) se agrega etiqueta "mes" en el campo correspondiente de la tarjeta de estadisticas
+     1) Se agrega moneda usd
 
 
      - BUGS CONOCIDOS:
