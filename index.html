@@ -37,11 +37,11 @@
             --border: #dde3ea;
             --input-bg: #dde3ea;
             --input-focus: #dde3ea;
-            --c-blue: #5382e6;
-            --c-green: #60ac94;
-            --c-red: #c05d76;
-            --c-purple: #8b5cf6;
-            --c-gold: #d6af66;
+            --c-blue: rgba(76, 114, 172, 0.8);
+            --c-green: rgba(76, 172, 140, 0.8);
+            --c-red: rgba(172, 90, 76, 0.8);
+            --c-purple: rgba(129, 76, 172, 0.8);
+            --c-gold: rgba(172, 155, 76, 0.8);
             --c-gray-btn: #dde3ea;
             --c-white: #ffffff;
             --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -320,7 +320,6 @@
             padding: 0.25rem 0.5rem;
             border-radius: var(--radius);
             font-size: 0.75rem;
-            font-weight: 550;
             margin-top: 0.5rem;
             color: var(--c-white);
         }
@@ -1016,15 +1015,15 @@
 
         /* Variaciones de color */
         .factura-estado-pagado {
-            color: var(--c-green);
+            background: var(--c-green);
         }
 
         .factura-estado-vencido {
-            color: var(--c-red);
+            background: var(--c-red);
         }
 
         .factura-estado-pendiente {
-            color: var(--c-gold);
+            background: var(--c-gold);
         }
 
         .mensaje-sin-facturas {
@@ -1469,13 +1468,11 @@
         }
 
         .moneda-badge.usd {
-            background: rgba(96, 172, 148, 0.2);
             color: var(--c-green);
         }
 
         .moneda-badge.ars {
-            background: rgba(83, 130, 230, 0.15);
-            color: var(--c-blue);
+            color: var(--c-red);
         }
 
         /* --- codigo css --- */
