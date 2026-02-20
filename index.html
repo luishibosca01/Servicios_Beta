@@ -28,21 +28,21 @@
     <style>
         :root {
             /* --- Variables de Color (Tema Claro) --- */
-            --bg-body: #f9fafb;
-            --bg-card: #ffffff;
-            --bg-header: rgba(255, 255, 255, 0.800);
-            --text-main: #1f2937;
-            --text-muted: #6b7280;
+            --bg-body: #ffffff;
+            --bg-card: #f0f4f9;
+            --bg-header: #ffffff;
+            --text-main: #1f1f1f;
+            --text-muted: #444746;
             --text-inv: #ffffff;
-            --border: #e5e7eb;
-            --input-bg: #ffffff;
-            --input-focus: #272450;
+            --border: #dde3ea;
+            --input-bg: #dde3ea;
+            --input-focus: #dde3ea;
             --c-blue: #5382e6;
             --c-green: #60ac94;
             --c-red: #c05d76;
             --c-purple: #8b5cf6;
             --c-gold: #d6af66;
-            --c-gray-btn: #e7e7e7;
+            --c-gray-btn: #dde3ea;
             --c-white: #ffffff;
             --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             --radius: 10px;
@@ -50,15 +50,15 @@
 
         body.dark-mode {
             /* --- Variables de Color (Tema Oscuro) --- */
-            --bg-body: #000000;
-            --bg-card: #0f141b;
-            --bg-header: rgba(0, 0, 0, 0.5);
-            --text-main: #f9fafb;
-            --text-muted: #d1d5db;
-            --border: #1f2836;
-            --input-bg: #1f2836;
-            --input-focus: #1f2836;
-            --c-gray-btn: #1f2836;
+            --bg-body: #131314;
+            --bg-card: #1e1f20;
+            --bg-header: #131314f6;
+            --text-main: #e3e3e3;
+            --text-muted: #b4b4b4;
+            --border: #313333;
+            --input-bg: #313333;
+            --input-focus: #313333;
+            --c-gray-btn: #313333;
             --shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
         }
 
@@ -105,7 +105,6 @@
 
         .header {
             background: var(--bg-header);
-            backdrop-filter: blur(10px);
             padding: 0 0.6rem;
             box-shadow: var(--shadow);
             position: sticky;
@@ -291,27 +290,6 @@
         .servicio-item:active,
         .facturas-grupo-header:active {
             transform: scale(0.99);
-        }
-
-        .servicio-item[class*="vencido"],
-        .servicio-item[class*="urgente"] {
-            border-left: 4px solid var(--c-red);
-        }
-
-        .servicio-item[class*="lejano"] {
-            border-left: 4px solid var(--c-blue);
-        }
-
-        .servicio-item[class*="proximo"] {
-            border-left: 4px solid var(--c-gold);
-        }
-
-        .servicio-item[class*="pagado"] {
-            border-left: 4px solid var(--c-green);
-        }
-
-        .servicio-item[class*="sin-facturas"] {
-            border-left: 4px solid var(--c-purple);
         }
 
         .servicio-nombre {
@@ -858,6 +836,7 @@
 
         .resumen-label {
             color: var(--text-muted);
+            margin-top: 1rem;
         }
 
         /* Estilos base de resumen-monto SIN borde */
@@ -865,7 +844,10 @@
             border-radius: var(--radius);
             text-align: center;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: opacity 0.3s;
+            min-height: 13rem;
+            display: flex;
+            flex-direction: column;
         }
 
         /* Barra de progreso en resumen */
@@ -942,6 +924,10 @@
             color: var(--text-muted);
             margin-top: 1rem;
             text-align: right;
+        }
+
+        .resumen-footer {
+            margin-top: auto;
         }
 
         .resumen-monto .resumen-label {
@@ -1469,7 +1455,6 @@
             font-weight: 700;
             color: var(--text-main);
             text-align: left;
-            margin-bottom: 1rem;
         }
 
         /* Badge de moneda en lista de facturas */
@@ -1767,7 +1752,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">Version 1.06</div> <!-- DeltaF -->
+            <div class="menu-version">Version 1.07</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -2617,11 +2602,6 @@
                 this.cargarDatosPerfilActivo();
 
                 this.init();
-            }
-
-            obtenerFechaLocal() {
-                const hoy = new Date();
-                return `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
             }
 
             // ========================================
@@ -3585,8 +3565,7 @@
                     pendienteARS, pendienteUSD, porcentajePagado, colorBorde, fecha: fechaFormateada
                 };
 
-                const estadoCambio = !this.ultimoEstadoResumen ||
-                    JSON.stringify(this.ultimoEstadoResumen) !== JSON.stringify(estadoActual);
+                const estadoCambio = this._objetosCambiaron(this.ultimoEstadoResumen, estadoActual);
                 const animacion = estadoCambio ? 'animation: slideDownFade 0.2s ease-out;' : '';
 
                 const estaAlDia = pendienteARS === 0 && pendienteUSD === 0;
@@ -3609,11 +3588,13 @@
         <div class="resumen-monto" id="resumen-toggle" style="${animacion}">
             <div class="resumen-titulo">Resumen de Servicios</div>
             ${(hayARS && hayUSD) ? valorMostrar : `<div class="resumen-valor">${valorMostrar}</div>`}
-            <div class="resumen-label">Pendiente de pago</div>
-            <div class="resumen-progreso">
-                <div class="resumen-progreso-barra" style="width: ${porcentajePagado}%"></div>
+            <div class="resumen-footer">
+                <div class="resumen-label">Pendiente de pago</div>
+                <div class="resumen-progreso">
+                    <div class="resumen-progreso-barra" style="width: ${porcentajePagado}%"></div>
+                </div>
+                <div class="resumen-fecha">${fechaFormateada}</div>
             </div>
-            <div class="resumen-fecha">${fechaFormateada}</div>
         </div>
     `;
                 document.getElementById('resumen-mes').innerHTML = resumenHTML;
@@ -3650,8 +3631,7 @@
                     pagadoMesARS, pagadoMesUSD, porcentajePagado, colorBorde, fecha: fechaFormateada
                 };
 
-                const estadoCambio = !this.ultimoEstadoResumen ||
-                    JSON.stringify(this.ultimoEstadoResumen) !== JSON.stringify(estadoActual);
+                const estadoCambio = this._objetosCambiaron(this.ultimoEstadoResumen, estadoActual);
                 const animacion = estadoCambio ? 'animation: slideDownFade 0.2s ease-out;' : '';
 
                 const hayUSD = pagadoMesUSD > 0;
@@ -3671,11 +3651,13 @@
         <div class="resumen-monto" id="resumen-toggle" style="${animacion}">
             <div class="resumen-titulo">Resumen de Pagos</div>
             ${(hayARS && hayUSD) ? valorMostrar : `<div class="resumen-valor">${valorMostrar}</div>`}
-            <div class="resumen-label">Pagado este mes</div>
-            <div class="resumen-progreso">
-                <div class="resumen-progreso-barra" style="width: ${porcentajePagado}%"></div>
+            <div class="resumen-footer">
+                <div class="resumen-label">Pagado este mes</div>
+                <div class="resumen-progreso">
+                    <div class="resumen-progreso-barra" style="width: ${porcentajePagado}%"></div>
+                </div>
+                <div class="resumen-fecha">${fechaFormateada}</div>
             </div>
-            <div class="resumen-fecha">${fechaFormateada}</div>
         </div>
     `;
                 document.getElementById('resumen-mes').innerHTML = resumenHTML;
@@ -3793,8 +3775,7 @@
                 };
 
                 // Comparar con el estado anterior
-                const estadoCambio = !this.ultimoEstadoEstadisticas ||
-                    JSON.stringify(this.ultimoEstadoEstadisticas) !== JSON.stringify(estadoActual);
+                const estadoCambio = this._objetosCambiaron(this.ultimoEstadoEstadisticas, estadoActual);
 
                 // Función para renderizar el contenido
                 const renderizarContenido = () => {
@@ -4044,7 +4025,6 @@
                 const inputHasta = document.getElementById('calculador-hasta');
                 const resultadosContainer = document.getElementById('calculador-resultados');
 
-                // Validar que todos los elementos existan antes de continuar
                 if (!selectServicio || !inputDesde || !inputHasta || !resultadosContainer) {
                     return;
                 }
@@ -4053,55 +4033,54 @@
                 const desde = inputDesde.value;
                 const hasta = inputHasta.value;
 
-                // Valores por defecto
                 let totalRegistros = 0;
-                let montoTotal = 0;
-                let montoPromedio = 0;
                 let variacionTexto = '0%';
                 let variacionUSDTexto = null;
 
-                // Si hay servicio seleccionado, calcular
+                // Variables de moneda — se calculan una sola vez
+                let _arsTotal = 0, _usdTotal = 0;
+                let _arsCount = 0, _usdCount = 0;
+
                 if (servicioId) {
                     const servicio = this.servicios.find(s => s.id === servicioId);
 
                     if (servicio) {
                         const esServicioIngresos = servicioId === this.SERVICIO_INGRESOS_ID;
 
-                        // Filtrar facturas por rango de fechas
+                        // Filtrar facturas por rango de fechas (único pase)
                         let facturasFiltradas = servicio.facturas;
 
                         if (desde) {
                             const fechaDesde = new Date(desde + 'T00:00:00');
-                            facturasFiltradas = facturasFiltradas.filter(f => {
-                                const fechaFactura = new Date(f.fecha + 'T00:00:00');
-                                return fechaFactura >= fechaDesde;
-                            });
+                            facturasFiltradas = facturasFiltradas.filter(f =>
+                                new Date(f.fecha + 'T00:00:00') >= fechaDesde
+                            );
                         }
 
                         if (hasta) {
                             const fechaHasta = new Date(hasta + 'T00:00:00');
-                            facturasFiltradas = facturasFiltradas.filter(f => {
-                                const fechaFactura = new Date(f.fecha + 'T00:00:00');
-                                return fechaFactura <= fechaHasta;
-                            });
+                            facturasFiltradas = facturasFiltradas.filter(f =>
+                                new Date(f.fecha + 'T00:00:00') <= fechaHasta
+                            );
                         }
 
-                        // Ordenar por fecha (más antiguas primero)
+                        // Ordenar por fecha (más antiguas primero) — necesario para variación
                         facturasFiltradas.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
-                        // Calcular totales básicos separados por moneda
                         totalRegistros = facturasFiltradas.length;
-                        const montoTotalARS = facturasFiltradas.filter(f => (f.moneda || 'ars') === 'ars').reduce((s, f) => s + f.monto, 0);
-                        const montoTotalUSD = facturasFiltradas.filter(f => (f.moneda || 'ars') === 'usd').reduce((s, f) => s + f.monto, 0);
-                        montoTotal = montoTotalARS + montoTotalUSD; // suma bruta para variación (solo ARS puro)
-                        // Promedio solo si moneda única
-                        const soloUSD = montoTotalARS === 0 && montoTotalUSD > 0;
-                        const soloARS = montoTotalUSD === 0;
-                        montoPromedio = totalRegistros > 0
-                            ? (soloUSD ? montoTotalUSD / totalRegistros : montoTotalARS / (facturasFiltradas.filter(f => (f.moneda || 'ars') === 'ars').length || 1))
-                            : 0;
 
-                        // Para cálculo de variación: excluir complementarios si es servicio de ingresos
+                        // Calcular totales por moneda — único pase, reutilizado abajo
+                        facturasFiltradas.forEach(f => {
+                            if ((f.moneda || 'ars') === 'usd') {
+                                _usdTotal += f.monto;
+                                _usdCount++;
+                            } else {
+                                _arsTotal += f.monto;
+                                _arsCount++;
+                            }
+                        });
+
+                        // Para variación: excluir complementarios si es servicio de ingresos
                         let facturasParaVariacion = facturasFiltradas;
                         if (esServicioIngresos) {
                             facturasParaVariacion = facturasFiltradas.filter(f => f.tipo !== 'complementario');
@@ -4136,7 +4115,7 @@
                             return null;
                         };
 
-                        // Calcular variación ARS (solo registros ARS)
+                        // Calcular variación por moneda usando las facturas ya filtradas
                         const facturasVariacionARS = facturasParaVariacion.filter(f => (f.moneda || 'ars') === 'ars');
                         const facturasVariacionUSD = facturasParaVariacion.filter(f => (f.moneda || 'ars') === 'usd');
 
@@ -4146,7 +4125,7 @@
                         if (varARS !== null) {
                             variacionTexto = varARS;
                         } else if (facturasVariacionARS.length === 0 && facturasVariacionUSD.length > 0) {
-                            variacionTexto = null; // solo USD, no mostrar variación ARS
+                            variacionTexto = null;
                         } else if (facturasParaVariacion.length === 0 && esServicioIngresos && totalRegistros > 0) {
                             variacionTexto = 'Solo extras';
                         } else if (facturasVariacionARS.length === 1) {
@@ -4157,36 +4136,19 @@
                     }
                 }
 
-                // Crear hash del estado para comparación
+                // Hash del estado para comparar y evitar re-renders innecesarios
                 const estadoCalculador = {
-                    servicioId,
-                    desde,
-                    hasta,
+                    servicioId, desde, hasta,
                     totalRegistros,
-                    montoTotal,
-                    montoPromedio,
-                    variacionTexto,
-                    variacionUSDTexto
+                    _arsTotal, _usdTotal,
+                    variacionTexto, variacionUSDTexto
                 };
 
-                // Comparar con estado anterior
-                const calculadorCambio = !this.ultimoEstadoCalculador ||
-                    JSON.stringify(this.ultimoEstadoCalculador) !== JSON.stringify(estadoCalculador);
+                const calculadorCambio = this._objetosCambiaron(this.ultimoEstadoCalculador, estadoCalculador);
 
-                // Recalcular vars de moneda para el HTML (necesitamos acceso al scope)
-                const _facturas = servicioId ? (this.servicios.find(s => s.id === servicioId) || { facturas: [] }).facturas : [];
-                const _filtradas = _facturas.filter(f => {
-                    if (desde && new Date(f.fecha + 'T00:00:00') < new Date(desde + 'T00:00:00')) return false;
-                    if (hasta && new Date(f.fecha + 'T00:00:00') > new Date(hasta + 'T00:00:00')) return false;
-                    return true;
-                });
-                const _arsTotal = _filtradas.filter(f => (f.moneda || 'ars') === 'ars').reduce((s, f) => s + f.monto, 0);
-                const _usdTotal = _filtradas.filter(f => (f.moneda || 'ars') === 'usd').reduce((s, f) => s + f.monto, 0);
-                const _arsCount = _filtradas.filter(f => (f.moneda || 'ars') === 'ars').length;
-                const _usdCount = _filtradas.filter(f => (f.moneda || 'ars') === 'usd').length;
-                const _hayARS = _arsTotal > 0;
-                const _hayUSD = _usdTotal > 0;
-                const _mixto = _hayARS && _hayUSD;
+                // Construir HTML reutilizando las vars ya calculadas (_arsTotal, _usdTotal, etc.)
+                const _hayARS = _arsTotal !== 0;
+                const _hayUSD = _usdTotal !== 0;
 
                 const _montoHTML = _hayARS
                     ? this.formatearMoneda(_arsTotal, 'ars')
@@ -4210,7 +4172,6 @@
         <span class="calculador-resultado-valor">${this.formatearMoneda(_promUSD, 'usd')}</span>
     </div>` : '';
 
-                // FUNCIÓN HELPER PARA GENERAR HTML
                 const _varUSDItem = variacionUSDTexto !== null && variacionUSDTexto !== undefined ? `
     <div class="calculador-resultado-item">
         <span class="calculador-resultado-label">Variación USD</span>
@@ -4240,14 +4201,9 @@
     ${_varUSDItem}
 `;
 
-                // Renderizar resultados
                 const renderizarResultados = () => {
-                    resultadosContainer.innerHTML = generarResultadosHTML(
-                        totalRegistros,
-                        variacionTexto
-                    );
+                    resultadosContainer.innerHTML = generarResultadosHTML(totalRegistros, variacionTexto);
 
-                    // Solo animar si hubo cambio
                     if (calculadorCambio) {
                         resultadosContainer.style.opacity = '0';
                         setTimeout(() => {
@@ -4258,15 +4214,12 @@
                 };
 
                 if (calculadorCambio) {
-                    // Animación de salida solo si cambió
                     resultadosContainer.style.animation = 'slideUpFade 0.2s ease-out forwards';
-
                     setTimeout(() => {
                         renderizarResultados();
                         this.ultimoEstadoCalculador = estadoCalculador;
                     }, 190);
                 } else {
-                    // No cambió, solo actualizar sin animar
                     renderizarResultados();
                 }
             }
@@ -5307,11 +5260,11 @@
 
                 this.guardarDatos();
                 this.guardarEstado();
-                this.enModoBusqueda = false;
-                this.renderServicios();
 
                 if (servicioId) {
+                    // Actualizar solo el item afectado, sin re-renderizar todo el listado
                     this.actualizarServicioIndividual(servicioId);
+                    this.actualizarResumenMes(); // mantener totales sincronizados
 
                     // Actualizar el modal de facturas si está abierto
                     const modalFacturas = document.getElementById('modal-facturas-servicio');
@@ -5336,11 +5289,11 @@
 
                 this.guardarDatos();
                 this.guardarEstado();
-                this.enModoBusqueda = false;
-                this.renderServicios();
 
                 if (servicioId) {
+                    // Actualizar solo el item afectado, sin re-renderizar todo el listado
                     this.actualizarServicioIndividual(servicioId);
+                    this.actualizarResumenMes(); // mantener totales sincronizados
 
                     // Actualizar el modal de facturas si está abierto
                     const modalFacturas = document.getElementById('modal-facturas-servicio');
@@ -6028,6 +5981,23 @@
                 return Date.now().toString(36) + Math.random().toString(36).substr(2);
             }
 
+            obtenerFechaLocal() {
+                const hoy = new Date();
+                return `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
+            }
+
+            // Comparación shallow de objetos planos (evita JSON.stringify para detección de cambios)
+            _objetosCambiaron(anterior, actual) {
+                if (!anterior) return true;
+                const keysA = Object.keys(anterior);
+                const keysB = Object.keys(actual);
+                if (keysA.length !== keysB.length) return true;
+                for (const k of keysA) {
+                    if (anterior[k] !== actual[k]) return true;
+                }
+                return false;
+            }
+
             formatearMoneda(monto, moneda = 'ars') {
                 const esEntero = Number.isInteger(monto) || monto % 1 === 0;
                 const decimales = esEntero ? 0 : 2;
@@ -6316,11 +6286,11 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA DeltaF VERSION 1.06
+    //                 NOTAS SISTEMA DeltaF VERSION 1.07
     // ====================================================================
     
      - CAMBIOS
-     1) Se agrega moneda usd
+     1)
 
 
      - BUGS CONOCIDOS:
