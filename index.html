@@ -1979,6 +1979,21 @@
             </div>
             <form id="form-factura">
                 <div class="form-group">
+                    <label for="factura-servicio">Servicio</label>
+                    <select id="factura-servicio" required>
+                        <!-- Los servicios se cargarán dinámicamente -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="factura-tipo">Tipo de factura</label>
+                    <select id="factura-tipo" required>
+                        <option value="mensual">Mensual</option>
+                        <option value="bimestral">Bimestral</option>
+                        <option value="semestral">Semestral</option>
+                        <option value="anual">Anual</option>
+                    </select>
+                </div>
+                <div class="form-group">
                     <label for="factura-monto">Monto</label>
                     <div style="display: flex; gap: 0.5rem; align-items: stretch;">
                         <button type="button" class="btn-moneda" id="btn-factura-moneda"
@@ -1995,21 +2010,6 @@
                             </svg>
                         </button>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label for="factura-tipo">Tipo de factura</label>
-                    <select id="factura-tipo" required>
-                        <option value="mensual">Mensual</option>
-                        <option value="bimestral">Bimestral</option>
-                        <option value="semestral">Semestral</option>
-                        <option value="anual">Anual</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="factura-servicio">Servicio</label>
-                    <select id="factura-servicio" required>
-                        <!-- Los servicios se cargarán dinámicamente -->
-                    </select>
                 </div>
                 <div class="form-group">
                     <label for="factura-fecha">Fecha de vencimiento</label>
@@ -2057,6 +2057,21 @@
             </div>
             <form id="form-editar-factura">
                 <div class="form-group">
+                    <label for="editar-factura-servicio">Servicio</label>
+                    <select id="editar-factura-servicio" required>
+                        <!-- Los servicios se cargarán dinámicamente -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editar-factura-tipo">Tipo de factura</label>
+                    <select id="editar-factura-tipo" required>
+                        <option value="mensual">Mensual</option>
+                        <option value="bimestral">Bimestral</option>
+                        <option value="semestral">Semestral</option>
+                        <option value="anual">Anual</option>
+                    </select>
+                </div>
+                <div class="form-group">
                     <label for="editar-factura-monto">Monto</label>
                     <div style="display: flex; gap: 0.5rem; align-items: stretch;">
                         <button type="button" class="btn-moneda" id="btn-editar-factura-moneda"
@@ -2073,21 +2088,6 @@
                             </svg>
                         </button>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label for="editar-factura-tipo">Tipo de factura</label>
-                    <select id="editar-factura-tipo" required>
-                        <option value="mensual">Mensual</option>
-                        <option value="bimestral">Bimestral</option>
-                        <option value="semestral">Semestral</option>
-                        <option value="anual">Anual</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="editar-factura-servicio">Servicio</label>
-                    <select id="editar-factura-servicio" required>
-                        <!-- Los servicios se cargarán dinámicamente -->
-                    </select>
                 </div>
                 <div class="form-group">
                     <label for="editar-factura-fecha">Fecha de vencimiento</label>
