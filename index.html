@@ -392,15 +392,6 @@
             color: var(--text-main);
         }
 
-        .modal-close {
-            background: transparent;
-            border: none;
-            width: auto;
-            padding: 0.5rem;
-            cursor: pointer;
-            color: var(--text-muted);
-        }
-
         /* --- Formularios --- */
         .form-group {
             margin-bottom: 1rem;
@@ -786,8 +777,7 @@
             background: var(--c-blue);
         }
 
-        .toast.error,
-        .toast.warning {
+        .toast.error {
             background: var(--c-red);
         }
 
@@ -943,10 +933,6 @@
         }
 
         /* Estadísticas Unificadas */
-        .estadisticas-selector-container {
-            margin-bottom: 1rem;
-        }
-
         .estadisticas-selector {
             width: 100%;
             background: var(--input-bg);
@@ -965,16 +951,13 @@
         .estadisticas-lista {
             display: flex;
             flex-direction: column;
-            gap: 0.75rem;
         }
 
         /* --- Estilos Calculador --- */
-        .calculador-container,
-        .calculador-filtros,
         .calculador-campo {
             display: flex;
             flex-direction: column;
-            padding-bottom: 1rem;
+            padding-top: 1rem;
         }
 
         .calculador-label {
@@ -988,15 +971,13 @@
         .calculador-resultados {
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
-            margin-top: 0.5rem;
         }
 
         .calculador-resultado-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0.5rem;
+            padding-top: 1rem;
         }
 
         .calculador-resultado-valor {
@@ -1345,14 +1326,6 @@
             background: var(--c-blue);
         }
 
-        .estadistica-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.5rem 1rem;
-            /* Opcional: línea divisoria */
-        }
-
         /* --- Selector de Moneda --- */
         .btn-moneda {
             flex-shrink: 0;
@@ -1371,32 +1344,6 @@
             align-items: center;
             justify-content: center;
             transition: background 0.15s, color 0.15s, border-color 0.15s;
-        }
-
-        /* Estadísticas duales: dos líneas apiladas */
-        .stat-dual-line {
-            display: flex;
-            flex-direction: column;
-            gap: 0.1rem;
-        }
-
-        .stat-dual-row {
-            display: flex;
-            align-items: baseline;
-            gap: 0.4rem;
-        }
-
-        .stat-dual-tag {
-            font-size: 0.65rem;
-            font-weight: 700;
-            letter-spacing: 0.04em;
-            color: var(--text-muted);
-            min-width: 1.8rem;
-        }
-
-        .stat-dual-val {
-            font-size: 0.9rem;
-            color: var(--text-main);
         }
 
         /* Tarjeta resumen: monto USD como segunda línea, mismo tamaño */
@@ -3790,7 +3737,7 @@
                             : this.formatearMoneda(0, 'ars');
 
                     const montoUSDItem = hayUSDMes ? `
-    <div class="estadistica-item">
+    <div class="calculador-resultado-item">
         <span class="estadistica-label">Monto USD</span>
         <span class="estadistica-valor">${this.formatearMoneda(totalMesUSD, 'usd')}</span>
     </div>` : '';
@@ -3806,13 +3753,13 @@
                                 : this.formatearMoneda(0, 'ars');
 
                         const ingUSDItem = hayIngUSD ? `
-    <div class="estadistica-item">
+    <div class="calculador-resultado-item">
         <span class="estadistica-label">Ingresos USD</span>
         <span class="estadistica-valor">${this.formatearMoneda(totalIngresosUSD, 'usd')}</span>
     </div>` : '';
 
                         ingresosHTML = `
-    <div class="estadistica-item">
+    <div class="calculador-resultado-item">
         <span class="estadistica-label">Ingresos</span>
         <span class="estadistica-valor">${ingMontoHTML}</span>
     </div>
@@ -3820,24 +3767,24 @@
                     }
 
                     const itemsHTML = `
-        <div class="estadistica-item">
+        <div class="calculador-resultado-item">
         <span class="estadistica-label">Monto</span>
         <span class="estadistica-valor">${montoHTML}</span>
     </div>
     ${montoUSDItem}
-        <div class="estadistica-item">
+        <div class="calculador-resultado-item">
             <span class="estadistica-label">Facturas</span>
             <span class="estadistica-valor">${cantidadPendientes + cantidadPagadas}</span>
         </div>    
-        <div class="estadistica-item">
+        <div class="calculador-resultado-item">
             <span class="estadistica-label">Pendientes</span>
             <span class="estadistica-valor">${cantidadPendientes}</span>
         </div>
-        <div class="estadistica-item">
+        <div class="calculador-resultado-item">
             <span class="estadistica-label">Pagadas</span>
             <span class="estadistica-valor">${cantidadPagadas}</span>
         </div>
-        <div class="estadistica-item">
+        <div class="calculador-resultado-item">
             <span class="estadistica-label">Vencidas</span>
             <span class="estadistica-valor">${cantidadVencidas}</span>
         </div>
@@ -3865,7 +3812,7 @@
                 // Si es la primera vez O no hay datos, crear/recrear toda la estructura
                 if (!yaExisteSelector || !hayDatos) {
                     const estadisticasHTML = `
-    <div class="estadisticas-selector-container">
+    <div class="calculador-campo">
     <label class="calculador-label">Mes</label>
     <select id="select-mes-estadisticas" class="estadisticas-selector">
             ${this.generarOpcionesMeses(mesSeleccionado, añoSeleccionado)}
