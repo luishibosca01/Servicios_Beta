@@ -45,7 +45,7 @@
             --c-gray-btn: #dde3ea;
             --c-white: #ffffff;
             --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            --radius: 10px;
+            --radius: 20px;
         }
 
         body.dark-mode {
@@ -295,8 +295,8 @@
 
         .servicio-nombre {
             font-size: 1.1rem;
-            margin-bottom: 0.5rem;
             font-weight: 600;
+            padding-bottom: 0.5rem;
         }
 
         .servicio-info {
@@ -308,7 +308,7 @@
         }
 
         .servicio-monto {
-            color: var(--text-main);
+            color: var(--text-muted);
             font-size: 1rem;
         }
 
@@ -317,12 +317,13 @@
         }
 
         .servicio-estado {
-            display: inline-block;
-            padding: 0.25rem 0.5rem;
-            border-radius: var(--radius);
             font-size: 0.75rem;
-            margin-top: 0.5rem;
+            font-weight: 600;
+            margin-top: 0.25rem;
             color: var(--c-white);
+            display: inline-block;
+            border-radius: var(--radius);
+            padding: .1rem 1rem .1rem 1rem;
         }
 
         .estado-vencido,
@@ -1700,7 +1701,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">Version 1.07</div> <!-- DeltaF -->
+            <div class="menu-version">Version 1.08</div> <!-- DeltaF -->
         </div>
     </div>
 
