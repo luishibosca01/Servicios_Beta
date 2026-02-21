@@ -142,7 +142,16 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: all 0.2s;
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+            transition: background 0.2s, color 0.2s, border-color 0.2s;
+            flex-shrink: 0;
+        }
+
+        .icon-btn svg {
+            width: 20px;
+            height: 20px;
         }
 
         .icon-btn.transparent {
@@ -151,7 +160,6 @@
         }
 
         .icon-btn:active,
-        .btn-moneda:active,
         .search-clear:active {
             transform: scale(0.95);
         }
@@ -1327,26 +1335,6 @@
             background: var(--c-blue);
         }
 
-        /* --- Selector de Moneda --- */
-        .btn-moneda {
-            flex-shrink: 0;
-            width: 52px;
-            min-height: 48px;
-            padding: 0;
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            background: var(--input-bg);
-            color: var(--text-muted);
-            font-size: 0.72rem;
-            font-weight: 800;
-            letter-spacing: 0.04em;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.15s, color 0.15s, border-color 0.15s;
-        }
-
         /* Tarjeta resumen: monto USD como segunda línea, mismo tamaño */
         .resumen-valor-usd {
             font-size: 2.5rem;
@@ -1372,6 +1360,17 @@
 
         .moneda-badge.ars {
             color: var(--c-red);
+        }
+
+        /* Botón toggle de moneda en modales */
+        .icon-btn.activo-usd {
+            color: var(--c-green) !important;
+            border-color: var(--c-green) !important;
+        }
+
+        .icon-btn:not(.activo-usd)[id*="moneda"] {
+            color: var(--c-red) !important;
+            border-color: var(--c-red) !important;
         }
 
         /* moviles */
@@ -1701,7 +1700,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">Version 1.08</div> <!-- DeltaF -->
+            <div class="menu-version">Version 1.09</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -1997,7 +1996,7 @@
                 <div class="form-group">
                     <label for="factura-monto">Monto</label>
                     <div style="display: flex; gap: 0.5rem; align-items: stretch;">
-                        <button type="button" class="btn-moneda" id="btn-factura-moneda"
+                        <button type="button" class="icon-btn" id="btn-factura-moneda"
                             onclick="app.toggleMoneda('factura-moneda','btn-factura-moneda')"
                             title="Cambiar moneda">ARS</button>
                         <input type="hidden" id="factura-moneda" value="ars">
@@ -2075,7 +2074,7 @@
                 <div class="form-group">
                     <label for="editar-factura-monto">Monto</label>
                     <div style="display: flex; gap: 0.5rem; align-items: stretch;">
-                        <button type="button" class="btn-moneda" id="btn-editar-factura-moneda"
+                        <button type="button" class="icon-btn" id="btn-editar-factura-moneda"
                             onclick="app.toggleMoneda('editar-factura-moneda','btn-editar-factura-moneda')"
                             title="Cambiar moneda">ARS</button>
                         <input type="hidden" id="editar-factura-moneda" value="ars">
@@ -2201,7 +2200,7 @@
                 <div class="form-group">
                     <label for="ingreso-monto">Monto</label>
                     <div style="display: flex; gap: 0.5rem; align-items: stretch;">
-                        <button type="button" class="btn-moneda" id="btn-ingreso-moneda"
+                        <button type="button" class="icon-btn" id="btn-ingreso-moneda"
                             onclick="app.toggleMoneda('ingreso-moneda','btn-ingreso-moneda')"
                             title="Cambiar moneda">ARS</button>
                         <input type="hidden" id="ingreso-moneda" value="ars">
@@ -2253,7 +2252,7 @@
                 <div class="form-group">
                     <label for="editar-ingreso-monto">Monto</label>
                     <div style="display: flex; gap: 0.5rem; align-items: stretch;">
-                        <button type="button" class="btn-moneda" id="btn-editar-ingreso-moneda"
+                        <button type="button" class="icon-btn" id="btn-editar-ingreso-moneda"
                             onclick="app.toggleMoneda('editar-ingreso-moneda','btn-editar-ingreso-moneda')"
                             title="Cambiar moneda">ARS</button>
                         <input type="hidden" id="editar-ingreso-moneda" value="ars">
@@ -2506,6 +2505,8 @@
                 this.servicioActual = null;
                 this.facturaActual = null;
                 this.origenModalFactura = null; // 'menu' o 'servicio'
+                this._anoExpandidoFacturas = {};
+                this._anoExpandidoIngresos = {};
 
                 // Modo calculadora - NUEVO
                 this.modoCalculadora = false;
@@ -4725,28 +4726,29 @@
 
                 modal.dataset.servicioId = servicioId;
                 this.abrirModal('modal-facturas-servicio');
+                const anoGuardado = this._anoExpandidoFacturas[servicioId];
+                if (anoGuardado) {
+                    this._restaurarAnoExpandido(anoGuardado);
+                    this._anoExpandidoFacturas[servicioId] = null;
+                }
             }
 
             toggleGrupoAno(headerElement) {
                 const chevron = headerElement.querySelector('.facturas-grupo-chevron');
                 const contenido = headerElement.nextElementSibling;
 
-                // Si el grupo actual está colapsado (lo vamos a abrir)
                 if (chevron.classList.contains('collapsed')) {
-                    // Cerrar todos los demás grupos abiertos
                     const todosLosChevrons = document.querySelectorAll('.facturas-grupo-chevron:not(.collapsed)');
                     const todosLosContenidos = document.querySelectorAll('.facturas-grupo-contenido:not(.collapsed)');
 
                     todosLosChevrons.forEach(ch => ch.classList.add('collapsed'));
                     todosLosContenidos.forEach(cont => cont.classList.add('collapsed'));
 
-                    // Pequeño delay antes de abrir el nuevo grupo
                     setTimeout(() => {
                         chevron.classList.remove('collapsed');
                         contenido.classList.remove('collapsed');
                     }, 200);
                 } else {
-                    // Si ya está abierto, simplemente cerrarlo sin delay
                     chevron.classList.add('collapsed');
                     contenido.classList.add('collapsed');
                 }
@@ -4767,6 +4769,30 @@
                     document.getElementById('form-servicio').reset();
                     this.abrirModal('modal-agregar-servicio');
                 }
+            }
+
+            _restaurarAnoExpandido(anoObjetivo) {
+                if (!anoObjetivo) return;
+                const headers = document.querySelectorAll('.facturas-grupo-header');
+                let encontrado = false;
+                headers.forEach(header => {
+                    const textoAno = header.querySelector('.facturas-grupo-ano-texto')?.textContent;
+                    if (textoAno === anoObjetivo) encontrado = true;
+                });
+                if (!encontrado) return;  // si el año no existe, no tocar nada
+
+                headers.forEach(header => {
+                    const textoAno = header.querySelector('.facturas-grupo-ano-texto')?.textContent;
+                    const chevron = header.querySelector('.facturas-grupo-chevron');
+                    const contenido = header.nextElementSibling;
+                    if (textoAno === anoObjetivo) {
+                        chevron.classList.remove('collapsed');
+                        contenido.classList.remove('collapsed');
+                    } else {
+                        chevron.classList.add('collapsed');
+                        contenido.classList.add('collapsed');
+                    }
+                });
             }
 
             generarHTMLFactura(factura, onclick = null) {
@@ -5252,15 +5278,24 @@
                 }
                 this.mostrarToast('Factura marcada como no pagada', 'success');
             }
+
             editarFactura(facturaId) {
-                // Buscar el servicio que contiene esta factura
                 const servicio = this.servicios.find(s => s.facturas.some(f => f.id === facturaId));
                 if (!servicio) return;
                 const factura = servicio.facturas.find(f => f.id === facturaId);
                 if (!factura) return;
+
+                const modal = document.getElementById('modal-facturas-servicio');
+                if (modal?.classList.contains('active')) {
+                    const sid = modal.dataset.servicioId;
+                    const item = document.querySelector(`.factura-item[data-id="${facturaId}"]`);
+                    const grupo = item?.closest('.facturas-grupo-ano');
+                    const ano = grupo?.querySelector('.facturas-grupo-ano-texto')?.textContent || null;
+                    this._anoExpandidoFacturas[sid] = ano;
+                }
+
                 this.cerrarModal('modal-facturas-servicio');
                 this.abrirModalFactura(servicio.id, facturaId);
-                // Actualizar estado del botón según el signo del monto
                 this.actualizarEstadoBotonToggle('editar-factura-monto', 'btn-editar-toggle-negativo');
             }
 
@@ -5848,6 +5883,10 @@
                     modal.classList.remove('active');
                 });
                 document.body.classList.remove('modal-open');
+
+                // Limpiar años guardados al cerrar por backdrop
+                this._anoExpandidoFacturas = {};
+                this._anoExpandidoIngresos = {};
             }
 
             toggleMenuAjustes() {
@@ -5975,7 +6014,7 @@
                 btn.classList.toggle('activo-usd', nuevo === 'usd');
             }
 
-            // Fija la moneda de un btn-moneda desde código (usado al cargar datos para editar)
+            // Fija la moneda de un icon-btn desde código (usado al cargar datos para editar)
             setMonedaBtn(hiddenId, btnId, moneda) {
                 const hidden = document.getElementById(hiddenId);
                 const btn = document.getElementById(btnId);
@@ -6035,29 +6074,45 @@
                             const badgeClass = monedaIngreso === 'usd' ? 'usd' : 'ars';
 
                             return `
-                    <div class="factura-item" data-id="${ingreso.id}">
-                        <div class="factura-info" onclick="app.abrirModalIngreso('${ingreso.id}')">
-                            <div class="factura-monto">${this.formatearMoneda(ingreso.monto, monedaIngreso)}<span class="moneda-badge ${badgeClass}">${monedaIngreso.toUpperCase()}</span></div>
-                            <div class="factura-fecha">${tipoEmoji} ${tipoTexto} | Cobrado: ${this.formatearFecha(ingreso.fecha)}</div>
-                        </div>
-                    </div>
-                `;
+                         <div class="factura-item" data-id="${ingreso.id}">
+                             <div class="factura-info" onclick="app.abrirModalIngreso('${ingreso.id}')">
+                                 <div class="factura-monto">${this.formatearMoneda(ingreso.monto, monedaIngreso)}<span class="moneda-badge ${badgeClass}">${monedaIngreso.toUpperCase()}</span></div>
+                                 <div class="factura-fecha">${tipoEmoji} ${tipoTexto} | Cobrado: ${this.formatearFecha(ingreso.fecha)}</div>
+                             </div>
+                         </div>
+                     `;
                         }).join('');
 
                         return this.generarGrupoAno(grupo.ano, grupo.items, ingresosHTML, 'ingreso', index);
                     }).join('');
                 }
 
+                document.getElementById('modal-ingresos-lista').dataset.servicioId = servicioId;
                 this.abrirModal('modal-ingresos-lista');
+                const anoGuardado = this._anoExpandidoIngresos[servicioId];
+                if (anoGuardado) {
+                    this._restaurarAnoExpandido(anoGuardado);
+                    this._anoExpandidoIngresos[servicioId] = null;
+                }
             }
 
             abrirModalIngreso(ingresoId = null, desdeMenu = false) {
+                if (ingresoId) {
+                    const modal = document.getElementById('modal-ingresos-lista');
+                    if (modal?.classList.contains('active')) {
+                        const sid = modal.dataset.servicioId;
+                        const item = document.querySelector(`.factura-item[data-id="${ingresoId}"]`);
+                        const grupo = item?.closest('.facturas-grupo-ano');
+                        const ano = grupo?.querySelector('.facturas-grupo-ano-texto')?.textContent || null;
+                        this._anoExpandidoIngresos[sid] = ano;
+                    }
+                }
+
                 this.cerrarModal('modal-ingresos-lista');
                 this.ingresoActual = ingresoId;
                 this.ingresoDesdeMenu = desdeMenu;
 
                 if (ingresoId) {
-                    // Modo editar - usar modal separado
                     const servicio = this.servicios.find(s => s.id === this.SERVICIO_INGRESOS_ID);
                     if (servicio) {
                         const ingreso = servicio.facturas.find(f => f.id === ingresoId);
@@ -6070,7 +6125,6 @@
                     }
                     this.abrirModal('modal-editar-ingreso');
                 } else {
-                    // Modo nuevo
                     document.getElementById('form-ingreso').reset();
                     this.setMonedaBtn('ingreso-moneda', 'btn-ingreso-moneda', 'ars');
                     this.abrirModal('modal-agregar-ingreso');
@@ -6235,7 +6289,7 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA DeltaF VERSION 1.07
+    //                 NOTAS SISTEMA DeltaF VERSION 1.9
     // ====================================================================
     
      - CAMBIOS
