@@ -1529,6 +1529,12 @@
             <line x1="12" y1="1" x2="12" y2="23" class="icon-line" stroke="currentColor"></line>
             <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" class="icon-line" stroke="currentColor"></path>
         </symbol>
+        <symbol id="icon-cash" viewBox="0 0 24 24">
+            <rect x="2" y="6" width="20" height="12" rx="2" class="icon-line" stroke="currentColor"></rect>
+            <circle cx="12" cy="12" r="3" class="icon-line" stroke="currentColor"></circle>
+            <line x1="6" y1="6" x2="6" y2="18" class="icon-line" stroke="currentColor"></line>
+            <line x1="18" y1="6" x2="18" y2="18" class="icon-line" stroke="currentColor"></line>
+        </symbol>
         <symbol id="icon-card" viewBox="0 0 24 24">
             <rect x="2" y="5" width="20" height="14" rx="2" class="icon-line" stroke="currentColor"></rect>
             <line x1="2" y1="10" x2="22" y2="10" class="icon-line" stroke="currentColor"></line>
@@ -1739,7 +1745,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">Version 1.10</div> <!-- DeltaF -->
+            <div class="menu-version">Version 1.11</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -2129,8 +2135,15 @@
                                 <use href="#icon-card" />
                             </svg>
                         </button>
+                        <button type="button" id="btn-toggle-credito" class="icon-btn" onclick="app.toggleConCredito()"
+                            title="Efectivo / Tarjeta de crédito" style="display:none;">
+                            <svg class="icon">
+                                <use href="#icon-cash" />
+                            </svg>
+                        </button>
                     </div>
                 </div>
+                <input type="hidden" id="factura-con-credito" value="false">
                 <div class="form-actions">
                     <button type="submit"><svg class="icon">
                             <use href="#icon-save" />
@@ -2208,8 +2221,16 @@
                                 <use href="#icon-card" />
                             </svg>
                         </button>
+                        <button type="button" id="btn-editar-toggle-credito" class="icon-btn"
+                            onclick="app.toggleConCredito('editar')" title="Efectivo / Tarjeta de crédito"
+                            style="display:none;">
+                            <svg class="icon">
+                                <use href="#icon-cash" />
+                            </svg>
+                        </button>
                     </div>
                 </div>
+                <input type="hidden" id="editar-factura-con-credito" value="false">
                 <div class="form-actions" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
                     <button type="submit"><svg class="icon">
                             <use href="#icon-save" />
@@ -3098,7 +3119,7 @@
 
                     // Calcular solo facturas pendientes del mes actual o siguiente
                     servicio.facturas.forEach(factura => {
-                        if (!factura.pagada && factura.monto > 0) {
+                        if (!factura.pagada && factura.monto > 0 && !factura.conCredito) {
                             // Obtener mes y año de la factura
                             const fechaFactura = new Date(factura.fecha + 'T00:00:00');
                             const mesFactura = fechaFactura.getMonth();
@@ -3491,20 +3512,22 @@
                         const esDelMesActual = mesFactura === mesActual && añoFactura === añoActual;
                         const moneda = factura.moneda || 'ars';
 
+                        const excluir = factura.conCredito === true;
+
                         if (esDelMesActual) {
                             if (factura.monto < 0) return;
                             if (moneda === 'usd') {
-                                totalFacturasMesActualUSD += factura.monto;
-                                if (!factura.pagada) { totalAPagarUSD += factura.monto; }
-                                else { totalPagadoDelMesActualUSD += factura.monto; }
+                                if (!excluir) totalFacturasMesActualUSD += factura.monto;
+                                if (!factura.pagada && !excluir) { totalAPagarUSD += factura.monto; }
+                                else if (factura.pagada && !excluir) { totalPagadoDelMesActualUSD += factura.monto; }
                             } else {
-                                totalFacturasMesActualARS += factura.monto;
-                                if (!factura.pagada) { totalAPagarARS += factura.monto; }
-                                else { totalPagadoDelMesActualARS += factura.monto; }
+                                if (!excluir) totalFacturasMesActualARS += factura.monto;
+                                if (!factura.pagada && !excluir) { totalAPagarARS += factura.monto; }
+                                else if (factura.pagada && !excluir) { totalPagadoDelMesActualARS += factura.monto; }
                             }
                         }
 
-                        if (factura.pagada && factura.fechaPago && factura.monto > 0) {
+                        if (factura.pagada && factura.fechaPago && factura.monto > 0 && !excluir) {
                             const fechaPago = new Date(factura.fechaPago + 'T00:00:00');
                             if (fechaPago.getMonth() === mesActual && fechaPago.getFullYear() === añoActual) {
                                 if (moneda === 'usd') { totalPagadoMesUSD += factura.monto; }
@@ -3810,8 +3833,10 @@
                             }
 
                             // Facturas normales (positivas)
-                            if (moneda === 'usd') totalMesUSD += factura.monto;
-                            else totalMesARS += factura.monto;
+                            if (!factura.conCredito) {
+                                if (moneda === 'usd') totalMesUSD += factura.monto;
+                                else totalMesARS += factura.monto;
+                            }
 
                             if (factura.pagada) {
                                 cantidadPagadas++;
@@ -5200,6 +5225,10 @@
                 if (!esEditar) {
                     this.actualizarEstadoBotonToggle('factura-monto', 'btn-toggle-negativo');
                     this.setMonedaBtn('factura-moneda', 'btn-factura-moneda', 'ars');
+                    const btnCreditoAgregar = document.getElementById('btn-toggle-credito');
+                    btnCreditoAgregar.style.display = 'none';
+                    document.getElementById('factura-con-credito').value = 'false';
+                    this._resetBtnCredito(btnCreditoAgregar);
                 }
 
                 const serviciosOrdenados = [...this.servicios]
@@ -5228,18 +5257,25 @@
                             this.setMonedaBtn('editar-factura-moneda', 'btn-editar-factura-moneda', factura.moneda || 'ars');
                             selectServicio.value = servicioId;
 
+                            const btnCredito = document.getElementById('btn-editar-toggle-credito');
+                            const inputCredito = document.getElementById('editar-factura-con-credito');
                             if (factura.pagada) {
                                 btnTogglePagada.classList.add('pagada');
                                 inputFechaPago.disabled = false;
-                                // Actualizar el icono a estado pagado
-                                if (iconUse) {
-                                    iconUse.setAttribute('href', '#icon-cancel');
-                                }
-                                if (factura.fechaPago) {
-                                    inputFechaPago.value = factura.fechaPago;
+                                if (iconUse) iconUse.setAttribute('href', '#icon-cancel');
+                                inputFechaPago.value = factura.fechaPago || this.obtenerFechaLocal();
+                                if (btnCredito) btnCredito.style.display = 'flex';
+                                if (inputCredito) inputCredito.value = factura.conCredito ? 'true' : 'false';
+                                if (factura.conCredito) {
+                                    btnCredito.classList.add('pagada');
+                                    btnCredito.querySelector('use').setAttribute('href', '#icon-card');
                                 } else {
-                                    inputFechaPago.value = this.obtenerFechaLocal();
+                                    this._resetBtnCredito(btnCredito);
                                 }
+                            } else {
+                                if (btnCredito) { btnCredito.style.display = 'none'; }
+                                if (inputCredito) inputCredito.value = 'false';
+                                this._resetBtnCredito(btnCredito);
                             }
                         }
                     }
@@ -5248,22 +5284,60 @@
                 this.abrirModal(modalId);
             }
 
+            toggleConCredito(modo = '') {
+                const esEditar = modo === 'editar';
+                const btn = document.getElementById(esEditar ? 'btn-editar-toggle-credito' : 'btn-toggle-credito');
+                const input = document.getElementById(esEditar ? 'editar-factura-con-credito' : 'factura-con-credito');
+                const iconUse = btn.querySelector('use');
+                const esCredito = input.value === 'true';
+
+                if (esCredito) {
+                    input.value = 'false';
+                    iconUse.setAttribute('href', '#icon-cash');
+                    btn.classList.remove('pagada');
+                    btn.title = 'Efectivo / transferencia';
+                    this.mostrarToast('Efectivo / transferencia', 'info');
+                } else {
+                    input.value = 'true';
+                    iconUse.setAttribute('href', '#icon-card');
+                    btn.classList.add('pagada');
+                    btn.title = 'Pagada con tarjeta de crédito';
+                    this.mostrarToast('Pagada con tarjeta de crédito', 'info');
+                }
+            }
+
+            _resetBtnCredito(btn) {
+                if (!btn) return;
+                const iconUse = btn.querySelector('use');
+                if (iconUse) iconUse.setAttribute('href', '#icon-cash');
+                btn.classList.remove('pagada');
+                btn.title = 'Efectivo / transferencia';
+            }
+
             toggleEstadoPago(btnId = 'btn-toggle-pagada', inputId = 'factura-fecha-pago') {
                 const btnTogglePagada = document.getElementById(btnId);
                 const inputFechaPago = document.getElementById(inputId);
                 const iconUse = btnTogglePagada.querySelector('use');
                 const estaPagada = btnTogglePagada.classList.contains('pagada');
+                const esEditar = btnId === 'btn-editar-toggle-pagada';
+
+                const btnCredito = document.getElementById(esEditar ? 'btn-editar-toggle-credito' : 'btn-toggle-credito');
+                const inputCredito = document.getElementById(esEditar ? 'editar-factura-con-credito' : 'factura-con-credito');
 
                 if (estaPagada) {
                     btnTogglePagada.classList.remove('pagada');
                     inputFechaPago.disabled = true;
                     inputFechaPago.value = '';
                     iconUse.setAttribute('href', '#icon-card');
+                    if (btnCredito) { btnCredito.style.display = 'none'; }
+                    if (inputCredito) { inputCredito.value = 'false'; }
+                    this._resetBtnCredito(btnCredito);
                 } else {
                     btnTogglePagada.classList.add('pagada');
                     inputFechaPago.disabled = false;
                     inputFechaPago.value = this.obtenerFechaLocal();
                     iconUse.setAttribute('href', '#icon-cancel');
+                    if (btnCredito) { btnCredito.style.display = 'flex'; }
                 }
             }
 
@@ -5322,6 +5396,7 @@
                 const btnTogglePagada = document.getElementById(esEditar ? 'btn-editar-toggle-pagada' : 'btn-toggle-pagada');
                 const estaPagada = btnTogglePagada.classList.contains('pagada');
                 const fechaPago = estaPagada ? document.getElementById(esEditar ? 'editar-factura-fecha-pago' : 'factura-fecha-pago').value : null;
+                const conCredito = estaPagada ? (document.getElementById(esEditar ? 'editar-factura-con-credito' : 'factura-con-credito')?.value === 'true') : false;
                 const servicioSeleccionadoId = document.getElementById(esEditar ? 'editar-factura-servicio' : 'factura-servicio').value;
 
                 // Validar monto (permitir negativos para saldos a favor)
@@ -5375,6 +5450,7 @@
                                 factura.pagada = estaPagada;
                                 factura.fechaPago = fechaPago;
                                 factura.moneda = moneda;
+                                factura.conCredito = conCredito;
 
                                 const servicioNuevo = this.servicios.find(s => s.id === servicioNuevoId);
                                 if (servicioNuevo) {
@@ -5388,7 +5464,8 @@
                                     factura.fecha === fecha &&
                                     factura.pagada === estaPagada &&
                                     factura.fechaPago === fechaPago &&
-                                    (factura.moneda || 'ars') === moneda) {
+                                    (factura.moneda || 'ars') === moneda &&
+                                    (factura.conCredito || false) === conCredito) {
                                     this.mostrarToast('Sin cambios', 'info');
                                     this.cerrarModal('modal-editar-factura');
                                     this.abrirModalFacturasServicio(servicioAnteriorId);
@@ -5400,6 +5477,7 @@
                                 factura.pagada = estaPagada;
                                 factura.fechaPago = fechaPago;
                                 factura.moneda = moneda;
+                                factura.conCredito = conCredito;
                             }
                         }
                     }
@@ -5412,7 +5490,8 @@
                         fecha: fecha,
                         pagada: estaPagada,
                         fechaPago: fechaPago,
-                        moneda: moneda
+                        moneda: moneda,
+                        conCredito: conCredito
                     };
 
                     const servicioDestino = this.servicios.find(s => s.id === servicioNuevoId);
@@ -5453,6 +5532,10 @@
                         servicioId = servicio.id;
                     }
                 });
+
+                // Por defecto se asume efectivo/transferencia; se puede cambiar editando la factura
+                const facturaRapida = this.servicios.flatMap(s => s.facturas).find(f => f.id === facturaId);
+                if (facturaRapida && facturaRapida.conCredito === undefined) facturaRapida.conCredito = false;
 
                 this.guardarDatos();
                 this.guardarEstado();
@@ -6531,11 +6614,12 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA DeltaF VERSION 1.10
+    //                 NOTAS SISTEMA DeltaF VERSION 1.11
     // ====================================================================
     
      - CAMBIOS
-     1) Se agrega tipo de servicio
+     1) Se agrega funcion para marcar si se apgo con credito o en efectivo/tranferencia, para que la cuenta de la
+     tarjeta de estadisticas sea de realice de forma correcta
 
 
      - BUGS CONOCIDOS:
