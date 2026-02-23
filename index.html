@@ -1373,6 +1373,38 @@
             border-color: var(--c-red) !important;
         }
 
+        .categoria-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 0.35rem 0.75rem 0.35rem 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .categoria-tag-del {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .categoria-tag-del:active {
+            color: var(--c-red);
+            transform: scale(0.9);
+        }
+
         /* moviles */
         @media (max-width: 767px) {
             .servicios-lista {
@@ -1685,6 +1717,13 @@
                 <span>Ingresos</span>
                 <span id="ingresos-indicator" style="margin-left: auto"></span>
             </div>
+            <div class="menu-item" id="menu-categorias">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M3 7h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 18h7v3H3zM3 3h7v3H3z" class="icon-line"
+                        stroke="currentColor" />
+                </svg>
+                <span>Categorías</span>
+            </div>
             <div class="menu-item" id="menu-informacion">
                 <svg class="icon">
                     <use href="#icon-info" />
@@ -1901,6 +1940,20 @@
                     <input type="text" id="servicio-nombre" required placeholder="Ej: Internet, Luz, Agua"
                         maxlength="30">
                 </div>
+                <div class="form-group">
+                    <label for="servicio-categoria">Categoría</label>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <select id="servicio-categoria" style="flex: 1;">
+                            <option value="">Sin categoría</option>
+                        </select>
+                        <button type="button" class="icon-btn" title="Agregar categoría"
+                            onclick="app.abrirModalNuevaCategoria('servicio-categoria')" style="flex-shrink:0;">
+                            <svg class="icon">
+                                <use href="#icon-plus" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
                 <div class="form-actions" style="display: grid; grid-template-columns: 1fr 1fr;">
                     <button type="submit">
                         <svg class="icon">
@@ -1928,6 +1981,20 @@
                     <label for="editar-servicio-nombre">Nombre del servicio</label>
                     <input type="text" id="editar-servicio-nombre" required placeholder="Ej: Internet, Luz, Agua"
                         maxlength="30">
+                </div>
+                <div class="form-group">
+                    <label for="editar-servicio-categoria">Categoría</label>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <select id="editar-servicio-categoria" style="flex: 1;">
+                            <option value="">Sin categoría</option>
+                        </select>
+                        <button type="button" class="icon-btn" title="Agregar categoría"
+                            onclick="app.abrirModalNuevaCategoria('editar-servicio-categoria')" style="flex-shrink:0;">
+                            <svg class="icon">
+                                <use href="#icon-plus" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
                 <div class="form-actions" style="display: grid; grid-template-columns: 1fr 1fr;">
                     <button type="submit">
@@ -1967,6 +2034,36 @@
             <div class="form-actions">
                 <button onclick="app.aplicarOrden()">Aplicar</button>
                 <button onclick="app.cerrarModal('modal-ordenar')">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nueva Categoría -->
+    <div class="modal" id="modal-nueva-categoria">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Categorías</h3>
+            </div>
+            <div class="form-group">
+                <label for="nueva-categoria-nombre">Nombre de categoría</label>
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="text" id="nueva-categoria-nombre" placeholder="Ej: Hogar, Streaming, Salud"
+                        maxlength="30" style="flex:1;">
+                    <button type="button" class="icon-btn" onclick="app.guardarNuevaCategoria()" title="Agregar">
+                        <svg class="icon">
+                            <use href="#icon-plus" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div id="categorias-lista"
+                style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; min-height: 2rem;"></div>
+            <div class="form-actions2">
+                <button type="button" onclick="app.cerrarModalCategorias()">
+                    <svg class="icon">
+                        <use href="#icon-cancel" />
+                    </svg>Cerrar
+                </button>
             </div>
         </div>
     </div>
@@ -3277,6 +3374,16 @@
                         return;
                     }
 
+                    // Enter en modal nueva categoría
+                    if (e.key === 'Enter') {
+                        const modalCat = document.getElementById('modal-nueva-categoria');
+                        if (modalCat?.classList.contains('active')) {
+                            e.preventDefault();
+                            this.guardarNuevaCategoria();
+                            return;
+                        }
+                    }
+
                     // Ctrl/Cmd + Z/Y para undo/redo
                     if (e.ctrlKey || e.metaKey) {
                         if (e.key === 'z' && !e.shiftKey) {
@@ -3287,6 +3394,11 @@
                             this.rehacer();
                         }
                     }
+                });
+
+                document.getElementById('menu-categorias').addEventListener('click', () => {
+                    this.cerrarMenuAjustes();
+                    this.abrirModalNuevaCategoria(null);
                 });
 
                 // Menu informacion
@@ -4762,11 +4874,13 @@
                     const servicio = this.servicios.find(s => s.id === servicioId);
                     if (servicio) {
                         document.getElementById('editar-servicio-nombre').value = servicio.nombre;
+                        this._poblarSelectCategorias('editar-servicio-categoria', servicio.categoria || '');
                     }
                     this.abrirModal('modal-editar-servicio');
                 } else {
                     // Modo nuevo
                     document.getElementById('form-servicio').reset();
+                    this._poblarSelectCategorias('servicio-categoria', '');
                     this.abrirModal('modal-agregar-servicio');
                 }
             }
@@ -4856,6 +4970,108 @@
     `;
             }
 
+            // ── Categorías ──────────────────────────────────────────────
+            _getCategorias() {
+                return JSON.parse(localStorage.getItem('categorias-servicios') || '[]');
+            }
+
+            _saveCategorias(cats) {
+                localStorage.setItem('categorias-servicios', JSON.stringify(cats));
+            }
+
+            _poblarSelectCategorias(selectId, valorSeleccionado = '') {
+                const sel = document.getElementById(selectId);
+                if (!sel) return;
+                const cats = this._getCategorias();
+                // Mantener primera opción "Sin categoría"
+                sel.innerHTML = `<option value="">Sin categoría</option>`;
+                cats.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c;
+                    opt.textContent = c;
+                    if (c === valorSeleccionado) opt.selected = true;
+                    sel.appendChild(opt);
+                });
+            }
+
+            abrirModalNuevaCategoria(targetSelectId) {
+                this._categoriaTargetSelect = targetSelectId;
+                // Recordar qué modal de servicio estaba abierto para reabrirlo al volver
+                this._modalServicioOrigen = document.querySelector('.modal.active')?.id || null;
+                if (this._modalServicioOrigen) this.cerrarModal(this._modalServicioOrigen);
+                document.getElementById('nueva-categoria-nombre').value = '';
+                this._renderCategorias();
+                this.abrirModal('modal-nueva-categoria');
+            }
+
+            cerrarModalCategorias() {
+                this.cerrarModal('modal-nueva-categoria');
+                if (this._modalServicioOrigen) {
+                    this.abrirModal(this._modalServicioOrigen);
+                    this._modalServicioOrigen = null;
+                }
+            }
+
+            _renderCategorias() {
+                const lista = document.getElementById('categorias-lista');
+                if (!lista) return;
+                const cats = this._getCategorias();
+                if (cats.length === 0) {
+                    lista.innerHTML = `<span style="font-size:0.85rem; color:var(--text-muted);">Sin categorías definidas</span>`;
+                    return;
+                }
+                lista.innerHTML = cats.map(c => `
+                    <span class="categoria-tag">
+                        <button class="categoria-tag-del" onclick="app.eliminarCategoria('${c.replace(/'/g, "\\'")}')" title="Eliminar">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                            </svg>
+                        </button>
+                        ${this.escaparHTML(c)}
+                    </span>
+                `).join('');
+            }
+
+            eliminarCategoria(nombre) {
+                let cats = this._getCategorias().filter(c => c !== nombre);
+                this._saveCategorias(cats);
+                // Si algún servicio usaba esta categoría, limpiarla
+                this.servicios.forEach(s => { if (s.categoria === nombre) s.categoria = ''; });
+                this.guardarDatos();
+                this.guardarEstado();
+                this._poblarSelectCategorias('servicio-categoria');
+                this._poblarSelectCategorias('editar-servicio-categoria');
+                this._renderCategorias();
+                this.mostrarToast('Categoría eliminada', 'success');
+            }
+
+            guardarNuevaCategoria() {
+                const nombre = document.getElementById('nueva-categoria-nombre').value.trim();
+                if (!nombre) {
+                    this.mostrarToast('El nombre es requerido', 'error');
+                    return;
+                }
+                const cats = this._getCategorias();
+                if (cats.some(c => c.toLowerCase() === nombre.toLowerCase())) {
+                    this.mostrarToast('Esa categoría ya existe', 'error');
+                    return;
+                }
+                cats.push(nombre);
+                cats.sort((a, b) => a.localeCompare(b));
+                this._saveCategorias(cats);
+                document.getElementById('nueva-categoria-nombre').value = '';
+                this._poblarSelectCategorias('servicio-categoria',
+                    this._categoriaTargetSelect === 'servicio-categoria' ? nombre : '');
+                this._poblarSelectCategorias('editar-servicio-categoria',
+                    this._categoriaTargetSelect === 'editar-servicio-categoria' ? nombre : '');
+                const sel = document.getElementById(this._categoriaTargetSelect);
+                if (sel) sel.value = nombre;
+                this.guardarEstado();
+                this._renderCategorias();
+                this.mostrarToast('Categoría agregada', 'success');
+            }
+            // ────────────────────────────────────────────────────────────
+
             guardarServicio(e) {
                 e.preventDefault();
 
@@ -4864,6 +5080,9 @@
                 const nombre = esEditar
                     ? document.getElementById('editar-servicio-nombre').value.trim()
                     : document.getElementById('servicio-nombre').value.trim();
+                const categoria = esEditar
+                    ? document.getElementById('editar-servicio-categoria').value
+                    : document.getElementById('servicio-categoria').value;
 
                 if (!nombre) {
                     this.mostrarToast('El nombre del servicio es obligatorio', 'error');
@@ -4886,7 +5105,7 @@
                     const servicio = this.servicios.find(s => s.id === this.servicioActual);
                     if (servicio) {
                         // Verificar si hubo cambios
-                        if (servicio.nombre === nombre) {
+                        if (servicio.nombre === nombre && (servicio.categoria || '') === categoria) {
                             this.mostrarToast('Sin cambios', 'info');
                             this.cerrarModal('modal-editar-servicio');
                             // Volver al modal de facturas
@@ -4896,6 +5115,7 @@
                             return;
                         }
                         servicio.nombre = nombre;
+                        servicio.categoria = categoria;
                         this.mostrarToast('Servicio actualizado', 'success');
                     }
                 } else {
@@ -4903,6 +5123,7 @@
                     const nuevoServicio = {
                         id: this.generarId(),
                         nombre: nombre,
+                        categoria: categoria,
                         facturas: []
                     };
                     this.servicios.push(nuevoServicio);
@@ -5370,7 +5591,10 @@
 
             guardarEstado() {
                 // Crear una copia profunda del estado actual DESPUÉS del cambio
-                const nuevoEstado = JSON.parse(JSON.stringify(this.servicios));
+                const nuevoEstado = {
+                    servicios: JSON.parse(JSON.stringify(this.servicios)),
+                    categorias: JSON.parse(JSON.stringify(this._getCategorias()))
+                };
 
                 // Si estamos en medio del historial, eliminar estados futuros
                 if (this.historialIndex < this.historial.length - 1) {
@@ -5391,14 +5615,14 @@
             }
 
             inicializarHistorial() {
-                // Limpiar historial anterior
                 this.historial = [];
                 this.historialIndex = -1;
 
-                // Guardar el estado inicial actual
                 if (this.servicios && this.servicios.length >= 0) {
-                    const estadoInicial = JSON.parse(JSON.stringify(this.servicios));
-                    this.historial.push(estadoInicial);
+                    this.historial.push({
+                        servicios: JSON.parse(JSON.stringify(this.servicios)),
+                        categorias: JSON.parse(JSON.stringify(this._getCategorias()))
+                    });
                     this.historialIndex = 0;
                 }
 
@@ -5408,7 +5632,9 @@
             deshacer() {
                 if (this.historialIndex > 0) {
                     this.historialIndex--;
-                    this.servicios = JSON.parse(JSON.stringify(this.historial[this.historialIndex]));
+                    const estado = this.historial[this.historialIndex];
+                    this.servicios = JSON.parse(JSON.stringify(estado.servicios));
+                    this._saveCategorias(JSON.parse(JSON.stringify(estado.categorias)));
                     this.guardarDatos();
                     this.renderServicios();
                     this.cerrarTodosLosModales();
@@ -5420,7 +5646,9 @@
             rehacer() {
                 if (this.historialIndex < this.historial.length - 1) {
                     this.historialIndex++;
-                    this.servicios = JSON.parse(JSON.stringify(this.historial[this.historialIndex]));
+                    const estado = this.historial[this.historialIndex];
+                    this.servicios = JSON.parse(JSON.stringify(estado.servicios));
+                    this._saveCategorias(JSON.parse(JSON.stringify(estado.categorias)));
                     this.guardarDatos();
                     this.renderServicios();
                     this.cerrarTodosLosModales();
@@ -5457,12 +5685,15 @@
                     }
 
                     // Inicializar historial con estado actual (después de cargar)
-                    this.historial = [JSON.parse(JSON.stringify(this.servicios))];
+                    this.historial = [{
+                        servicios: JSON.parse(JSON.stringify(this.servicios)),
+                        categorias: JSON.parse(JSON.stringify(this._getCategorias()))
+                    }];
                     this.historialIndex = 0;
                 } catch (error) {
                     console.error('Error al cargar datos:', error);
                     this.servicios = [];
-                    this.historial = [[]];
+                    this.historial = [{ servicios: [], categorias: [] }];
                     this.historialIndex = 0;
                 }
             }
@@ -5606,6 +5837,7 @@
                     const datos = {
                         version: '1.0',
                         fecha: new Date().toISOString(),
+                        categorias: this._getCategorias(),
                         servicios: this.servicios
                     };
 
@@ -5730,27 +5962,32 @@
                                     }
                                 });
 
+                                // Combinar categorías
+                                let categoriasAgregadas = 0;
+                                if (Array.isArray(datos.categorias)) {
+                                    const catsActuales = this._getCategorias();
+                                    const catsNuevas = datos.categorias.filter(c => !catsActuales.some(ca => ca.toLowerCase() === c.toLowerCase()));
+                                    if (catsNuevas.length > 0) {
+                                        const catsMerge = [...catsActuales, ...catsNuevas].sort((a, b) => a.localeCompare(b));
+                                        this._saveCategorias(catsMerge);
+                                        categoriasAgregadas = catsNuevas.length;
+                                    }
+                                }
+
                                 // Construir mensaje según lo que se hizo
-                                if (serviciosAgregados === 0 && facturasAgregadas === 0 && facturasActualizadas === 0) {
+                                if (serviciosAgregados === 0 && facturasAgregadas === 0 && facturasActualizadas === 0 && categoriasAgregadas === 0) {
                                     this.mostrarToast('No hay datos nuevos para agregar', 'info');
                                     document.getElementById('opciones-importacion').style.display = 'none';
                                     return;
                                 }
 
                                 let mensajePartes = [];
-                                if (serviciosAgregados > 0) {
-                                    mensajePartes.push(`${serviciosAgregados} servicio${serviciosAgregados !== 1 ? 's' : ''}`);
-                                }
-                                if (facturasAgregadas > 0) {
-                                    mensajePartes.push(`${facturasAgregadas} factura${facturasAgregadas !== 1 ? 's' : ''} nueva${facturasAgregadas !== 1 ? 's' : ''}`);
-                                }
-                                if (facturasActualizadas > 0) {
-                                    mensajePartes.push(`${facturasActualizadas} actualizada${facturasActualizadas !== 1 ? 's' : ''}`);
-                                }
+                                if (serviciosAgregados > 0) mensajePartes.push(`${serviciosAgregados} servicio${serviciosAgregados !== 1 ? 's' : ''}`);
+                                if (facturasAgregadas > 0) mensajePartes.push(`${facturasAgregadas} factura${facturasAgregadas !== 1 ? 's' : ''} nueva${facturasAgregadas !== 1 ? 's' : ''}`);
+                                if (facturasActualizadas > 0) mensajePartes.push(`${facturasActualizadas} actualizada${facturasActualizadas !== 1 ? 's' : ''}`);
+                                if (categoriasAgregadas > 0) mensajePartes.push(`${categoriasAgregadas} categoría${categoriasAgregadas !== 1 ? 's' : ''}`);
 
-                                const mensajeFinal = mensajePartes.length > 0
-                                    ? `Importado: ${mensajePartes.join(', ')}`
-                                    : 'Importación completada';
+                                const mensajeFinal = `Importado: ${mensajePartes.join(', ')}`;
 
                                 this.guardarDatos();
                                 this.guardarEstado();
@@ -5759,16 +5996,20 @@
                                 this.mostrarToast(mensajeFinal, 'success');
 
                             } else {
-                                // Modo reemplazar: comportamiento original
-                                const mensaje = `Se importarán ${cantidad} servicios y ${facturas} facturas. ¿Deseas reemplazar todos los datos actuales?`;
+                                // Modo reemplazar
+                                const cats = Array.isArray(datos.categorias) ? datos.categorias : [];
+                                const cantCats = cats.length;
+                                const catsTxt = cantCats > 0 ? `, ${cantCats} categoría${cantCats !== 1 ? 's' : ''}` : '';
+                                const mensaje = `Se restauraran ${cantidad} servicios, ${facturas} facturas${catsTxt}. ¿Deseas reemplazar todos los datos actuales?`;
 
                                 if (confirm(mensaje)) {
                                     this.servicios = datos.servicios;
+                                    this._saveCategorias(cats);
                                     this.guardarDatos();
                                     this.guardarEstado();
                                     this.renderServicios();
                                     this.actualizarEstadisticas();
-                                    this.mostrarToast(`Importados ${cantidad} servicios y ${facturas} facturas.`, 'success');
+                                    this.mostrarToast(`Restaurados ${cantidad} servicios, ${facturas} facturas${catsTxt}.`, 'success');
                                 }
                             }
                         } catch (error) {
@@ -5794,6 +6035,7 @@
                 if (confirm('¿Estás seguro de eliminar todos los datos?')) {
                     {
                         this.servicios = [];
+                        this._saveCategorias([]);
                         this.guardarDatos();
                         this.guardarEstado();
                         this.renderServicios();
