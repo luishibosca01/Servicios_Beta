@@ -1822,7 +1822,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">Version 0.72</div> <!-- DeltaF -->
+            <div class="menu-version">Version 0.73</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -2113,8 +2113,7 @@
                 </select>
             </div>
             <div class="form-actions">
-                <button onclick="app.aplicarOrden()">Aplicar</button>
-                <button onclick="app.cerrarModal('modal-ordenar')">Cancelar</button>
+                <button onclick="app.cerrarModal('modal-ordenar')">Cerrar</button>
             </div>
         </div>
     </div>
@@ -2792,12 +2791,13 @@
 
                 // Botón ordenar
                 document.getElementById('btn-sort').addEventListener('click', () => {
-                    // Sincronizar el select con el orden actual antes de abrir el modal
                     const select = document.getElementById('select-orden');
-                    if (select) {
-                        select.value = this.ordenActual;
-                    }
+                    if (select) select.value = this.ordenActual;
                     this.abrirModal('modal-ordenar');
+                });
+
+                document.getElementById('select-orden').addEventListener('change', () => {
+                    this.aplicarOrden();
                 });
 
                 // Listeners para sincronizar botón toggle de monto con el input
@@ -4970,7 +4970,6 @@
                 this.ordenActual = select.value;
                 localStorage.setItem('gestion_servicios_orden', this.ordenActual);
                 this.renderServicios();
-                this.cerrarModal('modal-ordenar');
                 this.mostrarToast('Orden aplicado', 'success');
             }
 
@@ -6824,7 +6823,7 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA DeltaF VERSION 0.72
+    //                 NOTAS SISTEMA DeltaF VERSION 0.73
     // ====================================================================
     
      - CAMBIOS
