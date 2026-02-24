@@ -1362,6 +1362,14 @@
             color: var(--c-red);
         }
 
+        .moneda-badge.contado {
+            color: var(--c-blue);
+        }
+
+        .moneda-badge.credito {
+            color: var(--c-gold);
+        }
+
         /* Botón toggle de moneda en modales */
         .icon-btn.activo-usd {
             color: var(--c-green) !important;
@@ -1745,7 +1753,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">Version 0.68</div> <!-- DeltaF -->
+            <div class="menu-version">Version 0.69</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -2255,7 +2263,8 @@
             <div class="modal-header modal-facturas-header">
                 <div>
                     <h3 id="modal-facturas-titulo"></h3>
-                    <span id="modal-facturas-categoria" style="display:none; font-size:0.75rem; font-weight:600; color:var(--text-muted); background:var(--input-bg); border:1px solid var(--border); border-radius:var(--radius); padding:0.1rem 0.75rem; margin-top:0.25rem; display:inline-block;"></span>
+                    <span id="modal-facturas-categoria"
+                        style="display:none; font-size:0.75rem; font-weight:600; color:var(--text-muted); background:var(--input-bg); border:1px solid var(--border); border-radius:var(--radius); padding:0.1rem 0.75rem; margin-top:0.25rem; display:inline-block;"></span>
                 </div>
                 <button class="icon-btn transparent" id="btn-editar-servicio-desde-modal"
                     onclick="app.editarServicioDesdeModal()" title="Editar servicio" style="margin-left: auto;">
@@ -3808,7 +3817,9 @@
                 let cantidadPendientes = 0;
                 let cantidadPagadas = 0;
                 let cantidadVencidas = 0;
+                let cantidadFacturasMes = 0;
                 let totalMesARS = 0, totalMesUSD = 0;
+                let totalPagadoMesARS = 0, totalPagadoMesUSD = 0;
                 let totalIngresosARS = 0, totalIngresosUSD = 0;
 
                 this.servicios.forEach(servicio => {
@@ -3835,18 +3846,31 @@
                             }
 
                             // Facturas normales (positivas)
+                            cantidadFacturasMes++;
                             if (!factura.conCredito) {
                                 if (moneda === 'usd') totalMesUSD += factura.monto;
                                 else totalMesARS += factura.monto;
                             }
 
-                            if (factura.pagada) {
-                                cantidadPagadas++;
-                            } else {
+                            if (!factura.pagada) {
                                 cantidadPendientes++;
                                 const vencimiento = new Date(factura.fecha + 'T00:00:00');
                                 vencimiento.setHours(0, 0, 0, 0);
                                 if (vencimiento < hoy) cantidadVencidas++;
+                            }
+                        }
+
+                        // Pagado en este mes por fecha de pago (sin importar el vencimiento)
+                        if (factura.pagada && factura.fechaPago && factura.monto > 0
+                            && servicio.id !== this.SERVICIO_INGRESOS_ID) {
+                            const fechaPago = new Date(factura.fechaPago + 'T00:00:00');
+                            if (fechaPago.getMonth() === mesSeleccionado && fechaPago.getFullYear() === añoSeleccionado) {
+                                cantidadPagadas++;
+                                if (!factura.conCredito) {
+                                    const moneda = factura.moneda || 'ars';
+                                    if (moneda === 'usd') totalPagadoMesUSD += factura.monto;
+                                    else totalPagadoMesARS += factura.monto;
+                                }
                             }
                         }
                     });
@@ -3855,9 +3879,11 @@
                 // Crear un hash del estado actual para comparación
                 const estadoActual = {
                     totalMesARS, totalMesUSD,
+                    totalPagadoMesARS, totalPagadoMesUSD,
                     cantidadPendientes,
                     cantidadPagadas,
                     cantidadVencidas,
+                    cantidadFacturasMes,
                     totalIngresosARS, totalIngresosUSD,
                     mesSeleccionado,
                     añoSeleccionado
@@ -3909,13 +3935,23 @@
 
                     const itemsHTML = `
         <div class="calculador-resultado-item">
-        <span class="estadistica-label">Monto</span>
+        <span class="estadistica-label">Monto (en facturas)</span>
         <span class="estadistica-valor">${montoHTML}</span>
     </div>
     ${montoUSDItem}
+    ${totalPagadoMesARS > 0 ? `
+    <div class="calculador-resultado-item">
+        <span class="estadistica-label">Monto (Pagado)</span>
+        <span class="estadistica-valor">${this.formatearMoneda(totalPagadoMesARS, 'ars')}</span>
+    </div>` : ''}
+    ${totalPagadoMesUSD > 0 ? `
+    <div class="calculador-resultado-item">
+        <span class="estadistica-label">Monto USD (Pagado)</span>
+        <span class="estadistica-valor">${this.formatearMoneda(totalPagadoMesUSD, 'usd')}</span>
+    </div>` : ''}
         <div class="calculador-resultado-item">
             <span class="estadistica-label">Facturas</span>
-            <span class="estadistica-valor">${cantidadPendientes + cantidadPagadas}</span>
+            <span class="estadistica-valor">${cantidadFacturasMes}</span>
         </div>    
         <div class="calculador-resultado-item">
             <span class="estadistica-label">Pendientes</span>
@@ -4950,11 +4986,16 @@
                 const clickHandler = onclick ? `onclick="${onclick}"` : '';
                 const moneda = factura.moneda || 'ars';
                 const badgeClass = moneda === 'usd' ? 'usd' : 'ars';
+                const pagoBadge = factura.pagada
+                    ? (factura.conCredito
+                        ? '<span class="moneda-badge credito">Crédito</span>'
+                        : '<span class="moneda-badge contado">Contado</span>')
+                    : '';
 
                 return `
         <div class="factura-item" data-id="${factura.id}">
             <div class="factura-info" ${clickHandler}>
-                <div class="${claseMonto}">${this.formatearMoneda(factura.monto, moneda)}<span class="moneda-badge ${badgeClass}">${moneda.toUpperCase()}</span></div>
+                <div class="${claseMonto}">${this.formatearMoneda(factura.monto, moneda)}<span class="moneda-badge ${badgeClass}">${moneda.toUpperCase()}</span>${pagoBadge}</div>
                 <div class="factura-fecha">
                     ${factura.tipo || 'mensual'} | Vence: ${this.formatearFecha(factura.fecha)}
                 </div>
@@ -6565,7 +6606,7 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA DeltaF VERSION 0.68
+    //                 NOTAS SISTEMA DeltaF VERSION 0.69
     // ====================================================================
     
      - CAMBIOS
