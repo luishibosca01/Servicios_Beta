@@ -3935,13 +3935,13 @@
 
                     const itemsHTML = `
         <div class="calculador-resultado-item">
-        <span class="estadistica-label">Monto (en facturas)</span>
+        <span class="estadistica-label">Monto en facturas</span>
         <span class="estadistica-valor">${montoHTML}</span>
     </div>
     ${montoUSDItem}
     ${totalPagadoMesARS > 0 ? `
     <div class="calculador-resultado-item">
-        <span class="estadistica-label">Monto (Pagado)</span>
+        <span class="estadistica-label">Monto pagado</span>
         <span class="estadistica-valor">${this.formatearMoneda(totalPagadoMesARS, 'ars')}</span>
     </div>` : ''}
     ${totalPagadoMesUSD > 0 ? `
