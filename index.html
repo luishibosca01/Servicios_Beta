@@ -389,6 +389,24 @@
             animation: slideUp 0.2s ease-in-out;
         }
 
+        .modal-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .modal-content::-webkit-scrollbar-track {
+            background: var(--bg-body);
+            border-radius: var(--radius);
+        }
+
+        .modal-content::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: var(--radius);
+        }
+
+        .modal-content::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+
         .modal-header {
             display: flex;
             justify-content: space-between;
@@ -960,6 +978,35 @@
         .estadisticas-lista {
             display: flex;
             flex-direction: column;
+        }
+
+        .est-cat-tags-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            padding: 0.75rem 0 0.25rem;
+        }
+
+        .est-cat-tag {
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            font-weight: 500;
+            padding: 0.3rem 0.75rem;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s, border-color 0.2s;
+        }
+
+        .est-cat-tag:active {
+            transform: scale(0.95);
+        }
+
+        .est-cat-tag--activa {
+            background: var(--c-blue);
+            border-color: transparent;
+            color: var(--text-inv);
         }
 
         /* --- Estilos Calculador --- */
@@ -1684,7 +1731,7 @@
         <div class="menu-header"><svg class="icon">
                 <use href="#icon-menu" />
             </svg> Ajustes</div>
-        <div class="menu-content">
+        <div class="menu-content custom-scroll">
             <div class="menu-item" id="menu-perfiles">
                 <svg class="icon">
                     <use href="#icon-users" />
@@ -1722,7 +1769,24 @@
                 <svg class="icon">
                     <use href="#icon-trash" />
                 </svg>
-                <span>Borrar todo</span>
+                <span>Borrar</span>
+            </div>
+            <div id="opciones-borrar" style="display: none; padding-left: 2.5rem; margin-top: 0.5rem;">
+                <div class="menu-item" id="menu-borrar-todo">
+                    <span>Todo</span>
+                </div>
+                <div class="menu-item" id="menu-borrar-servicios">
+                    <span>Servicios</span>
+                </div>
+                <div class="menu-item" id="menu-borrar-facturas">
+                    <span>Facturas</span>
+                </div>
+                <div class="menu-item" id="menu-borrar-ingresos">
+                    <span>Ingresos</span>
+                </div>
+                <div class="menu-item" id="menu-borrar-categorias">
+                    <span>Categorías</span>
+                </div>
             </div>
             <div class="menu-item" id="menu-toggle-ingresos">
                 <svg class="icon">
@@ -1753,7 +1817,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">Version 0.69</div> <!-- DeltaF -->
+            <div class="menu-version">Version 0.72</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -2676,6 +2740,7 @@
 
                 // Tipo de estadística seleccionado
                 this.tipoEstadisticaActual = localStorage.getItem('estadisticas-tipo') || 'mensual';
+                this._estadisticaCategoriaActiva = null;
 
                 // Cargar datos del perfil activo - NUEVO
                 this.cargarDatosPerfilActivo();
@@ -2862,6 +2927,10 @@
 
                 // Cargar datos del nuevo perfil
                 this.cargarDatosPerfilActivo(); // Esta función ahora también inicializa el historial
+
+                // Resetear filtro de categoría al cambiar de perfil
+                this._estadisticaCategoriaActiva = null;
+                this.ultimoEstadoEstadisticas = null;
 
                 // Actualizar interfaz
                 this.renderServicios();
@@ -3272,7 +3341,12 @@
                 document.getElementById('menu-importar').addEventListener('click', () => this.mostrarOpcionesImportacion());
                 document.getElementById('menu-importar-reemplazar').addEventListener('click', () => this.importarDatos('reemplazar'));
                 document.getElementById('menu-importar-combinar').addEventListener('click', () => this.importarDatos('combinar'));
-                document.getElementById('menu-limpiar').addEventListener('click', () => this.limpiarDatos());
+                document.getElementById('menu-limpiar').addEventListener('click', () => this.mostrarOpcionesBorrar());
+                document.getElementById('menu-borrar-todo').addEventListener('click', () => this.limpiarDatos('todo'));
+                document.getElementById('menu-borrar-servicios').addEventListener('click', () => this.limpiarDatos('servicios'));
+                document.getElementById('menu-borrar-facturas').addEventListener('click', () => this.limpiarDatos('facturas'));
+                document.getElementById('menu-borrar-ingresos').addEventListener('click', () => this.limpiarDatos('ingresos'));
+                document.getElementById('menu-borrar-categorias').addEventListener('click', () => this.limpiarDatos('categorias'));
                 document.getElementById('menu-toggle-ingresos').addEventListener('click', () => this.toggleIngresos());
 
                 // Menú agregar
@@ -3813,6 +3887,9 @@
                     añoSeleccionado = añoActual;
                 }
 
+                // Categoría activa (filtro)
+                const categoriaActiva = this._estadisticaCategoriaActiva || null;
+
                 // Calcular estadísticas del mes seleccionado
                 let cantidadPendientes = 0;
                 let cantidadPagadas = 0;
@@ -3823,6 +3900,12 @@
                 let totalIngresosARS = 0, totalIngresosUSD = 0;
 
                 this.servicios.forEach(servicio => {
+                    // Filtrar por categoría si hay una activa (ingresos siempre pasan)
+                    if (categoriaActiva && servicio.id !== this.SERVICIO_INGRESOS_ID) {
+                        const catServicio = servicio.categoria || '';
+                        if (catServicio !== categoriaActiva) return;
+                    }
+
                     servicio.facturas.forEach(factura => {
                         const fechaFactura = new Date(factura.fecha + 'T00:00:00');
                         const mesFactura = fechaFactura.getMonth();
@@ -3846,17 +3929,21 @@
                             }
 
                             // Facturas normales (positivas)
+                            // Con categoría activa se muestra el monto real sin excluir crédito
                             cantidadFacturasMes++;
-                            if (!factura.conCredito) {
+                            if (!factura.conCredito || categoriaActiva) {
                                 if (moneda === 'usd') totalMesUSD += factura.monto;
                                 else totalMesARS += factura.monto;
                             }
 
                             if (!factura.pagada) {
-                                cantidadPendientes++;
                                 const vencimiento = new Date(factura.fecha + 'T00:00:00');
                                 vencimiento.setHours(0, 0, 0, 0);
-                                if (vencimiento < hoy) cantidadVencidas++;
+                                if (vencimiento < hoy) {
+                                    cantidadVencidas++;
+                                } else {
+                                    cantidadPendientes++;
+                                }
                             }
                         }
 
@@ -3866,7 +3953,7 @@
                             const fechaPago = new Date(factura.fechaPago + 'T00:00:00');
                             if (fechaPago.getMonth() === mesSeleccionado && fechaPago.getFullYear() === añoSeleccionado) {
                                 cantidadPagadas++;
-                                if (!factura.conCredito) {
+                                if (!factura.conCredito || categoriaActiva) {
                                     const moneda = factura.moneda || 'ars';
                                     if (moneda === 'usd') totalPagadoMesUSD += factura.monto;
                                     else totalPagadoMesARS += factura.monto;
@@ -3886,7 +3973,8 @@
                     cantidadFacturasMes,
                     totalIngresosARS, totalIngresosUSD,
                     mesSeleccionado,
-                    añoSeleccionado
+                    añoSeleccionado,
+                    categoriaActiva
                 };
 
                 // Comparar con el estado anterior
@@ -3995,6 +4083,7 @@
             ${this.generarOpcionesMeses(mesSeleccionado, añoSeleccionado)}
         </select>
     </div>
+    <div id="estadisticas-categorias-tags"></div>
     <div class="estadisticas-lista"></div>
 `;
                     document.getElementById('estadisticas-mensual-container').innerHTML = estadisticasHTML;
@@ -4006,6 +4095,9 @@
                             this.actualizarEstadisticas();
                         });
                     }
+
+                    // Renderizar tags de categoría
+                    this._renderTagsCategoriaEstadisticas();
 
                     // Renderizar contenido inicial
                     renderizarContenido();
@@ -4023,6 +4115,9 @@
                         }
                     }
 
+                    // Actualizar tags de categoría
+                    this._renderTagsCategoriaEstadisticas();
+
                     // Solo animar si el estado cambió
                     const lista = document.querySelector('#estadisticas-mensual-container .estadisticas-lista');
                     if (lista && estadoCambio) {
@@ -4039,6 +4134,45 @@
                         renderizarContenido();
                     }
                 }
+            }
+
+            _renderTagsCategoriaEstadisticas() {
+                const container = document.getElementById('estadisticas-categorias-tags');
+                if (!container) return;
+
+                const cats = this._getCategorias();
+                // Solo mostrar si hay categorías asignadas a algún servicio normal
+                const catsUsadas = cats.filter(c =>
+                    this.servicios.some(s => s.id !== this.SERVICIO_INGRESOS_ID && s.categoria === c)
+                );
+
+                if (catsUsadas.length === 0) {
+                    container.innerHTML = '';
+                    return;
+                }
+
+                const activa = this._estadisticaCategoriaActiva || null;
+
+                const tagsHTML = catsUsadas.map(c => {
+                    const esActiva = c === activa;
+                    return `<button class="est-cat-tag${esActiva ? ' est-cat-tag--activa' : ''}" data-cat="${this.escaparAtributoHTML(c)}">${this.escaparHTML(c)}</button>`;
+                }).join('');
+
+                container.innerHTML = `<div class="est-cat-tags-row">${tagsHTML}</div>`;
+
+                container.querySelectorAll('.est-cat-tag').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const cat = btn.dataset.cat;
+                        if (this._estadisticaCategoriaActiva === cat) {
+                            // Desactivar filtro
+                            this._estadisticaCategoriaActiva = null;
+                        } else {
+                            this._estadisticaCategoriaActiva = cat;
+                        }
+                        this.ultimoEstadoEstadisticas = null; // forzar re-render
+                        this.actualizarEstadisticas();
+                    });
+                });
             }
 
             toggleEstadisticas() {
@@ -5411,6 +5545,9 @@
                 // Cambiar el signo
                 input.value = -valor;
 
+                // Toast informativo
+                this.mostrarToast(valor > 0 ? 'Saldo a favor' : 'Gasto normal', 'info');
+
                 // Actualizar estado del botón
                 const btnId = inputId === 'factura-monto' ? 'btn-toggle-negativo' : 'btn-editar-toggle-negativo';
                 this.actualizarEstadoBotonToggle(inputId, btnId);
@@ -6105,19 +6242,65 @@
                 this.cerrarMenuAjustes();
             }
 
-            limpiarDatos() {
-                if (confirm('¿Estás seguro de eliminar todos los datos?')) {
-                    {
+            mostrarOpcionesBorrar() {
+                const opciones = document.getElementById('opciones-borrar');
+                if (opciones.style.display === 'none') {
+                    opciones.style.display = 'block';
+                } else {
+                    opciones.style.display = 'none';
+                }
+            }
+
+            limpiarDatos(tipo = 'todo') {
+                const mensajes = {
+                    todo: '¿Estás seguro de eliminar TODOS los datos? (servicios, facturas, ingresos y categorías)',
+                    servicios: '¿Estás seguro de eliminar todos los servicios y sus facturas? Los ingresos y categorías se conservarán.',
+                    facturas: '¿Estás seguro de eliminar todas las facturas de todos los servicios? Los servicios se conservarán vacíos.',
+                    ingresos: '¿Estás seguro de eliminar todos los ingresos registrados?',
+                    categorias: '¿Estás seguro de eliminar todas las categorías?'
+                };
+
+                const toasts = {
+                    todo: 'Todos los datos han sido eliminados',
+                    servicios: 'Todos los servicios han sido eliminados',
+                    facturas: 'Todas las facturas han sido eliminadas',
+                    ingresos: 'Todos los ingresos han sido eliminados',
+                    categorias: 'Todas las categorías han sido eliminadas'
+                };
+
+                if (confirm(mensajes[tipo] || mensajes.todo)) {
+                    if (tipo === 'todo') {
                         this.servicios = [];
                         this._saveCategorias([]);
-                        this.guardarDatos();
-                        this.guardarEstado();
-                        this.renderServicios();
-                        this.actualizarBotonesHistorial();
-                        this.actualizarEstadisticas();
-                        this.mostrarToast('Todos los datos han sido eliminados', 'success');
-                        this.cerrarMenuAjustes();
+                    } else if (tipo === 'servicios') {
+                        // Eliminar todos los servicios excepto el de ingresos
+                        this.servicios = this.servicios.filter(s => s.id === this.SERVICIO_INGRESOS_ID);
+                    } else if (tipo === 'facturas') {
+                        // Vaciar facturas de todos los servicios normales (no ingresos)
+                        this.servicios = this.servicios.map(s => {
+                            if (s.id === this.SERVICIO_INGRESOS_ID) return s;
+                            return { ...s, facturas: [] };
+                        });
+                    } else if (tipo === 'ingresos') {
+                        // Eliminar todas las facturas del servicio de ingresos
+                        const servicioIngresos = this.servicios.find(s => s.id === this.SERVICIO_INGRESOS_ID);
+                        if (servicioIngresos) {
+                            servicioIngresos.facturas = [];
+                        }
+                    } else if (tipo === 'categorias') {
+                        // Limpiar categorías y quitar la categoría asignada a los servicios
+                        this._saveCategorias([]);
+                        this.servicios = this.servicios.map(s => ({ ...s, categoria: '' }));
                     }
+
+                    this.guardarDatos();
+                    this.guardarEstado();
+                    this.renderServicios();
+                    this.actualizarBotonesHistorial();
+                    this.actualizarEstadisticas();
+                    this.mostrarToast(toasts[tipo] || toasts.todo, 'success');
+                    document.getElementById('opciones-borrar').style.display = 'none';
+                    this.cerrarMenuAjustes();
                 }
             }
 
@@ -6228,6 +6411,10 @@
                 // Ocultar opciones de importación
                 const opciones = document.getElementById('opciones-importacion');
                 if (opciones) opciones.style.display = 'none';
+
+                // Ocultar opciones de borrado
+                const opcionesBorrar = document.getElementById('opciones-borrar');
+                if (opcionesBorrar) opcionesBorrar.style.display = 'none';
 
                 // Restaurar scroll del body
                 document.body.classList.remove('modal-open');
@@ -6606,12 +6793,11 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA DeltaF VERSION 0.69
+    //                 NOTAS SISTEMA DeltaF VERSION 0.72
     // ====================================================================
     
      - CAMBIOS
-     1) Se agrega funcion para marcar si se apgo con credito o en efectivo/tranferencia, para que la cuenta de la
-     tarjeta de estadisticas sea de realice de forma correcta
+     1)
 
 
      - BUGS CONOCIDOS:
