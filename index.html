@@ -1745,7 +1745,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">Version 1.11</div> <!-- DeltaF -->
+            <div class="menu-version">Version 0.68</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -2129,16 +2129,16 @@
                     <label for="factura-fecha-pago">Fecha de pago</label>
                     <div style="display: flex; gap: 0.5rem; align-items: center;">
                         <input type="date" id="factura-fecha-pago" disabled style="flex: 1;">
+                        <button type="button" id="btn-toggle-credito" class="icon-btn" onclick="app.toggleConCredito()"
+                            title="Contado / Crédito" style="display:none;">
+                            <svg class="icon">
+                                <use href="#icon-cash" />
+                            </svg>
+                        </button>
                         <button type="button" id="btn-toggle-pagada" class="icon-btn" onclick="app.toggleEstadoPago()"
                             title="Marcar como pagada/no pagada">
                             <svg class="icon">
                                 <use href="#icon-card" />
-                            </svg>
-                        </button>
-                        <button type="button" id="btn-toggle-credito" class="icon-btn" onclick="app.toggleConCredito()"
-                            title="Efectivo / Tarjeta de crédito" style="display:none;">
-                            <svg class="icon">
-                                <use href="#icon-cash" />
                             </svg>
                         </button>
                     </div>
@@ -2214,18 +2214,17 @@
                     <label for="editar-factura-fecha-pago">Fecha de pago</label>
                     <div style="display: flex; gap: 0.5rem; align-items: center;">
                         <input type="date" id="editar-factura-fecha-pago" disabled style="flex: 1;">
+                        <button type="button" id="btn-editar-toggle-credito" class="icon-btn"
+                            onclick="app.toggleConCredito('editar')" title="Contado / crédito" style="display:none;">
+                            <svg class="icon">
+                                <use href="#icon-cash" />
+                            </svg>
+                        </button>
                         <button type="button" id="btn-editar-toggle-pagada" class="icon-btn"
                             onclick="app.toggleEstadoPago('btn-editar-toggle-pagada', 'editar-factura-fecha-pago')"
                             title="Marcar como pagada/no pagada">
                             <svg class="icon">
                                 <use href="#icon-card" />
-                            </svg>
-                        </button>
-                        <button type="button" id="btn-editar-toggle-credito" class="icon-btn"
-                            onclick="app.toggleConCredito('editar')" title="Efectivo / Tarjeta de crédito"
-                            style="display:none;">
-                            <svg class="icon">
-                                <use href="#icon-cash" />
                             </svg>
                         </button>
                     </div>
@@ -2254,7 +2253,10 @@
     <div class="modal" id="modal-facturas-servicio">
         <div class="modal-content modal-facturas-content">
             <div class="modal-header modal-facturas-header">
-                <h3 id="modal-facturas-titulo"></h3>
+                <div>
+                    <h3 id="modal-facturas-titulo"></h3>
+                    <span id="modal-facturas-categoria" style="display:none; font-size:0.75rem; font-weight:600; color:var(--text-muted); background:var(--input-bg); border:1px solid var(--border); border-radius:var(--radius); padding:0.1rem 0.75rem; margin-top:0.25rem; display:inline-block;"></span>
+                </div>
                 <button class="icon-btn transparent" id="btn-editar-servicio-desde-modal"
                     onclick="app.editarServicioDesdeModal()" title="Editar servicio" style="margin-left: auto;">
                     <svg class="icon">
@@ -4836,6 +4838,15 @@
                 const listaFacturas = document.getElementById('lista-facturas-modal');
 
                 titulo.textContent = servicio.nombre;
+                const tagCategoria = document.getElementById('modal-facturas-categoria');
+                if (tagCategoria) {
+                    if (servicio.categoria) {
+                        tagCategoria.textContent = servicio.categoria;
+                        tagCategoria.style.display = 'inline-block';
+                    } else {
+                        tagCategoria.style.display = 'none';
+                    }
+                }
 
                 if (servicio.facturas.length === 0) {
                     listaFacturas.innerHTML = '<p class="mensaje-sin-facturas">No hay facturas registradas</p>';
@@ -5295,14 +5306,14 @@
                     input.value = 'false';
                     iconUse.setAttribute('href', '#icon-cash');
                     btn.classList.remove('pagada');
-                    btn.title = 'Efectivo / transferencia';
-                    this.mostrarToast('Efectivo / transferencia', 'info');
+                    btn.title = 'Pagada al contado';
+                    this.mostrarToast('Pagada al contado', 'info');
                 } else {
                     input.value = 'true';
                     iconUse.setAttribute('href', '#icon-card');
                     btn.classList.add('pagada');
-                    btn.title = 'Pagada con tarjeta de crédito';
-                    this.mostrarToast('Pagada con tarjeta de crédito', 'info');
+                    btn.title = 'Pagada con crédito';
+                    this.mostrarToast('Pagada con crédito', 'info');
                 }
             }
 
@@ -5311,7 +5322,7 @@
                 const iconUse = btn.querySelector('use');
                 if (iconUse) iconUse.setAttribute('href', '#icon-cash');
                 btn.classList.remove('pagada');
-                btn.title = 'Efectivo / transferencia';
+                btn.title = 'Contado / crédito';
             }
 
             toggleEstadoPago(btnId = 'btn-toggle-pagada', inputId = 'factura-fecha-pago') {
@@ -5332,12 +5343,14 @@
                     if (btnCredito) { btnCredito.style.display = 'none'; }
                     if (inputCredito) { inputCredito.value = 'false'; }
                     this._resetBtnCredito(btnCredito);
+                    this.mostrarToast('Factura pendiente', 'info');
                 } else {
                     btnTogglePagada.classList.add('pagada');
                     inputFechaPago.disabled = false;
                     inputFechaPago.value = this.obtenerFechaLocal();
                     iconUse.setAttribute('href', '#icon-cancel');
                     if (btnCredito) { btnCredito.style.display = 'flex'; }
+                    this.mostrarToast('Factura pagada', 'success');
                 }
             }
 
@@ -5518,69 +5531,6 @@
                 this.abrirModalFacturasServicio(servicioParaAbrir);
 
                 this.mostrarToast(esNueva ? 'Factura agregada' : 'Factura actualizada', 'success');
-            }
-
-            marcarPagada(facturaId) {
-                const hoy = this.obtenerFechaLocal();
-                let servicioId = null;
-
-                this.servicios.forEach(servicio => {
-                    const factura = servicio.facturas.find(f => f.id === facturaId);
-                    if (factura) {
-                        factura.pagada = true;
-                        factura.fechaPago = hoy;
-                        servicioId = servicio.id;
-                    }
-                });
-
-                // Por defecto se asume efectivo/transferencia; se puede cambiar editando la factura
-                const facturaRapida = this.servicios.flatMap(s => s.facturas).find(f => f.id === facturaId);
-                if (facturaRapida && facturaRapida.conCredito === undefined) facturaRapida.conCredito = false;
-
-                this.guardarDatos();
-                this.guardarEstado();
-
-                if (servicioId) {
-                    // Actualizar solo el item afectado, sin re-renderizar todo el listado
-                    this.actualizarServicioIndividual(servicioId);
-                    this.actualizarResumenMes(); // mantener totales sincronizados
-
-                    // Actualizar el modal de facturas si está abierto
-                    const modalFacturas = document.getElementById('modal-facturas-servicio');
-                    if (modalFacturas.classList.contains('active') && modalFacturas.dataset.servicioId === servicioId) {
-                        this.abrirModalFacturasServicio(servicioId);
-                    }
-                }
-                this.mostrarToast('Factura marcada como pagada', 'success');
-            }
-
-            marcarNoPagada(facturaId) {
-                let servicioId = null;
-
-                this.servicios.forEach(servicio => {
-                    const factura = servicio.facturas.find(f => f.id === facturaId);
-                    if (factura) {
-                        factura.pagada = false;
-                        factura.fechaPago = null;
-                        servicioId = servicio.id;
-                    }
-                });
-
-                this.guardarDatos();
-                this.guardarEstado();
-
-                if (servicioId) {
-                    // Actualizar solo el item afectado, sin re-renderizar todo el listado
-                    this.actualizarServicioIndividual(servicioId);
-                    this.actualizarResumenMes(); // mantener totales sincronizados
-
-                    // Actualizar el modal de facturas si está abierto
-                    const modalFacturas = document.getElementById('modal-facturas-servicio');
-                    if (modalFacturas.classList.contains('active') && modalFacturas.dataset.servicioId === servicioId) {
-                        this.abrirModalFacturasServicio(servicioId);
-                    }
-                }
-                this.mostrarToast('Factura marcada como no pagada', 'success');
             }
 
             editarFactura(facturaId) {
@@ -6337,6 +6287,7 @@
                 hidden.value = nuevo;
                 btn.textContent = nuevo.toUpperCase();
                 btn.classList.toggle('activo-usd', nuevo === 'usd');
+                this.mostrarToast(nuevo === 'usd' ? 'Dolares' : 'Pesos', 'info');
             }
 
             // Fija la moneda de un icon-btn desde código (usado al cargar datos para editar)
@@ -6614,7 +6565,7 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA DeltaF VERSION 1.11
+    //                 NOTAS SISTEMA DeltaF VERSION 0.68
     // ====================================================================
     
      - CAMBIOS
