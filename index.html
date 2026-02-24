@@ -997,6 +997,8 @@
             padding: 0.3rem 0.75rem;
             cursor: pointer;
             transition: background 0.2s, color 0.2s, border-color 0.2s;
+            width: fit-content;
+            flex-shrink: 0;
         }
 
         .est-cat-tag:active {
@@ -1618,10 +1620,6 @@
             <line x1="4" y1="18" x2="20" y2="18" class="icon-line" stroke="currentColor" stroke-width="2"></line>
             <polygon points="15 4 20 9 15 14" class="icon-line" stroke="currentColor" stroke-width="2"></polygon>
         </symbol>
-        <symbol id="icon-clock" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="10" class="icon-line" stroke="currentColor"></circle>
-            <polyline points="12 6 12 12 16 14" class="icon-line" stroke="currentColor"></polyline>
-        </symbol>
         <symbol id="icon-trash" viewBox="0 0 24 24">
             <polyline points="3 6 5 6 21 6" class="icon-line" stroke="currentColor"></polyline>
             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" class="icon-line"
@@ -1707,6 +1705,14 @@
             <path d="M23 21v-2a4 4 0 0 0-3-3.87" class="icon-line" stroke="currentColor"></path>
             <path d="M16 3.13a4 4 0 0 1 0 7.75" class="icon-line" stroke="currentColor"></path>
         </symbol>
+        <symbol id="icon-categorias" viewBox="0 0 24 24">
+            <path d="M3 7h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 18h7v3H3zM3 3h7v3H3z" class="icon-line"
+                stroke="currentColor" />
+        </symbol>
+        <symbol id="icon-estadisticas" viewBox="0 0 24 24">
+            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z" />
+            <path d="M7 12h2v5H7zm4-3h2v8h-2zm4-3h2v11h-2z" />
+        </symbol>
     </svg>
 
     <!-- Header -->
@@ -1740,7 +1746,7 @@
             </div>
             <div class="menu-item" id="menu-tema">
                 <svg class="icon">
-                    <use href="#icon-moon" />
+                    <use id="icon-tema-use" href="#icon-moon" />
                 </svg>
                 <span>Tema</span>
             </div>
@@ -1796,9 +1802,8 @@
                 <span id="ingresos-indicator" style="margin-left: auto"></span>
             </div>
             <div class="menu-item" id="menu-categorias">
-                <svg class="icon" viewBox="0 0 24 24">
-                    <path d="M3 7h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 18h7v3H3zM3 3h7v3H3z" class="icon-line"
-                        stroke="currentColor" />
+                <svg class="icon">
+                    <use href="#icon-categorias" />
                 </svg>
                 <span>Categorías</span>
             </div>
@@ -1834,10 +1839,8 @@
                 <div class="card card-fade-in" style="animation-delay: 0.1s;">
                     <h2 class="card-header-collapsible" id="estadisticas-header">
                         <span>
-                            <svg class="icon" viewBox="0 0 24 24">
-                                <path
-                                    d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z" />
-                                <path d="M7 12h2v5H7zm4-3h2v8h-2zm4-3h2v11h-2z" />
+                            <svg class="icon">
+                                <use href="#icon-estadisticas" />
                             </svg>
                             Estadísticas
                         </span>
@@ -4013,12 +4016,31 @@
         <span class="estadistica-valor">${this.formatearMoneda(totalIngresosUSD, 'usd')}</span>
     </div>` : '';
 
+                        // Porcentaje de ingresos: solo si hay ingresos ARS y facturas ARS en el mes
+                        let porcentajeIngresosHTML = '';
+                        if (hayIngARS && totalMesARS > 0) {
+                            const porcentaje = (totalMesARS / totalIngresosARS) * 100;
+                            const porcentajeTexto = porcentaje.toFixed(1) + '%';
+                            // Color según el nivel: verde < 50%, amarillo < 80%, rojo >= 80%
+                            const color = porcentaje < 50
+                                ? 'var(--c-green)'
+                                : porcentaje < 80
+                                    ? 'var(--c-gold)'
+                                    : 'var(--c-red)';
+                            porcentajeIngresosHTML = `
+    <div class="calculador-resultado-item">
+        <span class="estadistica-label">% del ingreso</span>
+        <span class="estadistica-valor" style="color: ${color}; font-weight: 600;">${porcentajeTexto}</span>
+    </div>`;
+                        }
+
                         ingresosHTML = `
     <div class="calculador-resultado-item">
         <span class="estadistica-label">Ingresos</span>
         <span class="estadistica-valor">${ingMontoHTML}</span>
     </div>
-    ${ingUSDItem}`;
+    ${ingUSDItem}
+    ${porcentajeIngresosHTML}`;
                     }
 
                     const itemsHTML = `
@@ -6318,14 +6340,23 @@
                         localStorage.setItem(this.THEME_KEY, 'dark');
                     }
                 }
+                // Sincronizar ícono con el tema cargado
+                const esDark = document.body.classList.contains('dark-mode');
+                this._actualizarIconoTema(esDark);
             }
 
             toggleTema() {
                 document.body.classList.toggle('dark-mode');
                 const esDark = document.body.classList.contains('dark-mode');
                 localStorage.setItem(this.THEME_KEY, esDark ? 'dark' : 'light');
+                this._actualizarIconoTema(esDark);
                 this.mostrarToast(`Tema ${esDark ? 'oscuro' : 'claro'} activado`, 'success');
                 this.cerrarMenuAjustes();
+            }
+
+            _actualizarIconoTema(esDark) {
+                const use = document.getElementById('icon-tema-use');
+                if (use) use.setAttribute('href', esDark ? '#icon-sun' : '#icon-moon');
             }
 
             toggleIngresos() {
@@ -6797,7 +6828,8 @@
     // ====================================================================
     
      - CAMBIOS
-     1)
+     1) Se agrega funcion para marcar si se apgo con credito o en efectivo/tranferencia, para que la cuenta de la
+     tarjeta de estadisticas sea de realice de forma correcta
 
 
      - BUGS CONOCIDOS:
