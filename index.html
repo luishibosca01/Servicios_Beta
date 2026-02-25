@@ -1356,11 +1356,11 @@
             padding: 1rem 1.5rem;
             border-radius: 50px;
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-            display: flex;
+            display: none;
             align-items: center;
             gap: 1rem;
             z-index: 998;
-            animation: slideUp2 0.3s ease-out;
+            animation: slideUp2 0.2s ease-out;
             backdrop-filter: blur(3px);
         }
 
@@ -1413,10 +1413,12 @@
 
         .moneda-badge.contado {
             color: var(--c-blue);
+            text-transform: uppercase;
         }
 
         .moneda-badge.credito {
             color: var(--c-gold);
+            text-transform: uppercase;
         }
 
         /* Botón toggle de moneda en modales */
@@ -1460,6 +1462,11 @@
         .categoria-tag-del:active {
             color: var(--c-red);
             transform: scale(0.9);
+        }
+
+        #ingresos-indicator {
+            margin-left: auto;
+            padding-right: 1rem;
         }
 
         /* moviles */
@@ -1799,7 +1806,7 @@
                     <use href="#icon-dollar" />
                 </svg>
                 <span>Ingresos</span>
-                <span id="ingresos-indicator" style="margin-left: auto"></span>
+                <span id="ingresos-indicator"></span>
             </div>
             <div class="menu-item" id="menu-categorias">
                 <svg class="icon">
@@ -1822,7 +1829,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">Version 0.73</div> <!-- DeltaF -->
+            <div class="menu-version">Version 0.71</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -1971,7 +1978,7 @@
     </button>
 
     <!-- Calculadora flotante -->
-    <div class="calculadora-flotante" id="calculadora-flotante" style="display: none;">
+    <div class="calculadora-flotante" id="calculadora-flotante">
         <div style="display: flex; flex-direction: column; align-items: center; gap: 0.25rem;">
             <div class="calculadora-total" id="calculadora-total">$0,00</div>
             <div class="calculadora-total" id="calculadora-total-usd" style="display: none;"></div>
@@ -5080,13 +5087,26 @@
                     const todosLosChevrons = document.querySelectorAll('.facturas-grupo-chevron:not(.collapsed)');
                     const todosLosContenidos = document.querySelectorAll('.facturas-grupo-contenido:not(.collapsed)');
 
+                    // Buscar el modal activo y fijar su altura actual
+                    const listaEl = headerElement.closest('#lista-facturas-modal, #lista-ingresos-modal');
+                    if (listaEl) {
+                        const alturaActual = listaEl.offsetHeight;
+                        listaEl.style.minHeight = alturaActual + 'px';
+                    }
+
                     todosLosChevrons.forEach(ch => ch.classList.add('collapsed'));
                     todosLosContenidos.forEach(cont => cont.classList.add('collapsed'));
 
                     setTimeout(() => {
                         chevron.classList.remove('collapsed');
                         contenido.classList.remove('collapsed');
-                    }, 200);
+                        // Liberar la altura fija después de que termine la animación
+                        if (listaEl) {
+                            setTimeout(() => {
+                                listaEl.style.minHeight = '';
+                            }, 50);
+                        }
+                    }, 300);
                 } else {
                     chevron.classList.add('collapsed');
                     contenido.classList.add('collapsed');
@@ -6823,12 +6843,11 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA DeltaF VERSION 0.73
+    //                 NOTAS SISTEMA DeltaF VERSION 0.71
     // ====================================================================
     
      - CAMBIOS
-     1) Se agrega funcion para marcar si se apgo con credito o en efectivo/tranferencia, para que la cuenta de la
-     tarjeta de estadisticas sea de realice de forma correcta
+     1) 
 
 
      - BUGS CONOCIDOS:
