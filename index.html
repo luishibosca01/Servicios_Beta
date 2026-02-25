@@ -1313,6 +1313,64 @@
             opacity: 0;
         }
 
+        /* --- Grupos de categoría en lista de servicios --- */
+        .servicios-grupo-cat {
+            margin-bottom: 0.25rem;
+        }
+
+        .servicios-grupo-cat-header {
+            display: flex;
+            align-items: center;
+            border-radius: var(--radius);
+            cursor: pointer;
+            margin: 0.5rem 0 0.25rem;
+            padding: 0.1rem 0;
+            transition: all 0.2s;
+            justify-content: space-between;
+        }
+
+        .servicios-grupo-cat-header-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .servicios-grupo-cat-texto {
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--text-main);
+        }
+
+        .servicios-grupo-cat-contador {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            padding: 0.25rem 0.5rem;
+        }
+
+        .servicios-grupo-cat-chevron {
+            transition: transform 0.2s;
+            color: var(--text-muted);
+        }
+
+        .servicios-grupo-cat-chevron.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        .servicios-grupo-cat-contenido {
+            display: flex;
+            flex-direction: column;
+            max-height: 5000px;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out, opacity 0.2s;
+            opacity: 1;
+            gap: 0.5rem;
+        }
+
+        .servicios-grupo-cat-contenido.collapsed {
+            max-height: 0;
+            opacity: 0;
+        }
+
         /* Estilos para modal de información */
         .info-content {
             max-height: 60vh;
@@ -1829,7 +1887,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">Version 0.71</div> <!-- DeltaF -->
+            <div class="menu-version">Version 0.72</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -2709,6 +2767,7 @@
                 this.origenModalFactura = null; // 'menu' o 'servicio'
                 this._anoExpandidoFacturas = {};
                 this._anoExpandidoIngresos = {};
+                this._catColapsadas = {};
 
                 // Modo calculadora - NUEVO
                 this.modoCalculadora = false;
@@ -4757,11 +4816,10 @@
                 // Ordenar servicios según el orden actual
                 const serviciosOrdenados = this.ordenarServicios(serviciosFiltrados);
 
-                // Renderizar servicios normales
-                let html = serviciosOrdenados.map(servicio => {
+                // Renderizar servicios normales agrupados por categoría
+                const generarItemServicio = (servicio) => {
                     const { estado, claseEstado, montoTexto, fechaTexto } = this.calcularEstadoServicio(servicio);
                     const claseCalculando = this.serviciosSeleccionados.has(servicio.id) ? 'calculando' : '';
-
                     return `
    <div class="servicio-wrapper" data-id="${this.escaparAtributoHTML(servicio.id)}">
       <div class="servicio-item ${claseEstado} ${claseCalculando}" data-id="${this.escaparAtributoHTML(servicio.id)}">
@@ -4774,7 +4832,53 @@
                        </div>
                    </div>
                  `;
-                }).join('');
+                };
+
+                // Agrupar por categoría
+                const gruposCat = {};
+                serviciosOrdenados.forEach(servicio => {
+                    const cat = servicio.categoria || '';
+                    if (!gruposCat[cat]) gruposCat[cat] = [];
+                    gruposCat[cat].push(servicio);
+                });
+
+                // Ordenar: categorías nombradas alfabéticamente, sin categoría al final
+                const catKeys = Object.keys(gruposCat).sort((a, b) => {
+                    if (a === '' && b !== '') return 1;
+                    if (a !== '' && b === '') return -1;
+                    return a.localeCompare(b);
+                });
+
+                let html = '';
+
+                // Si solo hay una categoría (o ninguna), no mostrar encabezado de grupo
+                if (catKeys.length <= 1) {
+                    html = serviciosOrdenados.map(generarItemServicio).join('');
+                } else {
+                    catKeys.forEach(cat => {
+                        const items = gruposCat[cat];
+                        const catLabel = cat || 'Sin categoría';
+                        const collapsed = this._catColapsadas[cat] ? 'collapsed' : '';
+                        const cantidad = items.length;
+                        const itemsHTML = items.map(generarItemServicio).join('');
+                        html += `
+        <div class="servicios-grupo-cat" data-cat="${this.escaparAtributoHTML(cat)}">
+            <div class="servicios-grupo-cat-header" onclick="app.toggleGrupoCat(this)">
+                <div class="servicios-grupo-cat-header-info">
+                    <span class="servicios-grupo-cat-texto">${this.escaparHTML(catLabel)}</span>
+                    <span class="servicios-grupo-cat-contador">${cantidad} ${cantidad !== 1 ? 'servicios' : 'servicio'}</span>
+                </div>
+                <svg class="icon servicios-grupo-cat-chevron ${collapsed}" viewBox="0 0 24 24">
+                    <polyline points="6 9 12 15 18 9" class="icon-line" stroke="currentColor"></polyline>
+                </svg>
+            </div>
+            <div class="servicios-grupo-cat-contenido ${collapsed}">
+                ${itemsHTML}
+            </div>
+        </div>
+                        `;
+                    });
+                }
 
                 // Agregar servicio de ingresos si está habilitado Y (no hay búsqueda O coincide con la búsqueda)
                 if (this.ingresosHabilitado() && (!this.terminoBusqueda || 'ingresos'.includes(this.terminoBusqueda))) {
@@ -5079,6 +5183,23 @@
                 }
             }
 
+            toggleGrupoCat(headerElement) {
+                const chevron = headerElement.querySelector('.servicios-grupo-cat-chevron');
+                const contenido = headerElement.nextElementSibling;
+                const cat = headerElement.closest('.servicios-grupo-cat')?.dataset.cat ?? '';
+
+                const estaColapsado = chevron.classList.contains('collapsed');
+                if (estaColapsado) {
+                    chevron.classList.remove('collapsed');
+                    contenido.classList.remove('collapsed');
+                    delete this._catColapsadas[cat];
+                } else {
+                    chevron.classList.add('collapsed');
+                    contenido.classList.add('collapsed');
+                    this._catColapsadas[cat] = true;
+                }
+            }
+
             toggleGrupoAno(headerElement) {
                 const chevron = headerElement.querySelector('.facturas-grupo-chevron');
                 const contenido = headerElement.nextElementSibling;
@@ -5087,26 +5208,11 @@
                     const todosLosChevrons = document.querySelectorAll('.facturas-grupo-chevron:not(.collapsed)');
                     const todosLosContenidos = document.querySelectorAll('.facturas-grupo-contenido:not(.collapsed)');
 
-                    // Buscar el modal activo y fijar su altura actual
-                    const listaEl = headerElement.closest('#lista-facturas-modal, #lista-ingresos-modal');
-                    if (listaEl) {
-                        const alturaActual = listaEl.offsetHeight;
-                        listaEl.style.minHeight = alturaActual + 'px';
-                    }
-
                     todosLosChevrons.forEach(ch => ch.classList.add('collapsed'));
                     todosLosContenidos.forEach(cont => cont.classList.add('collapsed'));
 
-                    setTimeout(() => {
-                        chevron.classList.remove('collapsed');
-                        contenido.classList.remove('collapsed');
-                        // Liberar la altura fija después de que termine la animación
-                        if (listaEl) {
-                            setTimeout(() => {
-                                listaEl.style.minHeight = '';
-                            }, 50);
-                        }
-                    }, 300);
+                    chevron.classList.remove('collapsed');
+                    contenido.classList.remove('collapsed');
                 } else {
                     chevron.classList.add('collapsed');
                     contenido.classList.add('collapsed');
@@ -5275,9 +5381,9 @@
                 lista.innerHTML = cats.map(c => `
                     <span class="categoria-tag">
                         <button class="categoria-tag-del" onclick="app.eliminarCategoria('${c.replace(/'/g, "\\'")}')" title="Eliminar">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                            </svg>
+                            <svg class="icon">
+                        <use href="#icon-cancel" />
+                    </svg>
                         </button>
                         ${this.escaparHTML(c)}
                     </span>
@@ -5294,6 +5400,7 @@
                 this._poblarSelectCategorias('servicio-categoria');
                 this._poblarSelectCategorias('editar-servicio-categoria');
                 this._renderCategorias();
+                this.renderServicios();
                 this.mostrarToast('Categoría eliminada', 'success');
             }
 
@@ -6843,11 +6950,11 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA DeltaF VERSION 0.71
+    //                 NOTAS SISTEMA DeltaF VERSION 0.72
     // ====================================================================
     
      - CAMBIOS
-     1) 
+     1) Se agrega agrupacion por categorias en la tarjeta de servicios.
 
 
      - BUGS CONOCIDOS:
