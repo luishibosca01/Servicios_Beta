@@ -766,6 +766,32 @@
             border-bottom: 2px solid var(--border);
         }
 
+        /* --- Submenús animados del menú de ajustes --- */
+        .menu-submenu {
+            overflow: hidden;
+            max-height: 0;
+            opacity: 0;
+            padding-left: 2.5rem;
+            transition: max-height 0.3s ease-out, opacity 0.25s ease-out;
+        }
+
+        .menu-submenu.open {
+            max-height: 400px;
+            opacity: 1;
+            transition: max-height 0.35s ease-in, opacity 0.25s ease-in;
+        }
+
+        .menu-item-parent svg.menu-chevron {
+            margin-left: auto;
+            transition: transform 0.25s ease;
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+
+        .menu-item-parent.open svg.menu-chevron {
+            transform: rotate(180deg);
+        }
+
         /* --- Toast Notifications --- */
         .toast {
             position: fixed;
@@ -1824,13 +1850,16 @@
                 </svg>
                 <span>Respaldar</span>
             </div>
-            <div class="menu-item" id="menu-importar">
+            <div class="menu-item menu-item-parent" id="menu-importar">
                 <svg class="icon">
                     <use href="#icon-upload" />
                 </svg>
                 <span>Restaurar</span>
+                <svg class="icon menu-chevron" viewBox="0 0 24 24">
+                    <polyline points="6 9 12 15 18 9" class="icon-line" stroke="currentColor"></polyline>
+                </svg>
             </div>
-            <div id="opciones-importacion" style="display: none; padding-left: 2.5rem; margin-top: 0.5rem;">
+            <div id="opciones-importacion" class="menu-submenu">
                 <div class="menu-item" id="menu-importar-reemplazar">
                     <span>Reemplazar</span>
                 </div>
@@ -1839,13 +1868,16 @@
                 </div>
             </div>
 
-            <div class="menu-item" id="menu-limpiar">
+            <div class="menu-item menu-item-parent" id="menu-limpiar">
                 <svg class="icon">
                     <use href="#icon-trash" />
                 </svg>
                 <span>Borrar</span>
+                <svg class="icon menu-chevron" viewBox="0 0 24 24">
+                    <polyline points="6 9 12 15 18 9" class="icon-line" stroke="currentColor"></polyline>
+                </svg>
             </div>
-            <div id="opciones-borrar" style="display: none; padding-left: 2.5rem; margin-top: 0.5rem;">
+            <div id="opciones-borrar" class="menu-submenu">
                 <div class="menu-item" id="menu-borrar-todo">
                     <span>Todo</span>
                 </div>
@@ -1890,7 +1922,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">Version 0.72</div> <!-- DeltaF -->
+            <div class="menu-version">Version 0.73</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -6230,11 +6262,15 @@
 
             mostrarOpcionesImportacion() {
                 const opciones = document.getElementById('opciones-importacion');
-                if (opciones.style.display === 'none') {
-                    opciones.style.display = 'block';
-                } else {
-                    opciones.style.display = 'none';
-                }
+                const padre = document.getElementById('menu-importar');
+                const abriendo = !opciones.classList.contains('open');
+
+                // Cerrar el otro submenú si está abierto
+                document.getElementById('opciones-borrar').classList.remove('open');
+                document.getElementById('menu-limpiar').classList.remove('open');
+
+                opciones.classList.toggle('open', abriendo);
+                padre.classList.toggle('open', abriendo);
             }
 
             importarDatos(modo = 'reemplazar') {
@@ -6344,7 +6380,8 @@
                                 // Construir mensaje según lo que se hizo
                                 if (serviciosAgregados === 0 && facturasAgregadas === 0 && facturasActualizadas === 0 && categoriasAgregadas === 0) {
                                     this.mostrarToast('No hay datos nuevos para agregar', 'info');
-                                    document.getElementById('opciones-importacion').style.display = 'none';
+                                    document.getElementById('opciones-importacion').classList.remove('open');
+                                    document.getElementById('menu-importar').classList.remove('open');
                                     return;
                                 }
 
@@ -6394,17 +6431,22 @@
 
                 input.click();
                 // Ocultar opciones después de seleccionar
-                document.getElementById('opciones-importacion').style.display = 'none';
+                document.getElementById('opciones-importacion').classList.remove('open');
+                document.getElementById('menu-importar').classList.remove('open');
                 this.cerrarMenuAjustes();
             }
 
             mostrarOpcionesBorrar() {
                 const opciones = document.getElementById('opciones-borrar');
-                if (opciones.style.display === 'none') {
-                    opciones.style.display = 'block';
-                } else {
-                    opciones.style.display = 'none';
-                }
+                const padre = document.getElementById('menu-limpiar');
+                const abriendo = !opciones.classList.contains('open');
+
+                // Cerrar el otro submenú si está abierto
+                document.getElementById('opciones-importacion').classList.remove('open');
+                document.getElementById('menu-importar').classList.remove('open');
+
+                opciones.classList.toggle('open', abriendo);
+                padre.classList.toggle('open', abriendo);
             }
 
             limpiarDatos(tipo = 'todo') {
@@ -6455,7 +6497,8 @@
                     this.actualizarBotonesHistorial();
                     this.actualizarEstadisticas();
                     this.mostrarToast(toasts[tipo] || toasts.todo, 'success');
-                    document.getElementById('opciones-borrar').style.display = 'none';
+                    document.getElementById('opciones-borrar').classList.remove('open');
+                    document.getElementById('menu-limpiar').classList.remove('open');
                     this.cerrarMenuAjustes();
                 }
             }
@@ -6573,13 +6616,11 @@
                 menu.classList.remove('active');
                 overlay.classList.remove('active');
 
-                // Ocultar opciones de importación
-                const opciones = document.getElementById('opciones-importacion');
-                if (opciones) opciones.style.display = 'none';
-
-                // Ocultar opciones de borrado
-                const opcionesBorrar = document.getElementById('opciones-borrar');
-                if (opcionesBorrar) opcionesBorrar.style.display = 'none';
+                // Cerrar submenús animados
+                document.getElementById('opciones-importacion')?.classList.remove('open');
+                document.getElementById('opciones-borrar')?.classList.remove('open');
+                document.getElementById('menu-importar')?.classList.remove('open');
+                document.getElementById('menu-limpiar')?.classList.remove('open');
 
                 // Restaurar scroll del body
                 document.body.classList.remove('modal-open');
@@ -6958,7 +6999,7 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA DeltaF VERSION 0.72
+    //                 NOTAS SISTEMA DeltaF VERSION 0.73
     // ====================================================================
     
      - CAMBIOS
