@@ -26,8 +26,10 @@
     <link rel="manifest" href="./manifest.json">
     <link rel="icon" type="image/svg+xml" href="./icon.svg">
     <style>
+        /* ============================================================
+           VARIABLES
+        ============================================================ */
         :root {
-            /* --- Variables de Color (Tema Claro) --- */
             --bg-body: #ffffff;
             --bg-card: #f0f4f9;
             --bg-header: #ffffff;
@@ -36,20 +38,21 @@
             --text-inv: #ffffff;
             --border: #dde3ea;
             --input-bg: #dde3ea;
-            --input-focus: #dde3ea;
             --c-blue: rgba(76, 114, 172, 0.8);
             --c-green: rgba(76, 172, 140, 0.8);
             --c-red: rgba(172, 90, 76, 0.8);
             --c-purple: rgba(129, 76, 172, 0.8);
             --c-gold: rgba(172, 155, 76, 0.8);
-            --c-gray-btn: #dde3ea;
             --c-white: #ffffff;
             --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            --shadow-float: 0 4px 16px rgba(0, 0, 0, 0.3);
+            --shadow-modal: 0 10px 40px rgba(0, 0, 0, 0.3);
             --radius: 20px;
+            --transition-fast: 0.2s;
+            --transition-base: 0.3s;
         }
 
         body.dark-mode {
-            /* --- Variables de Color (Tema Oscuro) --- */
             --bg-body: #131314;
             --bg-card: #1e1f20;
             --bg-header: #131314f6;
@@ -57,15 +60,12 @@
             --text-muted: #b4b4b4;
             --border: #313333;
             --input-bg: #313333;
-            --input-focus: #313333;
-            --c-gray-btn: #313333;
             --shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
         }
 
-        body.modal-open {
-            overflow: hidden !important;
-        }
-
+        /* ============================================================
+           RESET & BASE
+        ============================================================ */
         * {
             margin: 0;
             padding: 0;
@@ -84,19 +84,24 @@
             background: var(--bg-body);
             color: var(--text-main);
             overflow-anchor: none;
-            transition: background 0.3s, color 0.3s;
             overflow-y: auto;
             touch-action: pan-y;
+            transition: background var(--transition-base), color var(--transition-base);
         }
 
-        /* --- Layout & Contenedores --- */
+        body.modal-open {
+            overflow: hidden !important;
+        }
+
+        /* ============================================================
+           LAYOUT
+        ============================================================ */
         .container {
             max-width: 1300px;
             margin: 0 auto;
             padding: 1rem 0.5rem;
         }
 
-        /* Layout de 2 columnas para desktop */
         .main-grid {
             display: grid;
             grid-template-columns: 1fr;
@@ -104,49 +109,167 @@
         }
 
         .header {
-            background: var(--bg-header);
-            padding: 0 0.6rem;
-            box-shadow: var(--shadow);
             position: sticky;
             top: 0;
             z-index: 90;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            background: var(--bg-header);
+            padding: 0 0.6rem;
+            box-shadow: var(--shadow);
         }
 
         .header h1 {
-            font-size: 1.25rem;
-            color: var(--text-main);
             display: flex;
             align-items: center;
             gap: 0.5rem;
             flex-shrink: 0;
             margin-right: auto;
             margin-left: 1rem;
+            font-size: 1.25rem;
+            color: var(--text-main);
         }
 
         .header-actions {
             display: flex;
-            gap: 0.5rem;
             align-items: center;
+            gap: 0.5rem;
         }
 
-        .icon-btn {
-            background: var(--c-gray-btn);
-            border: 1px solid var(--border);
+        /* ============================================================
+           CARD
+        ============================================================ */
+        .card {
+            background: var(--bg-card);
             border-radius: var(--radius);
-            width: 50px;
-            height: 50px;
+            padding: 1.5rem 0.5rem;
+            box-shadow: var(--shadow);
+            color: var(--text-main);
+            margin-bottom: 1rem;
+        }
+
+        .card h2 {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+            color: var(--text-main);
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* Bordes de estado en card de resumen */
+        .card.borde-vencido,
+        .card.borde-urgente {
+            border-left: 4px solid var(--c-red);
+        }
+
+        .card.borde-proximo {
+            border-left: 4px solid var(--c-gold);
+        }
+
+        .card.borde-lejano {
+            border-left: 4px solid var(--c-blue);
+        }
+
+        .card.borde-pagado {
+            border-left: 4px solid var(--c-green);
+        }
+
+        .card-fade-in {
+            animation: slideDownFade var(--transition-base) ease-out forwards;
+            opacity: 0;
+        }
+
+        /* Tarjeta colapsable */
+        .card-header-collapsible {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .card-header-collapsible+.collapsible-content {
+            padding-top: 0;
+            transition: max-height var(--transition-base), opacity var(--transition-base), padding var(--transition-base);
+        }
+
+        .card-header-collapsible+.collapsible-content:not(.collapsed) {
+            padding-top: 1rem;
+        }
+
+        /* ============================================================
+           ICONOS
+        ============================================================ */
+        .icon {
+            width: 1.2em;
+            height: 1.2em;
+            vertical-align: text-bottom;
+            fill: currentColor;
+            stroke: currentColor;
+            stroke-width: 0;
+        }
+
+        .icon-line {
+            stroke-width: 2;
+            fill: none;
+        }
+
+        /* ============================================================
+           BOTONES
+        ============================================================ */
+        button {
             display: flex;
             align-items: center;
             justify-content: center;
+            gap: 0.5rem;
+            width: 100%;
+            padding: 0.875rem;
+            border: 1px solid transparent;
+            border-radius: var(--radius);
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            color: var(--text-main);
+            background: var(--input-bg);
+            transition: transform var(--transition-fast), background var(--transition-fast);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button:disabled,
+        input:disabled,
+        select:disabled {
+            background: transparent;
+            cursor: not-allowed;
+            transform: none;
+            color: #6b7280;
+            opacity: 0.5;
+        }
+
+        /* Botón icono cuadrado */
+        .icon-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            width: 50px;
+            height: 50px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            background: var(--input-bg);
             cursor: pointer;
             font-size: 0.72rem;
             font-weight: 800;
             letter-spacing: 0.04em;
-            transition: background 0.2s, color 0.2s, border-color 0.2s;
-            flex-shrink: 0;
+            transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
         }
 
         .icon-btn svg {
@@ -164,107 +287,23 @@
             transform: scale(0.95);
         }
 
-        .card {
-            background: var(--bg-card);
-            border-radius: var(--radius);
-            padding: 1.5rem 0.5rem;
-            box-shadow: var(--shadow);
-            color: var(--text-main);
-            margin-bottom: 1rem;
+        .icon-btn.pagada {
+            border-color: var(--c-green);
+            background: rgba(96, 172, 148, 0.1);
+            color: var(--c-green);
         }
 
-        .card h2 {
-            font-size: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: var(--text-main);
+        .icon-btn.activo-usd {
+            color: var(--c-green) !important;
+            border-color: var(--c-green) !important;
         }
 
-        .card-actions {
-            display: flex;
-            gap: 0.5rem;
+        .icon-btn:not(.activo-usd)[id*="moneda"] {
+            color: var(--c-red) !important;
+            border-color: var(--c-red) !important;
         }
 
-        /* --- Iconos --- */
-        .icon {
-            width: 1.2em;
-            height: 1.2em;
-            vertical-align: text-bottom;
-            fill: currentColor;
-            stroke: currentColor;
-            stroke-width: 0;
-        }
-
-        .icon-line {
-            stroke-width: 2;
-            fill: none;
-        }
-
-        /* --- Botones --- */
-        button {
-            width: 100%;
-            padding: 0.875rem;
-            border: 1px solid transparent;
-            border-radius: var(--radius);
-            font-weight: 600;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: transform 0.2s, background 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            color: var(--text-main);
-            background: var(--c-gray-btn);
-        }
-
-        button:active {
-            transform: scale(0.98);
-        }
-
-        button:disabled,
-        input:disabled,
-        select:disabled {
-            background: transparent;
-            cursor: not-allowed;
-            transform: none;
-            color: #6b7280;
-            opacity: 0.5;
-        }
-
-        .btn-add {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            font-size: 1.5rem;
-            padding: 0;
-            background: var(--c-blue);
-            color: var(--c-white);
-            position: fixed;
-            bottom: 3rem;
-            right: 2rem;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-            z-index: 110;
-            animation: slideUp 1s ease-in-out 1;
-            backdrop-filter: blur(3px);
-        }
-
-        .btn-add.modo-calculadora {
-            background: var(--c-red);
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-
-        }
-
-        .btn-add #btn-add-icon {
-            display: inline-block;
-            transition: transform 0.3s;
-        }
-
-        .btn-add.modo-calculadora #btn-add-icon {
-            transform: rotate(45deg);
-        }
-
+        /* Botones de header transparentes */
         #btn-filter,
         #btn-undo,
         #btn-redo,
@@ -274,164 +313,46 @@
             background: none;
         }
 
-        .servicios-lista {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            max-height: 700px;
-            opacity: 1;
-            overflow-y: auto;
-            overflow-x: hidden;
-            margin-top: 1rem;
-            transition: all 0.3s;
-        }
-
-        .servicio-item {
-            background: var(--input-bg);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 1rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            position: relative;
-        }
-
-        .servicio-item:active,
-        .facturas-grupo-header:active {
-            transform: scale(0.99);
-        }
-
-        .servicio-nombre {
-            font-weight: 600;
-            margin-bottom: 0.25rem;
-            color: var(--text-main);
-        }
-
-        .servicio-info {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.9rem;
-            color: var(--text-muted);
-        }
-
-        .servicio-monto {
-            color: var(--text-muted);
-            font-size: 1rem;
-        }
-
-        .servicio-fecha {
-            font-size: 0.9rem;
-        }
-
-        .servicio-estado {
-            font-size: 0.75rem;
-            font-weight: 600;
-            margin-top: 0.25rem;
+        /* Botón flotante + */
+        .btn-add {
+            position: fixed;
+            bottom: 3rem;
+            right: 2rem;
+            z-index: 110;
+            width: 60px;
+            height: 60px;
+            padding: 0;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            background: var(--c-blue);
             color: var(--c-white);
-            display: inline-block;
-            border-radius: var(--radius);
-            padding: .1rem 1rem .1rem 1rem;
+            box-shadow: var(--shadow-float);
+            backdrop-filter: blur(3px);
+            animation: slideUp 1s ease-in-out 1;
         }
 
-        .estado-vencido,
-        .estado-urgente {
+        .btn-add.modo-calculadora {
             background: var(--c-red);
         }
 
-        .estado-proximo {
-            background: var(--c-gold);
+        .btn-add #btn-add-icon {
+            display: inline-block;
+            transition: transform var(--transition-base);
         }
 
-        .estado-pagado {
-            background: var(--c-green);
+        .btn-add.modo-calculadora #btn-add-icon {
+            transform: rotate(45deg);
         }
 
-        .estado-lejano {
-            background: var(--c-blue);
-        }
-
-        .estado-sin-facturas-mes {
-            background: var(--c-purple);
-        }
-
-        /* --- Modal --- */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 200;
-            align-items: center;
-            justify-content: center;
-            padding: 1rem;
-            transition: all 0.3s ease;
-        }
-
-        .modal.active {
-            display: flex;
-            background: rgba(0, 0, 0, 0.25);
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
-        }
-
-        .modal-content {
-            background: var(--bg-card);
-            border-radius: var(--radius);
-            padding: 1rem;
-            max-width: 500px;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-            animation: slideUp 0.2s ease-in-out;
-        }
-
-        .modal-content::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .modal-content::-webkit-scrollbar-track {
-            background: var(--bg-body);
-            border-radius: var(--radius);
-        }
-
-        .modal-content::-webkit-scrollbar-thumb {
-            background: var(--border);
-            border-radius: var(--radius);
-        }
-
-        .modal-content::-webkit-scrollbar-thumb:hover {
-            background: var(--text-muted);
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-
-        .modal-header h3 {
-            font-size: 1.2rem;
-            color: var(--text-main);
-        }
-
-        /* --- Formularios --- */
+        /* ============================================================
+           FORMULARIOS
+        ============================================================ */
         .form-group {
             margin-bottom: 1rem;
         }
 
-        .form-group select:focus {
-            outline: none;
-            border-color: var(--input-focus);
-        }
-
         input,
-        select,
-        .form-group select {
+        select {
             width: 100%;
             padding: 0.75rem;
             border: 1px solid var(--border);
@@ -441,26 +362,30 @@
             color: var(--text-main);
         }
 
-        .form-group select {
-            padding: 0.875rem;
-            cursor: pointer;
-        }
-
-        label {
-            display: block;
-            font-size: 0.875rem;
-            font-weight: 600;
-            color: var(--text-muted);
-            margin-bottom: 0.25rem;
-            padding-left: 1rem;
-        }
-
         input:focus,
         select:focus {
             outline: none;
         }
 
-        /* Ocultar flechas de input number */
+        .form-group select {
+            padding: 0.875rem;
+            cursor: pointer;
+        }
+
+        .form-group select:focus {
+            border-color: var(--border);
+        }
+
+        label {
+            display: block;
+            padding-left: 1rem;
+            margin-bottom: 0.25rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        /* Ocultar flechas number */
         input[type="number"]::-webkit-outer-spin-button,
         input[type="number"]::-webkit-inner-spin-button {
             -webkit-appearance: none;
@@ -483,7 +408,81 @@
             margin-top: 0.5rem;
         }
 
-        /* --- Facturas --- */
+        /* ============================================================
+           SCROLLBAR (reutilizable)
+        ============================================================ */
+        .custom-scroll,
+        .modal-content {
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .custom-scroll::-webkit-scrollbar,
+        .modal-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .custom-scroll::-webkit-scrollbar-track,
+        .modal-content::-webkit-scrollbar-track {
+            background: var(--bg-body);
+            border-radius: var(--radius);
+        }
+
+        .custom-scroll::-webkit-scrollbar-thumb,
+        .modal-content::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: var(--radius);
+        }
+
+        .custom-scroll::-webkit-scrollbar-thumb:hover,
+        .modal-content::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+
+        /* ============================================================
+           MODAL
+        ============================================================ */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .modal.active {
+            display: flex;
+            background: rgba(0, 0, 0, 0.25);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 1rem;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            box-shadow: var(--shadow-modal);
+            animation: slideUp 0.2s ease-in-out;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-header h3 {
+            font-size: 1.2rem;
+            color: var(--text-main);
+        }
+
+        /* Modal facturas (layout flex interno) */
         .modal-facturas-content {
             display: flex;
             flex-direction: column;
@@ -494,9 +493,8 @@
         .modal-facturas-header {
             position: sticky;
             top: 0;
-            background: var(--bg-card);
             z-index: 10;
-            margin-bottom: 0;
+            background: var(--bg-card);
             padding-bottom: 1rem;
             border-bottom: 1px solid var(--border);
         }
@@ -504,8 +502,8 @@
         .modal-facturas-footer {
             position: sticky;
             bottom: 0;
-            background: var(--bg-card);
             z-index: 10;
+            background: var(--bg-card);
             padding-top: 1rem;
             border-top: 1px solid var(--border);
             display: flex;
@@ -513,64 +511,32 @@
             gap: 0.5rem;
         }
 
-        .facturas-lista {
-            flex: 1;
-            overflow-y: auto;
-            padding: 1rem 0;
-            margin: 0 -1rem;
-            padding-left: 1rem;
-            padding-right: 1rem;
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
+        /* ============================================================
+           OVERLAYS (modal, menú ajustes, menú agregar — patrón común)
+        ============================================================ */
+        .menu-overlay,
+        .menu-agregar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.25);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            z-index: 100;
         }
 
-        .factura-item {
-            background: var(--input-bg);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 0.75rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.2s;
+        .menu-agregar-overlay {
+            background: rgba(0, 0, 0, 0.3);
         }
 
-        .factura-item.pagada {
-            opacity: 0.6;
-            border-color: var(--c-green);
+        .menu-overlay.active,
+        .menu-agregar-overlay.active {
+            display: block;
         }
 
-        .factura-info {
-            flex: 1;
-            cursor: pointer;
-        }
-
-        .factura-monto {
-            font-weight: 600;
-            font-size: 1rem;
-            color: var(--text-main);
-        }
-
-        .factura-monto-favor {
-            color: var(--c-green);
-            font-weight: 700;
-        }
-
-        .factura-fecha {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            margin-top: 0.25rem;
-        }
-
-        .factura-actions {
-            display: flex;
-            gap: 0.5rem;
-            border: 1px solid var(--text-main);
-            border-radius: var(--radius);
-        }
-
-        /* --- Animaciones --- */
+        /* ============================================================
+           ANIMACIONES
+        ============================================================ */
         @keyframes slideUp {
             from {
                 opacity: 0;
@@ -609,170 +575,97 @@
 
         @keyframes slideUp2 {
             from {
-                transform: translateX(-50%) translateY(100px);
                 opacity: 0;
+                transform: translateX(-50%) translateY(100px);
             }
 
             to {
-                transform: translateX(-50%) translateY(0);
                 opacity: 1;
+                transform: translateX(-50%) translateY(0);
             }
         }
 
-        .card-fade-in {
-            animation: slideDownFade 0.3s ease-out forwards;
+        /* ============================================================
+           CHEVRONS (patrón unificado para todos los grupos colapsables)
+        ============================================================ */
+        .chevron-icon,
+        .facturas-grupo-chevron,
+        .servicios-grupo-cat-chevron,
+        .menu-item-parent svg.menu-chevron {
+            transition: transform var(--transition-fast);
+            flex-shrink: 0;
+            color: var(--text-muted);
+        }
+
+        .chevron-icon {
+            transition: transform var(--transition-base) ease;
+        }
+
+        .chevron-icon.collapsed,
+        .facturas-grupo-chevron.collapsed,
+        .servicios-grupo-cat-chevron.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        .chevron-icon.semi-collapsed {
+            transform: rotate(180deg);
+        }
+
+        .menu-item-parent.open svg.menu-chevron {
+            transform: rotate(180deg);
+        }
+
+        /* ============================================================
+           COLLAPSIBLE CONTENT (patrón unificado)
+           Usado por: tarjetas principales, grupos de facturas y categorías
+        ============================================================ */
+        .collapsible-content {
+            max-height: 1500px;
+            opacity: 0;
+            visibility: hidden;
+            transition: max-height var(--transition-base), opacity var(--transition-base), visibility var(--transition-base);
+        }
+
+        .collapsible-content:not(.collapsed) {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .collapsible-content.collapsed {
+            max-height: 0;
             opacity: 0;
         }
 
-        /* --- Scrollbar --- */
-        .custom-scroll {
-            overflow-y: auto;
+        #servicios-content:not(.collapsed) {
+            overflow-y: visible;
             overflow-x: hidden;
         }
 
-        .custom-scroll::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .custom-scroll::-webkit-scrollbar-track {
-            background: var(--bg-body);
-            border-radius: var(--radius);
-        }
-
-        .custom-scroll::-webkit-scrollbar-thumb {
-            background: var(--border);
-            border-radius: var(--radius);
-        }
-
-        .custom-scroll::-webkit-scrollbar-thumb:hover {
-            background: var(--text-muted);
-        }
-
-        /* --- Empty State --- */
-        .empty-state {
-            text-align: center;
-            padding: 3rem 1rem;
-            color: var(--text-muted);
-        }
-
-        .empty-state svg {
-            width: 80px;
-            height: 80px;
-            margin-bottom: 1rem;
-            opacity: 0.3;
-        }
-
-        .empty-state p {
-            font-size: 0.95rem;
-        }
-
-        /* --- Menu Ajustes --- */
-        .menu-ajustes {
-            position: fixed;
-            top: 0;
-            right: -280px;
-            width: 280px;
-            height: 100dvh;
-            background: var(--bg-card);
-            box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
-            transition: right 0.3s;
-            z-index: 120;
-            padding: 1rem;
-            overscroll-behavior: contain;
+        /* Grupos de facturas por año y grupos de categorías — mismo patrón */
+        .facturas-grupo-contenido,
+        .servicios-grupo-cat-contenido {
             display: flex;
             flex-direction: column;
-        }
-
-        .menu-ajustes.active {
-            right: 0;
-        }
-
-        .menu-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.25);
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
-            z-index: 100;
-
-        }
-
-        .menu-overlay.active {
-            display: block;
-        }
-
-        .menu-item {
-            padding: 1rem 0;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            color: var(--text-main);
-            transition: color 0.2s;
-        }
-
-        .menu-item:hover,
-        .btn-cerrar-menu:hover {
-            color: var(--text-muted);
-        }
-
-        .menu-item:last-child {
-            border-bottom: none;
-        }
-
-        .menu-content {
-            flex: 1;
-            overflow-y: auto;
-        }
-
-        .menu-footer {
-            margin-top: auto;
-            padding-top: 1rem;
-            border-top: 1px solid var(--border);
-        }
-
-        .btn-cerrar-menu {
-            width: 100%;
-            padding: 0.875rem;
-            margin-bottom: 1rem;
-            background: transparent;
-            font-weight: 600;
-            font-size: 0.875rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             gap: 0.5rem;
-            color: var(--text-main);
+            max-height: 2000px;
+            overflow: hidden;
+            opacity: 1;
+            transition: max-height var(--transition-base) ease-out, opacity var(--transition-fast);
         }
 
-        .menu-version {
-            text-align: center;
-            font-size: 0.875rem;
-            color: var(--text-muted);
-            padding: 0.5rem 0;
+        .facturas-grupo-contenido.collapsed,
+        .servicios-grupo-cat-contenido.collapsed {
+            max-height: 0;
+            opacity: 0;
         }
 
-        .menu-header {
-            font-weight: 600;
-            font-size: 1.1rem;
-            margin-bottom: 1rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 2px solid var(--border);
-        }
-
-        /* --- Submenús animados del menú de ajustes --- */
+        /* Submenús del menú de ajustes */
         .menu-submenu {
             overflow: hidden;
             max-height: 0;
             opacity: 0;
             padding-left: 2.5rem;
-            transition: max-height 0.3s ease-out, opacity 0.25s ease-out;
+            transition: max-height var(--transition-base) ease-out, opacity 0.25s ease-out;
         }
 
         .menu-submenu.open {
@@ -781,96 +674,294 @@
             transition: max-height 0.35s ease-in, opacity 0.25s ease-in;
         }
 
-        .menu-item-parent svg.menu-chevron {
-            margin-left: auto;
-            transition: transform 0.25s ease;
-            color: var(--text-muted);
-            flex-shrink: 0;
-        }
-
-        .menu-item-parent.open svg.menu-chevron {
-            transform: rotate(180deg);
-        }
-
-        /* --- Toast Notifications --- */
-        .toast {
-            position: fixed;
-            bottom: 2rem;
-            left: 50%;
-            background: var(--bg-card);
-            color: var(--c-white);
-            padding: 1rem 1.5rem;
-            border-radius: var(--radius);
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-            opacity: 0;
-            transform: translateX(-50%) translateY(100px);
-            transition: all 0.3s ease;
-            z-index: 999;
+        /* ============================================================
+           GRUPOS (headers de facturas y categorías — patrón unificado)
+        ============================================================ */
+        .facturas-grupo-header,
+        .servicios-grupo-cat-header {
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 0.75rem;
-            white-space: pre-line;
-            pointer-events: none;
-            max-width: 90%;
-            min-width: 300px;
-            text-align: center;
-            backdrop-filter: blur(3px);
+            justify-content: space-between;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: opacity var(--transition-fast);
         }
 
-        .toast.show {
+        .facturas-grupo-header {
+            margin: 0.25rem 1rem;
+        }
+
+        .servicios-grupo-cat-header {
+            margin: 0.5rem 0 0.25rem;
+            padding-left: 1rem;
+        }
+
+        .facturas-grupo-header:active,
+        .servicios-grupo-cat-header:active {
+            opacity: 0.7;
+        }
+
+        .facturas-grupo-header-info,
+        .servicios-grupo-cat-header-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Texto del título del grupo */
+        .facturas-grupo-ano-texto,
+        .servicios-grupo-cat-texto {
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--text-main);
+        }
+
+        /* Contador del grupo */
+        .facturas-grupo-contador,
+        .servicios-grupo-cat-contador {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .facturas-grupo-contador {
+            padding: 0.25rem 0.5rem;
+        }
+
+        .servicios-grupo-cat {
+            margin-bottom: 0.25rem;
+        }
+
+        /* ============================================================
+           SERVICIOS LISTA
+        ============================================================ */
+        .servicios-lista {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            max-height: 700px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            margin-top: 1rem;
             opacity: 1;
-            transform: translateX(-50%) translateY(0);
+            transition: max-height var(--transition-base), opacity var(--transition-base);
         }
 
-        .toast.success {
-            background: var(--c-green);
+        /* Estados colapso de la sección servicios */
+        .servicios-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            justify-content: flex-start;
+            max-height: 50px;
+            overflow: hidden;
+            opacity: 1;
+            background: var(--bg-card);
+            transition: max-height var(--transition-base), opacity var(--transition-base), margin var(--transition-base);
         }
 
-        .toast.info {
+        .servicios-actions.hidden,
+        #servicios-content.semi-collapsed .servicios-actions {
+            max-height: 0;
+            opacity: 0;
+            margin-bottom: 0;
+        }
+
+        #servicios-content.collapsed .servicios-actions,
+        #servicios-content.collapsed .servicios-lista,
+        #servicios-content.collapsed .search-container,
+        #servicios-content.semi-collapsed .search-container {
+            max-height: 0;
+            opacity: 0;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        /* Item de servicio */
+        .servicio-item {
+            position: relative;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1rem;
+            cursor: pointer;
+            transition: opacity var(--transition-fast), transform var(--transition-fast);
+        }
+
+        .servicio-item:active,
+        .facturas-grupo-header:active {
+            transform: scale(0.99);
+        }
+
+        .servicio-item.calculando {
             background: var(--c-blue);
         }
 
-        .toast.error {
+        .servicio-nombre {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            color: var(--text-main);
+        }
+
+        .servicio-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .servicio-monto {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        .servicio-fecha {
+            font-size: 0.9rem;
+        }
+
+        /* Badge de estado del servicio */
+        .servicio-estado {
+            display: inline-block;
+            margin-top: 0.25rem;
+            padding: 0.1rem 1rem;
+            border-radius: var(--radius);
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--c-white);
+        }
+
+        .servicio-estado.estado-sin-facturas {
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        /* Colores de estado — servicios y facturas comparten la misma paleta */
+        .estado-vencido,
+        .estado-urgente,
+        .factura-estado-vencido {
             background: var(--c-red);
         }
 
-        /* --- Menú Emergente Agregar --- */
-        .menu-agregar {
-            position: fixed;
-            bottom: 7rem;
-            right: 2rem;
-            background: var(--bg-card);
-            border-radius: var(--radius);
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-            padding: 1rem;
-            display: none;
+        .estado-proximo,
+        .factura-estado-pendiente {
+            background: var(--c-gold);
+        }
+
+        .estado-pagado,
+        .factura-estado-pagado {
+            background: var(--c-green);
+        }
+
+        .estado-lejano {
+            background: var(--c-blue);
+        }
+
+        .estado-sin-facturas-mes {
+            background: var(--c-purple);
+        }
+
+        /* ============================================================
+           FACTURAS LISTA
+        ============================================================ */
+        .facturas-lista {
+            flex: 1;
+            display: flex;
             flex-direction: column;
             gap: 0.5rem;
-            z-index: 110;
-            animation: slideUp 0.2s ease;
+            overflow-y: auto;
+            padding: 1rem;
+            margin: 0 -1rem;
         }
 
-        .menu-agregar.active {
+        .factura-item {
             display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 0.75rem;
+            transition: opacity var(--transition-fast);
         }
 
-        .menu-agregar-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 100;
-            background: rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
+        .factura-item.pagada {
+            opacity: 0.6;
+            border-color: var(--c-green);
         }
 
-        .menu-agregar-overlay.active {
-            display: block;
+        .factura-info {
+            flex: 1;
+            cursor: pointer;
+        }
 
+        .factura-monto {
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--text-main);
+        }
+
+        .factura-monto-favor {
+            color: var(--c-green);
+            font-weight: 700;
+        }
+
+        .factura-fecha {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        .factura-actions {
+            display: flex;
+            gap: 0.5rem;
+            border: 1px solid var(--text-main);
+            border-radius: var(--radius);
+        }
+
+        /* Badge de estado de factura */
+        .factura-estado-pagado,
+        .factura-estado-vencido,
+        .factura-estado-pendiente {
+            display: inline-block;
+            margin-top: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .mensaje-sin-facturas {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 2rem 0;
+        }
+
+        /* ============================================================
+           RESUMEN
+        ============================================================ */
+        .resumen-monto {
+            display: flex;
+            flex-direction: column;
+            border-radius: var(--radius);
+            cursor: pointer;
+            min-height: 12rem;
+            transition: opacity var(--transition-base);
+        }
+
+        .resumen-monto .resumen-valor,
+        .resumen-valor-usd {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--text-main);
+            text-align: left;
+        }
+
+        .resumen-titulo {
+            font-weight: 500;
+            color: var(--text-main);
+            text-align: left;
         }
 
         .resumen-label {
@@ -878,34 +969,37 @@
             margin-top: 1rem;
         }
 
-        /* Estilos base de resumen-monto SIN borde */
-        .resumen-monto {
-            border-radius: var(--radius);
-            text-align: center;
-            cursor: pointer;
-            transition: opacity 0.3s;
-            min-height: 12rem;
-            display: flex;
-            flex-direction: column;
+        .resumen-monto .resumen-label {
+            text-align: left;
         }
 
-        /* Barra de progreso en resumen */
+        .resumen-footer {
+            margin-top: auto;
+        }
+
+        .resumen-fecha {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-top: 1rem;
+            text-align: right;
+        }
+
         .resumen-progreso {
             width: 100%;
             height: 5px;
             border-radius: 10px;
             overflow: hidden;
-            margin: 1rem 0 1rem 0;
+            margin: 1rem 0;
         }
 
         .resumen-progreso-barra {
             height: 100%;
-            background: var(--bg-card);
             border-radius: 10px;
-            transition: width 0.3s ease, background 0.3s ease;
+            background: var(--bg-card);
+            transition: width var(--transition-base) ease, background var(--transition-base) ease;
         }
 
-        /* Colores de la barra según el estado de las PENDIENTES */
+        /* Color de la barra según estado */
         .card.borde-vencido .resumen-progreso-barra,
         .card.borde-urgente .resumen-progreso-barra {
             background: var(--c-red);
@@ -923,54 +1017,18 @@
             background: var(--c-green);
         }
 
-        /* Bordes dinámicos para la CARD padre (no para resumen-monto) */
- 
-        .card.borde-urgente,
-        .card.borde-vencido {
-            border-left: 4px solid var(--c-red);
+        /* ============================================================
+           ESTADÍSTICAS
+        ============================================================ */
+        .estadisticas-container {
+            animation: slideDownFade var(--transition-base) ease;
         }
 
-        .card.borde-proximo {
-            border-left: 4px solid var(--c-gold);
+        .estadisticas-lista {
+            display: flex;
+            flex-direction: column;
         }
 
-        .card.borde-lejano {
-            border-left: 4px solid var(--c-blue);
-        }
-
-        .card.borde-pagado {
-            border-left: 4px solid var(--c-green);
-        }
-
-        .resumen-titulo {
-            font-weight: 500;
-            color: var(--text-main);
-            text-align: left;
-        }
-
-        .resumen-monto .resumen-valor {
-            font-size: 1.8rem;
-            font-weight: 600;
-            color: var(--text-main);
-            text-align: left;
-        }
-
-        .resumen-fecha {
-            font-size: 0.875rem;
-            color: var(--text-muted);
-            margin-top: 1rem;
-            text-align: right;
-        }
-
-        .resumen-footer {
-            margin-top: auto;
-        }
-
-        .resumen-monto .resumen-label {
-            text-align: left;
-        }
-
-        /* Estadísticas Unificadas */
         .estadisticas-selector {
             width: 100%;
             background: var(--input-bg);
@@ -979,16 +1037,7 @@
             color: var(--text-main);
             font-size: 1rem;
             cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .estadisticas-container {
-            animation: slideDownFade 0.3s ease;
-        }
-
-        .estadisticas-lista {
-            display: flex;
-            flex-direction: column;
+            transition: opacity var(--transition-fast);
         }
 
         .est-cat-tags-row {
@@ -999,17 +1048,18 @@
         }
 
         .est-cat-tag {
-            background: var(--input-bg);
+            display: flex;
+            flex-shrink: 0;
+            width: fit-content;
+            padding: 0.3rem 0.75rem;
             border: 1px solid var(--border);
             border-radius: var(--radius);
+            background: var(--input-bg);
             color: var(--text-muted);
             font-size: 0.8rem;
             font-weight: 500;
-            padding: 0.3rem 0.75rem;
             cursor: pointer;
-            transition: background 0.2s, color 0.2s, border-color 0.2s;
-            width: fit-content;
-            flex-shrink: 0;
+            transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
         }
 
         .est-cat-tag:active {
@@ -1022,7 +1072,9 @@
             color: var(--text-inv);
         }
 
-        /* --- Estilos Calculador --- */
+        /* ============================================================
+           CALCULADOR DE PERÍODO
+        ============================================================ */
         .calculador-campo {
             display: flex;
             flex-direction: column;
@@ -1053,157 +1105,71 @@
             color: var(--text-main);
         }
 
-        /* Estado de factura */
-        .factura-estado-pagado,
-        .factura-estado-vencido,
-        .factura-estado-pendiente {
-            font-size: 0.8rem;
-            padding: 0.25rem 0.5rem;
-            border-radius: 5px;
-            font-weight: 600;
-            margin-top: 0.25rem;
-            display: inline-block;
-        }
-
-        /* Variaciones de color */
-        .factura-estado-pagado {
-            background: var(--c-green);
-        }
-
-        .factura-estado-vencido {
-            background: var(--c-red);
-        }
-
-        .factura-estado-pendiente {
-            background: var(--c-gold);
-        }
-
-        .mensaje-sin-facturas {
-            text-align: center;
-            color: var(--text-muted);
-            padding: 2rem 0;
-        }
-
-        .servicio-estado.estado-sin-facturas {
-            background: transparent;
-            color: var(--text-muted);
-            font-size: 0.8rem;
-        }
-
-        /* Tarjeta colapsable */
-        .card-header-collapsible {
-            display: flex;
-            justify-content: space-between;
+        /* ============================================================
+           CALCULADORA FLOTANTE
+        ============================================================ */
+        .calculadora-flotante {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            z-index: 998;
+            display: none;
             align-items: center;
-            cursor: pointer;
-            user-select: none;
+            gap: 1rem;
+            padding: 1rem 1.5rem;
+            border-radius: 50px;
+            background: var(--c-blue);
+            color: var(--text-main);
+            box-shadow: var(--shadow-float);
+            backdrop-filter: blur(3px);
+            transform: translateX(-50%);
+            animation: slideUp2 0.2s ease-out;
         }
 
-        .card-header-collapsible+.collapsible-content {
-            padding-top: 0;
-            transition: all 0.3s;
+        .calculadora-total,
+        .calculadora-contador {
+            text-shadow: 0 0 8px rgba(0, 0, 0, 0.8);
         }
 
-        .card-header-collapsible+.collapsible-content:not(.collapsed) {
-            padding-top: 1rem;
+        .calculadora-total {
+            min-width: 120px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-align: center;
         }
 
-        .chevron-icon {
-            transition: transform 0.3s ease;
-            flex-shrink: 0;
+        .calculadora-contador {
+            font-size: 0.85rem;
+            font-weight: 500;
+            opacity: 0.9;
         }
 
-        .chevron-icon.collapsed {
-            transform: rotate(-90deg);
-        }
-
-        .chevron-icon.semi-collapsed {
-            transform: rotate(180deg);
-        }
-
-        .collapsible-content {
-            max-height: 1500px;
-            transition: all 0.3s;
-            opacity: 0;
-            visibility: hidden;
-        }
-
-        .collapsible-content:not(.collapsed) {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        #servicios-content:not(.collapsed) {
-            overflow-y: visible;
-            overflow-x: hidden;
-        }
-
-        .collapsible-content.collapsed {
-            max-height: 0;
-            opacity: 0;
-        }
-
-        /* Estados de la tarjeta de servicios (3 estados) */
-        .servicios-actions {
-            display: flex;
-            gap: 0.5rem;
-            margin-bottom: 1rem;
-            justify-content: flex-start;
-            max-height: 50px;
-            opacity: 1;
-            overflow: hidden;
-            transition: all 0.3s;
-            background: var(--bg-card);
-        }
-
-        .servicios-actions.hidden {
-            max-height: 0;
-            opacity: 0;
-            margin-bottom: 0;
-        }
-
-        #servicios-content.semi-collapsed .servicios-actions {
-            max-height: 0;
-            opacity: 0;
-            margin-bottom: 0;
-        }
-
-        /* Cuando está completamente colapsado */
-        #servicios-content.collapsed .servicios-actions,
-        #servicios-content.collapsed .servicios-lista,
-        #servicios-content.collapsed .search-container,
-        #servicios-content.semi-collapsed .search-container {
-            max-height: 0;
-            opacity: 0;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-        }
-
-        /* Contenedor de búsqueda */
+        /* ============================================================
+           BÚSQUEDA
+        ============================================================ */
         .search-container {
             position: relative;
             max-height: 50px;
-            opacity: 1;
             overflow: visible;
-            transition: all 0.3s;
+            opacity: 1;
             background: var(--bg-card);
+            transition: max-height var(--transition-base), opacity var(--transition-base), padding var(--transition-base);
         }
 
         .search-input {
             width: 100%;
-            padding: 0.75rem 2.5rem 0.75rem 2.5rem;
+            padding: 0.75rem 2.5rem;
             border: 1px solid var(--border);
             border-radius: var(--radius);
             font-size: 0.95rem;
             background: var(--input-bg);
             color: var(--text-main);
-            transition: border-color 0.2s;
+            transition: border-color var(--transition-fast);
         }
 
         .search-input:focus {
             outline: none;
-            border-color: var(--input-focus);
+            border-color: var(--border);
         }
 
         .search-input::placeholder {
@@ -1227,16 +1193,16 @@
             right: 0;
             top: 0;
             bottom: 0;
-            background: transparent;
-            border: none;
-            padding: 0 1rem;
-            cursor: pointer;
-            color: var(--text-muted);
-            width: 3rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: color 0.2s;
+            width: 3rem;
+            padding: 0 1rem;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: color var(--transition-fast);
         }
 
         .search-clear:hover {
@@ -1249,210 +1215,193 @@
             pointer-events: none;
         }
 
-        .icon-btn.pagada {
-            border-color: var(--c-green);
-            background: rgba(96, 172, 148, 0.1);
-            color: var(--c-green);
-        }
-
-        /* --- Grupos de Facturas por Año --- */
-
-        .facturas-grupo-header {
-            display: flex;
-            align-items: center;
-            border-radius: var(--radius);
-            cursor: pointer;
-            margin: 0.25rem 1rem 0.25rem;
-            transition: all 0.2s;
-            justify-content: space-between;
-        }
-
-        .facturas-grupo-header-info {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .facturas-grupo-ano-texto {
-            font-weight: 600;
-            font-size: 1rem;
-            color: var(--text-main);
-        }
-
-        .facturas-grupo-contador {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            padding: 0.25rem 0.5rem;
-        }
-
-        .facturas-grupo-chevron {
-            transition: transform 0.2s;
+        /* ============================================================
+           EMPTY STATE
+        ============================================================ */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
             color: var(--text-muted);
         }
 
-        .facturas-grupo-chevron.collapsed {
-            transform: rotate(-90deg);
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 1rem;
+            opacity: 0.3;
         }
 
-        .facturas-grupo-contenido {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            max-height: 2000px;
-            overflow: hidden;
-            transition: max-height 0.3s ease-out, opacity 0.2s;
-            opacity: 1;
-        }
-
-        .facturas-grupo-contenido.collapsed {
-            max-height: 0;
-            opacity: 0;
-        }
-
-        /* --- Grupos de categoría en lista de servicios --- */
-        .servicios-grupo-cat {
-            margin-bottom: 0.25rem;
-        }
-
-        .servicios-grupo-cat-header {
-            display: flex;
-            align-items: center;
-            border-radius: var(--radius);
-            cursor: pointer;
-            margin: 0.5rem 0 0.25rem;
-            padding-left: 1rem;
-            transition: all 0.2s;
-            justify-content: space-between;
-        }
-
-        .servicios-grupo-cat-header-info {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .servicios-grupo-cat-texto {
-            font-weight: 600;
-            font-size: 1rem;
-            color: var(--text-main);
-        }
-
-        .servicios-grupo-cat-contador {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-        }
-
-        .servicios-grupo-cat-chevron {
-            transition: transform 0.2s;
-            color: var(--text-muted);
-        }
-
-        .servicios-grupo-cat-chevron.collapsed {
-            transform: rotate(-90deg);
-        }
-
-        .servicios-grupo-cat-contenido {
-            display: flex;
-            flex-direction: column;
-            max-height: 2000px;
-            overflow: hidden;
-            transition: max-height 0.3s ease-out, opacity 0.2s;
-            opacity: 1;
-            gap: 0.5rem;
-        }
-
-        .servicios-grupo-cat-contenido.collapsed {
-            max-height: 0;
-            opacity: 0;
-        }
-
-        /* Estilos para modal de información */
-        .info-content {
-            max-height: 60vh;
-            overflow-y: auto;
-            padding: 0.5rem;
-        }
-
-        .info-section {
-            margin-bottom: 1.5rem;
-        }
-
-        .info-section h4 {
-            color: var(--text-main);
-            font-size: 1rem;
-            font-weight: 600;
-        }
-
-        .info-item {
-            margin-bottom: 0.75rem;
-            padding-left: 0.5rem;
-        }
-
-        .info-item strong {
-            color: var(--text-main);
+        .empty-state p {
             font-size: 0.95rem;
         }
 
-        .info-content em {
-            color: var(--c-blue);
-            font-style: normal;
-        }
-
-        /* Calculadora flotante */
-        .calculadora-flotante {
+        /* ============================================================
+           TOAST
+        ============================================================ */
+        .toast {
             position: fixed;
             bottom: 2rem;
             left: 50%;
-            transform: translateX(-50%);
-            background: var(--c-blue);
-            color: var(--text-main);
-            padding: 1rem 1.5rem;
-            border-radius: 50px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-            display: none;
+            z-index: 999;
+            display: flex;
             align-items: center;
-            gap: 1rem;
-            z-index: 998;
-            animation: slideUp2 0.2s ease-out;
+            justify-content: center;
+            gap: 0.75rem;
+            min-width: 300px;
+            max-width: 90%;
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius);
+            background: var(--bg-card);
+            color: var(--c-white);
+            box-shadow: var(--shadow-float);
             backdrop-filter: blur(3px);
-        }
-
-        .calculadora-total {
-            font-size: 1.5rem;
-            font-weight: 700;
-            min-width: 120px;
+            opacity: 0;
+            pointer-events: none;
+            white-space: pre-line;
             text-align: center;
-            text-shadow: 0 0 8px rgba(0, 0, 0, 0.8);
+            transform: translateX(-50%) translateY(100px);
+            transition: opacity var(--transition-base) ease, transform var(--transition-base) ease;
         }
 
-        .calculadora-contador {
-            font-size: 0.85rem;
-            opacity: 0.9;
-            font-weight: 500;
-            text-shadow: 0 0 8px rgba(0, 0, 0, 0.8);
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
         }
 
-        /* Servicio seleccionado para calcular */
-        .servicio-item.calculando {
+        .toast.success {
+            background: var(--c-green);
+        }
+
+        .toast.info {
             background: var(--c-blue);
         }
 
-        /* Tarjeta resumen: monto USD como segunda línea, mismo tamaño */
-        .resumen-valor-usd {
-            font-size: 1.8rem;
-            font-weight: 600;
-            color: var(--text-main);
-            text-align: left;
+        .toast.error {
+            background: var(--c-red);
         }
 
-        /* Badge de moneda en lista de facturas */
+        /* ============================================================
+           MENÚ AJUSTES (panel lateral)
+        ============================================================ */
+        .menu-ajustes {
+            position: fixed;
+            top: 0;
+            right: -280px;
+            z-index: 120;
+            display: flex;
+            flex-direction: column;
+            width: 280px;
+            height: 100dvh;
+            padding: 1rem;
+            background: var(--bg-card);
+            box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+            overscroll-behavior: contain;
+            transition: right var(--transition-base);
+        }
+
+        .menu-ajustes.active {
+            right: 0;
+        }
+
+        .menu-header {
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .menu-content {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .menu-footer {
+            margin-top: auto;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem 0;
+            cursor: pointer;
+            color: var(--text-main);
+            transition: color var(--transition-fast);
+        }
+
+        .menu-item:hover,
+        .btn-cerrar-menu:hover {
+            color: var(--text-muted);
+        }
+
+        .menu-item-parent svg.menu-chevron {
+            margin-left: auto;
+        }
+
+        .btn-cerrar-menu {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            width: 100%;
+            padding: 0.875rem;
+            margin-bottom: 1rem;
+            border: none;
+            background: transparent;
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            color: var(--text-main);
+            transition: color var(--transition-fast);
+        }
+
+        .menu-version {
+            padding: 0.5rem 0;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        #ingresos-indicator {
+            margin-left: auto;
+            padding-right: 1rem;
+        }
+
+        /* ============================================================
+           MENÚ EMERGENTE AGREGAR
+        ============================================================ */
+        .menu-agregar {
+            position: fixed;
+            bottom: 7rem;
+            right: 2rem;
+            z-index: 110;
+            display: none;
+            flex-direction: column;
+            gap: 0.5rem;
+            padding: 1rem;
+            border-radius: var(--radius);
+            background: var(--bg-card);
+            box-shadow: var(--shadow-modal);
+            animation: slideUp 0.2s ease;
+        }
+
+        .menu-agregar.active {
+            display: flex;
+        }
+
+        /* ============================================================
+           BADGES DE MONEDA
+        ============================================================ */
         .moneda-badge {
             display: inline-block;
-            font-size: 0.7rem;
-            font-weight: 700;
+            margin-left: 0.4rem;
             padding: 0.1rem 0.35rem;
             border-radius: 4px;
-            margin-left: 0.4rem;
+            font-size: 0.7rem;
+            font-weight: 700;
             vertical-align: middle;
         }
 
@@ -1474,57 +1423,84 @@
             text-transform: uppercase;
         }
 
-        /* Botón toggle de moneda en modales */
-        .icon-btn.activo-usd {
-            color: var(--c-green) !important;
-            border-color: var(--c-green) !important;
-        }
-
-        .icon-btn:not(.activo-usd)[id*="moneda"] {
-            color: var(--c-red) !important;
-            border-color: var(--c-red) !important;
-        }
-
+        /* ============================================================
+           CATEGORÍAS (tags en gestión)
+        ============================================================ */
         .categoria-tag {
             display: inline-flex;
             align-items: center;
             gap: 0.4rem;
-            background: var(--input-bg);
+            padding: 0.35rem 0.75rem 0.35rem 0.5rem;
             border: 1px solid var(--border);
             border-radius: var(--radius);
-            padding: 0.35rem 0.75rem 0.35rem 0.5rem;
+            background: var(--input-bg);
             font-size: 0.875rem;
             font-weight: 500;
         }
 
         .categoria-tag-del {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 0;
-            width: 18px;
-            height: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--text-muted);
-            border-radius: 50%;
             flex-shrink: 0;
+            width: 18px;
+            height: 18px;
+            padding: 0;
+            border: none;
+            border-radius: 50%;
+            background: none;
+            cursor: pointer;
+            color: var(--text-muted);
         }
 
         .categoria-tag-del:active {
             color: var(--text-main);
         }
 
-        #ingresos-indicator {
-            margin-left: auto;
-            padding-right: 1rem;
+        /* ============================================================
+           MODAL DE INFORMACIÓN
+        ============================================================ */
+        .info-content {
+            max-height: 60vh;
+            overflow-y: auto;
+            padding: 0.5rem;
         }
 
-        /* moviles */
+        .info-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .info-section h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .info-item {
+            margin-bottom: 0.75rem;
+            padding-left: 0.5rem;
+        }
+
+        .info-item strong {
+            font-size: 0.95rem;
+            color: var(--text-main);
+        }
+
+        .info-content em {
+            color: var(--c-blue);
+            font-style: normal;
+        }
+
+        /* ============================================================
+           MEDIA QUERIES
+        ============================================================ */
         @media (max-width: 767px) {
             .servicios-lista {
                 min-height: 400px;
+                max-height: 5000px;
+            }
+
+            .collapsible-content {
                 max-height: 5000px;
             }
 
@@ -1543,11 +1519,6 @@
                 bottom: 12rem;
                 right: 2rem;
             }
-
-            .collapsible-content {
-                max-height: 5000px;
-            }
-
         }
 
         @media (min-width: 768px) {
@@ -1575,10 +1546,7 @@
             .card {
                 padding: 1.5rem 1rem;
             }
-
         }
-
-        /* --- codigo css --- */
     </style>
     <script>
         // Aplicar estado de tarjetas colapsables
@@ -1889,7 +1857,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">Lushibosca 0.73</div> <!-- DeltaF -->
+            <div class="menu-version">Lushibosca 0.74</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -6966,7 +6934,7 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA DeltaF VERSION 0.73
+    //                 NOTAS SISTEMA DeltaF VERSION 0.74
     // ====================================================================
     
      - CAMBIOS
