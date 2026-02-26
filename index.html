@@ -302,9 +302,9 @@
         }
 
         .servicio-nombre {
-            font-size: 1.1rem;
             font-weight: 600;
-            padding-bottom: 0.5rem;
+            margin-bottom: 0.25rem;
+            color: var(--text-main);
         }
 
         .servicio-info {
@@ -1518,8 +1518,7 @@
         }
 
         .categoria-tag-del:active {
-            color: var(--c-red);
-            transform: scale(0.9);
+            color: var(--text-main);
         }
 
         #ingresos-indicator {
@@ -3833,7 +3832,7 @@
 
                 const resumenHTML = `
         <div class="resumen-monto" id="resumen-toggle" style="${animacion}">
-            <div class="resumen-titulo">Resumen de Servicios</div>
+            <div class="resumen-titulo">Resumen de Deuda</div>
             ${(hayARS && hayUSD) ? valorMostrar : `<div class="resumen-valor">${valorMostrar}</div>`}
             <div class="resumen-footer">
                 <div class="resumen-label">Pendiente de pago</div>
