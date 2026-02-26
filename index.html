@@ -278,7 +278,7 @@
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
-            max-height: 850px;
+            max-height: 700px;
             opacity: 1;
             overflow-y: auto;
             overflow-x: hidden;
@@ -290,7 +290,7 @@
             background: var(--input-bg);
             border: 1px solid var(--border);
             border-radius: var(--radius);
-            padding: 1rem 0.5rem;
+            padding: 1rem;
             cursor: pointer;
             transition: all 0.2s;
             position: relative;
@@ -1578,6 +1578,10 @@
                 padding-right: 8px;
             }
 
+            .card {
+                padding: 1.5rem 1rem;
+            }
+
         }
 
         /* --- codigo css --- */
@@ -2767,7 +2771,11 @@
                 this.origenModalFactura = null; // 'menu' o 'servicio'
                 this._anoExpandidoFacturas = {};
                 this._anoExpandidoIngresos = {};
-                this._catColapsadas = {};
+                try {
+                    this._catColapsadas = JSON.parse(localStorage.getItem('cat-colapsadas') || '{}');
+                } catch (e) {
+                    this._catColapsadas = {};
+                }
 
                 // Modo calculadora - NUEVO
                 this.modoCalculadora = false;
@@ -5198,6 +5206,7 @@
                     contenido.classList.add('collapsed');
                     this._catColapsadas[cat] = true;
                 }
+                localStorage.setItem('cat-colapsadas', JSON.stringify(this._catColapsadas));
             }
 
             toggleGrupoAno(headerElement) {
