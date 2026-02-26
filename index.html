@@ -1857,7 +1857,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">Lushibosca 0.74</div> <!-- DeltaF -->
+            <div class="menu-version">Lushibosca 0.75</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -2173,6 +2173,14 @@
             </div>
             <div id="categorias-lista"
                 style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; min-height: 2rem;"></div>
+            <div style="margin-bottom: 1rem;">
+                <button type="button" id="btn-toggle-agrupacion" class="icon-btn" style="width:100%; height:auto; padding:0.75rem 1rem; border-radius:var(--radius);" onclick="app.toggleAgrupacionCategorias()">
+                    <svg class="icon icon-line" viewBox="0 0 24 24">
+                        <use href="#icon-categorias" />
+                    </svg>
+                    <span id="btn-toggle-agrupacion-texto">Agrupar por categorías: ON</span>
+                </button>
+            </div>
             <div class="form-actions2">
                 <button type="button" onclick="app.cerrarModalCategorias()">
                     <svg class="icon">
@@ -2742,6 +2750,7 @@
                 } catch (e) {
                     this._catColapsadas = {};
                 }
+                this._agrupacionActiva = localStorage.getItem('cat-agrupacion') !== 'off';
 
                 // Modo calculadora - NUEVO
                 this.modoCalculadora = false;
@@ -4826,7 +4835,7 @@
                 let html = '';
 
                 // Si solo hay una categoría (o ninguna), no mostrar encabezado de grupo
-                if (catKeys.length <= 1) {
+                if (catKeys.length <= 1 || !this._agrupacionActiva) {
                     html = serviciosOrdenados.map(generarItemServicio).join('');
                 } else {
                     catKeys.forEach(cat => {
@@ -5334,6 +5343,7 @@
                 if (this._modalServicioOrigen) this.cerrarModal(this._modalServicioOrigen);
                 document.getElementById('nueva-categoria-nombre').value = '';
                 this._renderCategorias();
+                this._actualizarBtnAgrupacion();
                 this.abrirModal('modal-nueva-categoria');
             }
 
@@ -5342,6 +5352,28 @@
                 if (this._modalServicioOrigen) {
                     this.abrirModal(this._modalServicioOrigen);
                     this._modalServicioOrigen = null;
+                }
+            }
+
+            toggleAgrupacionCategorias() {
+                this._agrupacionActiva = !this._agrupacionActiva;
+                localStorage.setItem('cat-agrupacion', this._agrupacionActiva ? 'on' : 'off');
+                this._actualizarBtnAgrupacion();
+                this.renderServicios();
+            }
+
+            _actualizarBtnAgrupacion() {
+                const btn = document.getElementById('btn-toggle-agrupacion');
+                const texto = document.getElementById('btn-toggle-agrupacion-texto');
+                if (!btn || !texto) return;
+                if (this._agrupacionActiva) {
+                    texto.textContent = 'Agrupar por categorías: SI';
+                    btn.style.borderColor = 'var(--c-green)';
+                    btn.style.color = 'var(--c-green)';
+                } else {
+                    texto.textContent = 'Agrupar por categorías: NO';
+                    btn.style.borderColor = '';
+                    btn.style.color = '';
                 }
             }
 
@@ -6934,7 +6966,7 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA DeltaF VERSION 0.74
+    //                 NOTAS SISTEMA DeltaF VERSION 0.75
     // ====================================================================
     
      - CAMBIOS
