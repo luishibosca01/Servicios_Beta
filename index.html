@@ -873,12 +873,6 @@
 
         }
 
-        .resumen-valor {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--text-main);
-        }
-
         .resumen-label {
             color: var(--text-muted);
             margin-top: 1rem;
@@ -890,7 +884,7 @@
             text-align: center;
             cursor: pointer;
             transition: opacity 0.3s;
-            min-height: 13.5rem;
+            min-height: 12rem;
             display: flex;
             flex-direction: column;
         }
@@ -930,11 +924,9 @@
         }
 
         /* Bordes dinámicos para la CARD padre (no para resumen-monto) */
+ 
+        .card.borde-urgente,
         .card.borde-vencido {
-            border-left: 4px solid var(--c-red);
-        }
-
-        .card.borde-urgente {
             border-left: 4px solid var(--c-red);
         }
 
@@ -951,15 +943,14 @@
         }
 
         .resumen-titulo {
-            font-size: 1.5rem;
             font-weight: 500;
             color: var(--text-main);
             text-align: left;
         }
 
         .resumen-monto .resumen-valor {
-            font-size: 2.5rem;
-            font-weight: 700;
+            font-size: 1.8rem;
+            font-weight: 600;
             color: var(--text-main);
             text-align: left;
         }
@@ -976,14 +967,7 @@
         }
 
         .resumen-monto .resumen-label {
-            color: var(--text-muted);
             text-align: left;
-        }
-
-        /* --- Estilos para colapso de facturas --- */
-        .servicio-item {
-            cursor: pointer;
-            transition: all 0.3s;
         }
 
         /* Estadísticas Unificadas */
@@ -1186,7 +1170,9 @@
 
         /* Cuando está completamente colapsado */
         #servicios-content.collapsed .servicios-actions,
-        #servicios-content.collapsed .servicios-lista {
+        #servicios-content.collapsed .servicios-lista,
+        #servicios-content.collapsed .search-container,
+        #servicios-content.semi-collapsed .search-container {
             max-height: 0;
             opacity: 0;
             margin: 0;
@@ -1202,20 +1188,6 @@
             overflow: visible;
             transition: all 0.3s;
             background: var(--bg-card);
-        }
-
-        #servicios-content.semi-collapsed .search-container {
-            max-height: 0;
-            opacity: 0;
-            margin-bottom: 0;
-            overflow: hidden;
-        }
-
-        #servicios-content.collapsed .search-container {
-            max-height: 0;
-            opacity: 0;
-            margin-bottom: 0;
-            overflow: hidden;
         }
 
         .search-input {
@@ -1284,9 +1256,6 @@
         }
 
         /* --- Grupos de Facturas por Año --- */
-        .facturas-grupo-ano {
-            margin-bottom: none;
-        }
 
         .facturas-grupo-header {
             display: flex;
@@ -1470,8 +1439,8 @@
 
         /* Tarjeta resumen: monto USD como segunda línea, mismo tamaño */
         .resumen-valor-usd {
-            font-size: 2.5rem;
-            font-weight: 700;
+            font-size: 1.8rem;
+            font-weight: 600;
             color: var(--text-main);
             text-align: left;
         }
@@ -1867,7 +1836,6 @@
                     <span>Combinar</span>
                 </div>
             </div>
-
             <div class="menu-item menu-item-parent" id="menu-limpiar">
                 <svg class="icon">
                     <use href="#icon-trash" />
@@ -1914,7 +1882,6 @@
                 <span>Información</span>
             </div>
         </div>
-
         <div class="menu-footer">
             <button class="btn-cerrar-menu" id="btn-cerrar-menu">
                 <svg class="icon">
@@ -1922,7 +1889,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">Version 0.73</div> <!-- DeltaF -->
+            <div class="menu-version">Lushibosca 0.73</div> <!-- DeltaF -->
         </div>
     </div>
 
