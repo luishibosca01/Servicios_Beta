@@ -938,7 +938,7 @@
             flex-direction: column;
             border-radius: var(--radius);
             cursor: pointer;
-            min-height: 12rem;
+            min-height: 11rem;
             transition: opacity var(--transition-base);
         }
 
@@ -954,11 +954,11 @@
             font-weight: 500;
             color: var(--text-main);
             text-align: left;
+            margin-bottom: 0.5rem
         }
 
         .resumen-label {
             color: var(--text-muted);
-            margin-top: 1rem;
         }
 
         .resumen-monto .resumen-label {
@@ -972,7 +972,7 @@
         .resumen-fecha {
             font-size: 0.875rem;
             color: var(--text-muted);
-            margin-top: 1rem;
+            margin-top: 0.5rem;
             text-align: right;
         }
 
@@ -981,12 +981,12 @@
             height: 5px;
             border-radius: 10px;
             overflow: hidden;
-            margin: 1rem 0;
+            margin: 0.25rem 0;
         }
 
         .resumen-progreso-barra {
             height: 100%;
-            border-radius: 10px;
+            border-radius: var(--radius);
             background: var(--bg-card);
             transition: width var(--transition-base) ease, background var(--transition-base) ease;
         }
@@ -1735,6 +1735,15 @@
         <symbol id="icon-estadisticas" viewBox="0 0 24 24">
             <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z" />
             <path d="M7 12h2v5H7zm4-3h2v8h-2zm4-3h2v11h-2z" />
+        </symbol>
+        <symbol id="icon-deuda" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" class="icon-line" stroke="currentColor" stroke-width="2" fill="none"></circle>
+            <line x1="12" y1="8" x2="12" y2="12" class="icon-line" stroke="currentColor" stroke-width="2" stroke-linecap="round"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16" class="icon-line" stroke="currentColor" stroke-width="2" stroke-linecap="round"></line>
+        </symbol>
+        <symbol id="icon-pagado" viewBox="0 0 24 24">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" class="icon-line" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"></path>
+            <polyline points="22 4 12 14.01 9 11.01" class="icon-line" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"></polyline>
         </symbol>
     </svg>
 
@@ -3802,13 +3811,13 @@
 
                 const resumenHTML = `
         <div class="resumen-monto" id="resumen-toggle" style="${animacion}">
-            <div class="resumen-titulo">Resumen de Deuda</div>
+            <div class="resumen-titulo"><svg class="icon"><use href="#icon-deuda" /></svg> Resumen de Deuda</div>
             ${(hayARS && hayUSD) ? valorMostrar : `<div class="resumen-valor">${valorMostrar}</div>`}
-            <div class="resumen-footer">
-                <div class="resumen-label">Pendiente de pago</div>
+            <div class="resumen-footer">                
                 <div class="resumen-progreso">
                     <div class="resumen-progreso-barra" style="width: ${porcentajePagado}%"></div>
                 </div>
+                <div class="resumen-label">Pendiente de pago</div>
                 <div class="resumen-fecha">${fechaFormateada}</div>
             </div>
         </div>
@@ -3865,13 +3874,13 @@
 
                 const resumenHTML = `
         <div class="resumen-monto" id="resumen-toggle" style="${animacion}">
-            <div class="resumen-titulo">Resumen de Pagos</div>
+            <div class="resumen-titulo"><svg class="icon"><use href="#icon-pagado" /></svg> Resumen de Pagos</div>
             ${(hayARS && hayUSD) ? valorMostrar : `<div class="resumen-valor">${valorMostrar}</div>`}
-            <div class="resumen-footer">
-                <div class="resumen-label">Pagado este mes</div>
+            <div class="resumen-footer">                
                 <div class="resumen-progreso">
                     <div class="resumen-progreso-barra" style="width: ${porcentajePagado}%"></div>
                 </div>
+                <div class="resumen-label">Pagado este mes</div>
                 <div class="resumen-fecha">${fechaFormateada}</div>
             </div>
         </div>
