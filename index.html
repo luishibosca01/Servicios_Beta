@@ -269,7 +269,7 @@
             font-size: 0.72rem;
             font-weight: 800;
             letter-spacing: 0.04em;
-            transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+            transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
         }
 
         .icon-btn svg {
@@ -284,7 +284,7 @@
 
         .icon-btn:active,
         .search-clear:active {
-            transform: scale(0.95);
+            transform: scale(0.98);
         }
 
         .icon-btn.pagada {
@@ -692,7 +692,7 @@
         }
 
         .servicios-grupo-cat-header {
-            margin: 0.5rem 0 0.25rem;
+            margin: 0.5rem 0 0.5rem;
             padding-left: 1rem;
         }
 
@@ -721,14 +721,6 @@
         .servicios-grupo-cat-contador {
             font-size: 0.85rem;
             color: var(--text-muted);
-        }
-
-        .facturas-grupo-contador {
-            padding: 0.25rem 0.5rem;
-        }
-
-        .servicios-grupo-cat {
-            margin-bottom: 0.25rem;
         }
 
         /* ============================================================
@@ -1857,7 +1849,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">Lushibosca 0.75</div> <!-- DeltaF -->
+            <div class="menu-version">Lushibosca 0.74</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -2160,9 +2152,9 @@
                 <h3>Categorías</h3>
             </div>
             <div class="form-group">
-                <label for="nueva-categoria-nombre">Nombre de categoría</label>
+                <label for="nueva-categoria-nombre">Agregar nueva categoría</label>
                 <div style="display: flex; gap: 0.5rem;">
-                    <input type="text" id="nueva-categoria-nombre" placeholder="Ej: Hogar, Streaming, Salud"
+                    <input type="text" id="nueva-categoria-nombre" placeholder="Ej: impuestos, Hogar, Credito"
                         maxlength="30" style="flex:1;">
                     <button type="button" class="icon-btn" onclick="app.guardarNuevaCategoria()" title="Agregar">
                         <svg class="icon">
@@ -2174,7 +2166,9 @@
             <div id="categorias-lista"
                 style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; min-height: 2rem;"></div>
             <div style="margin-bottom: 1rem;">
-                <button type="button" id="btn-toggle-agrupacion" class="icon-btn" style="width:100%; height:auto; padding:0.75rem 1rem; border-radius:var(--radius);" onclick="app.toggleAgrupacionCategorias()">
+                <button type="button" id="btn-toggle-agrupacion" class="icon-btn"
+                    style="width:100%; height:auto; padding:0.75rem 1rem; border-radius:var(--radius);"
+                    onclick="app.toggleAgrupacionCategorias()">
                     <svg class="icon icon-line" viewBox="0 0 24 24">
                         <use href="#icon-categorias" />
                     </svg>
@@ -4846,7 +4840,8 @@
                         const itemsHTML = items.map(generarItemServicio).join('');
                         html += `
         <div class="servicios-grupo-cat" data-cat="${this.escaparAtributoHTML(cat)}">
-            <div class="servicios-grupo-cat-header" onclick="app.toggleGrupoCat(this)">
+            <div class="servicios-grupo-cat-header" onclick="app.toggleGrupoCat(this)"
+                onpointerdown="app._lpStart(event,this)" onpointerup="app._lpCancel()" onpointerleave="app._lpCancel()" oncontextmenu="event.preventDefault()">
                 <div class="servicios-grupo-cat-header-info">
                     <span class="servicios-grupo-cat-texto">${this.escaparHTML(catLabel)}</span>
                     <span class="servicios-grupo-cat-contador">${cantidad} ${cantidad !== 1 ? 'servicios' : 'servicio'}</span>
@@ -5167,6 +5162,7 @@
             }
 
             toggleGrupoCat(headerElement) {
+                if (this._lpFired) { this._lpFired = false; return; }
                 const chevron = headerElement.querySelector('.servicios-grupo-cat-chevron');
                 const contenido = headerElement.nextElementSibling;
                 const cat = headerElement.closest('.servicios-grupo-cat')?.dataset.cat ?? '';
@@ -5182,6 +5178,45 @@
                     this._catColapsadas[cat] = true;
                 }
                 localStorage.setItem('cat-colapsadas', JSON.stringify(this._catColapsadas));
+            }
+
+            _lpStart(event, headerElement) {
+                this._lpTimer = setTimeout(() => {
+                    this._lpFired = true;
+                    this.toggleTodosGruposCat(headerElement);
+                }, 500);
+                this._lpFired = false;
+            }
+
+            _lpCancel() {
+                clearTimeout(this._lpTimer);
+            }
+
+            toggleTodosGruposCat(headerElement) {
+                // Determinar estado del grupo tocado
+                const chevronTocado = headerElement.querySelector('.servicios-grupo-cat-chevron');
+                const estaColapsado = chevronTocado.classList.contains('collapsed');
+
+                // Seleccionar todos los grupos visibles
+                const todosHeaders = document.querySelectorAll('.servicios-grupo-cat-header');
+                todosHeaders.forEach(header => {
+                    const chevron = header.querySelector('.servicios-grupo-cat-chevron');
+                    const contenido = header.nextElementSibling;
+                    const cat = header.closest('.servicios-grupo-cat')?.dataset.cat ?? '';
+                    if (estaColapsado) {
+                        // Expandir todos
+                        chevron.classList.remove('collapsed');
+                        contenido.classList.remove('collapsed');
+                        delete this._catColapsadas[cat];
+                    } else {
+                        // Colapsar todos
+                        chevron.classList.add('collapsed');
+                        contenido.classList.add('collapsed');
+                        this._catColapsadas[cat] = true;
+                    }
+                });
+                localStorage.setItem('cat-colapsadas', JSON.stringify(this._catColapsadas));
+                this.mostrarToast(estaColapsado ? 'Categorías expandidas' : 'Categorías colapsadas', 'info');
             }
 
             toggleGrupoAno(headerElement) {
@@ -5368,12 +5403,10 @@
                 if (!btn || !texto) return;
                 if (this._agrupacionActiva) {
                     texto.textContent = 'Agrupar por categorías: SI';
-                    btn.style.borderColor = 'var(--c-green)';
-                    btn.style.color = 'var(--c-green)';
+                    btn.classList.add('pagada');
                 } else {
                     texto.textContent = 'Agrupar por categorías: NO';
-                    btn.style.borderColor = '';
-                    btn.style.color = '';
+                    btn.classList.remove('pagada');
                 }
             }
 
@@ -6966,11 +6999,11 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA DeltaF VERSION 0.75
+    //                 NOTAS SISTEMA DeltaF VERSION 0.74
     // ====================================================================
     
      - CAMBIOS
-     1) Se agrega agrupacion por categorias en la tarjeta de servicios.
+     1)
 
 
      - BUGS CONOCIDOS:
