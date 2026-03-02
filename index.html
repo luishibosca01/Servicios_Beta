@@ -5141,89 +5141,68 @@
                 return [...servicios].sort((a, b) => {
                     switch (this.ordenActual) {
                         case 'nombre':
-                            // Alfabético A-Z
                             return a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' });
 
                         case 'vencimiento':
-                            // Por fecha de vencimiento más próxima con sub-ordenamiento mejorado
                             const facturaA = this.obtenerUltimaFactura(a.id);
                             const facturaB = this.obtenerUltimaFactura(b.id);
 
-                            // Determinar si tienen facturas en general
                             const tieneFacturasA = a.facturas && a.facturas.length > 0;
                             const tieneFacturasB = b.facturas && b.facturas.length > 0;
 
-                            // PRIORIDAD 1: Servicios SIN FACTURAS NUNCA van al final absoluto
-                            if (!tieneFacturasA && !tieneFacturasB) {
-                                // Ambos sin facturas nunca → orden alfabético
-                                return a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' });
-                            }
-                            if (!tieneFacturasA) return 1;  // A sin facturas nunca → va al final
-                            if (!tieneFacturasB) return -1; // B sin facturas nunca → va al final
+                            // PRIORIDAD 1: Sin facturas nunca → final absoluto
+                            if (!tieneFacturasA && !tieneFacturasB) return a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' });
+                            if (!tieneFacturasA) return 1;
+                            if (!tieneFacturasB) return -1;
 
-                            // PRIORIDAD 2: Servicios SIN FACTURAS ESTE MES (pero tienen facturas en otros meses)
-                            // En este punto sabemos que ambos tienen facturas en algún momento
-                            if (!facturaA && !facturaB) {
-                                // Ambos sin facturas este mes → ordenar por fecha de última factura disponible
-                                const ultimaFacturaGeneralA = [...a.facturas].sort((x, y) =>
-                                    new Date(y.fecha) - new Date(x.fecha)
-                                )[0];
-                                const ultimaFacturaGeneralB = [...b.facturas].sort((x, y) =>
-                                    new Date(y.fecha) - new Date(x.fecha)
-                                )[0];
+                            // Calcular estados para los que sí tienen facturas
+                            const fechaA = facturaA ? new Date(facturaA.fecha + 'T00:00:00') : null;
+                            const fechaB = facturaB ? new Date(facturaB.fecha + 'T00:00:00') : null;
+                            if (fechaA) fechaA.setHours(0, 0, 0, 0);
+                            if (fechaB) fechaB.setHours(0, 0, 0, 0);
 
-                                const fechaUltimaA = new Date(ultimaFacturaGeneralA.fecha + 'T00:00:00');
-                                const fechaUltimaB = new Date(ultimaFacturaGeneralB.fecha + 'T00:00:00');
+                            const vencidaA = facturaA && !facturaA.pagada && fechaA < hoy;
+                            const vencidaB = facturaB && !facturaB.pagada && fechaB < hoy;
+                            const pendienteA = facturaA && !facturaA.pagada && !vencidaA;
+                            const pendienteB = facturaB && !facturaB.pagada && !vencidaB;
+                            const pagadaA = facturaA && facturaA.pagada;
+                            const pagadaB = facturaB && facturaB.pagada;
+                            const sinMesA = !facturaA;
+                            const sinMesB = !facturaB;
+                            const anualVigenteA = sinMesA && a.facturas.some(f => f.tipo === 'anual' && f.pagada && new Date(f.fecha + 'T00:00:00').getFullYear() === hoy.getFullYear());
+                            const anualVigenteB = sinMesB && b.facturas.some(f => f.tipo === 'anual' && f.pagada && new Date(f.fecha + 'T00:00:00').getFullYear() === hoy.getFullYear());
 
-                                // Ordenar por fecha de última factura (más reciente primero)
-                                return fechaUltimaB - fechaUltimaA;
-                            }
-                            if (!facturaA) return 1;  // A sin facturas este mes → va después de las que sí tienen
-                            if (!facturaB) return -1; // B sin facturas este mes → va después de las que sí tienen
+                            // PRIORIDAD 2: VENCIDAS primero
+                            if (vencidaA && !vencidaB) return -1;
+                            if (!vencidaA && vencidaB) return 1;
+                            if (vencidaA && vencidaB) return fechaA - fechaB;
 
-                            // En este punto, ambos tienen facturas del mes actual
-                            // Calcular fechas de vencimiento
-                            const fechaA = new Date(facturaA.fecha + 'T00:00:00');
-                            fechaA.setHours(0, 0, 0, 0);
-                            const fechaB = new Date(facturaB.fecha + 'T00:00:00');
-                            fechaB.setHours(0, 0, 0, 0);
+                            // PRIORIDAD 3: PENDIENTES
+                            if (pendienteA && !pendienteB) return -1;
+                            if (!pendienteA && pendienteB) return 1;
+                            if (pendienteA && pendienteB) return fechaA - fechaB;
 
-                            // Calcular si están vencidas
-                            const vencidaA = !facturaA.pagada && fechaA < hoy;
-                            const vencidaB = !facturaB.pagada && fechaB < hoy;
+                            // PRIORIDAD 4: SIN FACTURAS ESTE MES (excluye anuales vigentes que van con pagados)
+                            const sinMesRealA = sinMesA && !anualVigenteA;
+                            const sinMesRealB = sinMesB && !anualVigenteB;
 
-                            // PRIORIDAD 3: VENCIDAS (pendientes con fecha pasada)
-                            if (vencidaA && !vencidaB) return -1; // A vencida → va primero
-                            if (!vencidaA && vencidaB) return 1;  // B vencida → va primero
-                            if (vencidaA && vencidaB) {
-                                // Ambas vencidas → más antigua primero
-                                return fechaA - fechaB;
+                            if (sinMesRealA && !sinMesRealB) return -1;
+                            if (!sinMesRealA && sinMesRealB) return 1;
+                            if (sinMesRealA && sinMesRealB) {
+                                const ultimaA = [...a.facturas].sort((x, y) => new Date(y.fecha) - new Date(x.fecha))[0];
+                                const ultimaB = [...b.facturas].sort((x, y) => new Date(y.fecha) - new Date(x.fecha))[0];
+                                return new Date(ultimaB.fecha) - new Date(ultimaA.fecha);
                             }
 
-                            // PRIORIDAD 4: PENDIENTES (no pagadas, no vencidas)
-                            const pendienteA = !facturaA.pagada && !vencidaA;
-                            const pendienteB = !facturaB.pagada && !vencidaB;
-
-                            if (pendienteA && !pendienteB) return -1; // A pendiente → va primero
-                            if (!pendienteA && pendienteB) return 1;  // B pendiente → va primero
-                            if (pendienteA && pendienteB) {
-                                // Ambas pendientes → ordenar por fecha de vencimiento
-                                return fechaA - fechaB;
-                            }
-
-                            // PRIORIDAD 5: PAGADAS
-                            // En este punto, ambas están pagadas del mes actual
-                            // Ordenar por fecha de VENCIMIENTO (mantiene consistencia con el criterio)
+                            // PRIORIDAD 5: PAGADAS (incluye anuales vigentes)
                             return fechaA - fechaB;
 
                         case 'monto-desc':
-                            // Por monto de mayor a menor
                             const montoA = this.obtenerUltimaFactura(a.id)?.monto || 0;
                             const montoB = this.obtenerUltimaFactura(b.id)?.monto || 0;
                             return montoB - montoA;
 
                         case 'monto-asc':
-                            // Por monto de menor a mayor
                             const montoAsc_A = this.obtenerUltimaFactura(a.id)?.monto || 0;
                             const montoAsc_B = this.obtenerUltimaFactura(b.id)?.monto || 0;
                             return montoAsc_A - montoAsc_B;
