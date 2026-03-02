@@ -4811,6 +4811,25 @@
                 const ultimaFactura = this.obtenerUltimaFactura(servicio.id);
                 let estado = '', claseEstado = '', montoTexto = '-', fechaTexto = '';
 
+                // Lógica especial para el servicio de ingresos
+                if (servicio.id === this.SERVICIO_INGRESOS_ID && ultimaFactura) {
+                    const moneda = ultimaFactura.moneda || 'ars';
+                    montoTexto = this.formatearMoneda(ultimaFactura.monto, moneda);
+                    fechaTexto = this.formatearFecha(ultimaFactura.fecha);
+                    const hoy = new Date();
+                    hoy.setHours(0, 0, 0, 0);
+                    const fechaCobro = new Date(ultimaFactura.fecha + 'T00:00:00');
+                    fechaCobro.setHours(0, 0, 0, 0);
+                    if (fechaCobro <= hoy) {
+                        estado = 'Cobrado';
+                        claseEstado = 'pagado';
+                    } else {
+                        estado = 'Esperado';
+                        claseEstado = 'lejano';
+                    }
+                    return { estado, claseEstado, montoTexto, fechaTexto };
+                }
+
                 if (ultimaFactura) {
                     const moneda = ultimaFactura.moneda || 'ars';
                     montoTexto = this.formatearMoneda(ultimaFactura.monto, moneda);
