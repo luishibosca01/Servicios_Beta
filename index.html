@@ -970,7 +970,7 @@
             flex-direction: column;
             border-radius: var(--radius);
             cursor: pointer;
-            min-height: 11rem;
+            min-height: 10rem;
             transition: opacity var(--transition-base);
         }
 
@@ -1543,6 +1543,7 @@
                 bottom: 12rem;
                 right: 2rem;
             }
+
         }
 
         @media (min-width: 768px) {
@@ -1574,6 +1575,7 @@
             .container {
                 padding: 1.5rem;
             }
+
         }
     </style>
     <script>
@@ -4824,7 +4826,7 @@
                         estado = 'Cobrado';
                         claseEstado = 'pagado';
                     } else {
-                        estado = 'Esperado';
+                        estado = 'A liquidar';
                         claseEstado = 'lejano';
                     }
                     return { estado, claseEstado, montoTexto, fechaTexto };
