@@ -1638,6 +1638,11 @@
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" class="icon-line" stroke-width="2"
                 stroke="currentColor" fill="none"></path>
         </symbol>
+        <symbol id="icon-clock" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2" />
+            <polyline points="12 7 12 12 15 15" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" />
+        </symbol>
         <symbol id="icon-info" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none" />
             <line x1="12" y1="16" x2="12" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
@@ -1901,7 +1906,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">Lushibosca 0.78</div> <!-- DeltaF -->
+            <div class="menu-version">Lushibosca 0.79</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -2070,29 +2075,54 @@
     <div class="menu-agregar-overlay" id="menu-agregar-overlay"></div>
     <!-- Menú Emergente Agregar -->
     <div class="menu-agregar" id="menu-agregar">
-        <div class="menu-item" id="menu-agregar-servicio">
-            <svg class="icon">
-                <use href="#icon-briefcase" />
-            </svg>
-            <span>Nuevo servicio</span>
+        <!-- Vista principal -->
+        <div id="menu-vista-principal">
+            <div class="menu-item" id="menu-agregar-servicio">
+                <svg class="icon">
+                    <use href="#icon-briefcase" />
+                </svg>
+                <span>Nuevo servicio</span>
+            </div>
+            <div class="menu-item" id="menu-agregar-factura">
+                <svg class="icon">
+                    <use href="#icon-card" />
+                </svg>
+                <span>Nueva factura</span>
+            </div>
+            <div class="menu-item" id="menu-agregar-recibo">
+                <svg class="icon">
+                    <use href="#icon-dollar" />
+                </svg>
+                <span>Nuevo ingreso</span>
+            </div>
+            <div class="menu-item" id="menu-agregar-calcular">
+                <svg class="icon">
+                    <use href="#icon-stats" />
+                </svg>
+                <span>Calcular</span>
+            </div>
         </div>
-        <div class="menu-item" id="menu-agregar-factura">
-            <svg class="icon">
-                <use href="#icon-card" />
-            </svg>
-            <span>Nueva factura</span>
-        </div>
-        <div class="menu-item" id="menu-agregar-recibo">
-            <svg class="icon">
-                <use href="#icon-dollar" />
-            </svg>
-            <span>Nuevo ingreso</span>
-        </div>
-        <div class="menu-item" id="menu-agregar-calcular">
-            <svg class="icon">
-                <use href="#icon-stats" />
-            </svg>
-            <span>Calcular</span>
+        <!-- Vista calcular -->
+        <div id="menu-vista-calcular" style="display:none;">
+            <div class="menu-item" id="menu-calcular-volver">
+                <svg class="icon">
+                    <use href="#icon-undo" />
+                </svg>
+                <span>Volver</span>
+            </div>
+            <div class="menu-item" id="menu-calcular-pagados">
+                <svg class="icon">
+                    <use href="#icon-pagado" />
+                </svg>
+                <span>Pagados</span>
+            </div>
+            <div class="menu-item" id="menu-calcular-pendientes">
+                <svg class="icon">
+                    <use href="#icon-clock" />
+                </svg>
+                <span>Pendientes</span>
+            </div>
+
         </div>
     </div>
 
@@ -2827,6 +2857,7 @@
                 this.filtroEstado = '';
                 // Modo calculadora - NUEVO
                 this.modoCalculadora = false;
+                this.modoCalculadoraTipo = 'pendientes';
                 this.serviciosSeleccionados = new Set();
                 this.servicioContextual = null;
 
@@ -3297,6 +3328,7 @@
 
             desactivarModoCalculadora() {
                 this.modoCalculadora = false;
+                this.modoCalculadoraTipo = 'pendientes';
                 this.serviciosSeleccionados.clear();
 
                 // Restaurar apariencia del botón add
@@ -3350,30 +3382,33 @@
                     const servicio = this.servicios.find(s => s.id === servicioId);
                     if (!servicio) return;
 
-                    // Calcular solo facturas pendientes del mes actual o siguiente
                     servicio.facturas.forEach(factura => {
-                        if (!factura.pagada && factura.monto > 0 && !factura.conCredito) {
-                            // Obtener mes y año de la factura
+                        /* if (factura.monto > 0 && !factura.conCredito) { 
+                        NO CONTAR FACTURAS CON CREDITO COMENTADO */
+                        if (factura.monto > 0) {
                             const fechaFactura = new Date(factura.fecha + 'T00:00:00');
                             const mesFactura = fechaFactura.getMonth();
                             const anioFactura = fechaFactura.getFullYear();
-
-                            // Verificar si es del mes actual, anterior o siguiente
-                            const mesPasado = mesActual === 0 ? 11 : mesActual - 1;
-                            const anioPasado = mesActual === 0 ? anioActual - 1 : anioActual;
-
                             const esMesActual = (mesFactura === mesActual && anioFactura === anioActual);
-                            const esMesSiguiente = (mesFactura === mesSiguiente && anioFactura === anioSiguiente);
-                            const esMesPasado = (mesFactura === mesPasado && anioFactura === anioPasado);
 
-                            if (esMesActual || esMesSiguiente || esMesPasado) {
-                                if ((factura.moneda || 'ars') === 'usd') {
-                                    totalUSD += factura.monto;
-                                } else {
-                                    totalARS += factura.monto;
-                                }
-                                contadorFacturas++;
+                            if (this.modoCalculadoraTipo === 'pendientes') {
+                                if (factura.pagada) return;
+                                const mesPasado = mesActual === 0 ? 11 : mesActual - 1;
+                                const anioPasado = mesActual === 0 ? anioActual - 1 : anioActual;
+                                const esMesSiguiente = (mesFactura === mesSiguiente && anioFactura === anioSiguiente);
+                                const esMesPasado = (mesFactura === mesPasado && anioFactura === anioPasado);
+                                if (!esMesActual && !esMesSiguiente && !esMesPasado) return;
+                            } else if (this.modoCalculadoraTipo === 'pagados') {
+                                if (!factura.pagada) return;
+                                if (!esMesActual) return; // Solo mes en curso
                             }
+
+                            if ((factura.moneda || 'ars') === 'usd') {
+                                totalUSD += factura.monto;
+                            } else {
+                                totalARS += factura.monto;
+                            }
+                            contadorFacturas++;
                         }
                     });
                 });
@@ -3511,6 +3546,27 @@
                     this.abrirModalIngreso(null, true);
                 });
                 document.getElementById('menu-agregar-calcular').addEventListener('click', () => {
+                    document.getElementById('menu-vista-principal').style.display = 'none';
+                    const vistaCalc = document.getElementById('menu-vista-calcular');
+                    vistaCalc.style.display = 'block';
+                    vistaCalc.style.animation = 'slideUp 0.2s ease';
+                });
+
+                document.getElementById('menu-calcular-volver').addEventListener('click', () => {
+                    document.getElementById('menu-vista-calcular').style.display = 'none';
+                    const vistaPrincipal = document.getElementById('menu-vista-principal');
+                    vistaPrincipal.style.display = 'block';
+                    vistaPrincipal.style.animation = 'slideUp 0.2s ease';
+                });
+
+                document.getElementById('menu-calcular-pendientes').addEventListener('click', () => {
+                    this.modoCalculadoraTipo = 'pendientes';
+                    this.cerrarMenuAgregar();
+                    this.activarModoCalculadora();
+                });
+
+                document.getElementById('menu-calcular-pagados').addEventListener('click', () => {
+                    this.modoCalculadoraTipo = 'pagados';
                     this.cerrarMenuAgregar();
                     this.activarModoCalculadora();
                 });
@@ -4826,7 +4882,7 @@
                         estado = 'Cobrado';
                         claseEstado = 'pagado';
                     } else {
-                        estado = 'A liquidar';
+                        estado = 'Liquidado';
                         claseEstado = 'lejano';
                     }
                     return { estado, claseEstado, montoTexto, fechaTexto };
@@ -6815,7 +6871,12 @@
                 const overlay = document.getElementById('menu-agregar-overlay');
                 menu.classList.remove('active');
                 overlay.classList.remove('active');
-                document.body.classList.remove('modal-open'); // Desbloquear scroll
+                document.body.classList.remove('modal-open');
+                // Resetear a vista principal
+                const vistaPrincipal = document.getElementById('menu-vista-principal');
+                const vistaCalcular = document.getElementById('menu-vista-calcular');
+                if (vistaPrincipal) vistaPrincipal.style.display = 'block';
+                if (vistaCalcular) vistaCalcular.style.display = 'none';
             }
 
             actualizarMenuAgregar() {
@@ -7170,7 +7231,7 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA DeltaF VERSION 0.78
+    //                 NOTAS SISTEMA DeltaF VERSION 0.79
     // ====================================================================
     
      - CAMBIOS
