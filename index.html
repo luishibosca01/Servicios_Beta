@@ -1899,7 +1899,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">Lushibosca 0.77</div> <!-- DeltaF -->
+            <div class="menu-version">Lushibosca 0.78</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -4852,8 +4852,24 @@
                 } else {
                     // Cuando obtenerUltimaFactura retorna null
                     if (servicio.facturas && servicio.facturas.length > 0) {
-                        estado = 'Sin facturas de este mes';
-                        claseEstado = 'sin-facturas-mes';
+                        // Verificar si hay una factura anual pagada que cubra el año actual
+                        const hoy = new Date();
+                        const facturaAnualVigente = servicio.facturas.find(f => {
+                            if (f.tipo !== 'anual' || !f.pagada) return false;
+                            const fechaVenc = new Date(f.fecha + 'T00:00:00');
+                            return fechaVenc.getFullYear() === hoy.getFullYear();
+                        });
+
+                        if (facturaAnualVigente) {
+                            const moneda = facturaAnualVigente.moneda || 'ars';
+                            montoTexto = this.formatearMoneda(facturaAnualVigente.monto, moneda);
+                            fechaTexto = this.formatearFecha(facturaAnualVigente.fecha);
+                            estado = 'Pago anual';
+                            claseEstado = 'pagado';
+                        } else {
+                            estado = 'Sin facturas de este mes';
+                            claseEstado = 'sin-facturas-mes';
+                        }
                     } else {
                         estado = 'Sin facturas';
                         claseEstado = 'sin-facturas';
@@ -7154,7 +7170,7 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA DeltaF VERSION 0.77
+    //                 NOTAS SISTEMA DeltaF VERSION 0.78
     // ====================================================================
     
      - CAMBIOS
