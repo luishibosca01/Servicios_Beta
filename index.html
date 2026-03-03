@@ -2279,16 +2279,7 @@
             </div>
             <div id="categorias-lista"
                 style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; min-height: 2rem;"></div>
-            <div style="margin-bottom: 1rem;">
-                <button type="button" id="btn-toggle-agrupacion" class="icon-btn"
-                    style="width:100%; height:auto; padding:0.75rem 1rem; border-radius:var(--radius);"
-                    onclick="app.toggleAgrupacionCategorias()">
-                    <svg class="icon icon-line" viewBox="0 0 24 24">
-                        <use href="#icon-categorias" />
-                    </svg>
-                    <span id="btn-toggle-agrupacion-texto">Agrupar por categorías: ON</span>
-                </button>
-            </div>
+            
             <div class="form-actions2">
                 <button type="button" onclick="app.cerrarModalCategorias()">
                     <svg class="icon">
@@ -2998,7 +2989,6 @@
                     if (activar !== this._agrupacionActiva) {
                         this._agrupacionActiva = activar;
                         localStorage.setItem('cat-agrupacion', activar ? 'on' : 'off');
-                        this._actualizarBtnAgrupacion();
                         this.renderServicios();
                     }
                 });
@@ -3186,7 +3176,7 @@
 
                     return `
                         <div class="perfil-item ${esActivo ? 'activo' : ''}" 
-                             style="border: 2px solid ${esActivo ? 'var(--c-blue)' : 'var(--border)'}; 
+                             style="border: 1px solid ${esActivo ? 'var(--c-green)' : 'var(--border)'}; 
                                     border-radius: var(--radius); 
                                     padding: 1rem; 
                                     background: var(--bg-card);
@@ -3198,7 +3188,7 @@
                             <div style="flex: 1;">
                                 <div style="font-weight: 600; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem;">
                                     ${this.escaparHTML(perfil.nombre)}
-                                    ${esActivo ? '<span style="color: var(--c-blue); font-size: 0.9rem;">● Activo</span>' : ''}
+                                    ${esActivo ? '<span style="color: var(--c-green); font-size: 0.9rem;">● Activo</span>' : ''}
                                 </div>
                                 <div style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.25rem;">
                                     ${cantidadServicios} servicio${cantidadServicios !== 1 ? 's' : ''}
@@ -5640,7 +5630,6 @@
                 if (this._modalServicioOrigen) this.cerrarModal(this._modalServicioOrigen);
                 document.getElementById('nueva-categoria-nombre').value = '';
                 this._renderCategorias();
-                this._actualizarBtnAgrupacion();
                 this.abrirModal('modal-nueva-categoria');
             }
 
@@ -5650,27 +5639,7 @@
                     this.abrirModal(this._modalServicioOrigen);
                     this._modalServicioOrigen = null;
                 }
-            }
-
-            toggleAgrupacionCategorias() {
-                this._agrupacionActiva = !this._agrupacionActiva;
-                localStorage.setItem('cat-agrupacion', this._agrupacionActiva ? 'on' : 'off');
-                this._actualizarBtnAgrupacion();
-                this.renderServicios();
-            }
-
-            _actualizarBtnAgrupacion() {
-                const btn = document.getElementById('btn-toggle-agrupacion');
-                const texto = document.getElementById('btn-toggle-agrupacion-texto');
-                if (!btn || !texto) return;
-                if (this._agrupacionActiva) {
-                    texto.textContent = 'Agrupar por categorías: SI';
-                    btn.classList.add('pagada');
-                } else {
-                    texto.textContent = 'Agrupar por categorías: NO';
-                    btn.classList.remove('pagada');
-                }
-            }
+            } 
 
             _actualizarBtnSort() {
                 const btn = document.getElementById('btn-sort');
