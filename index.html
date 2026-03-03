@@ -3916,7 +3916,7 @@
                                     prioridad = 1;
                                     colorBorde = 'borde-urgente';
                                 }
-                            } else if (diasRestantes <= 7) {
+                            } else if (diasRestantes <= 6) {
                                 // Próximo (3-7 días)
                                 if (prioridad > 2) {
                                     prioridad = 2;
@@ -4936,7 +4936,7 @@
                         } else if (diasRestantes <= 3) {
                             estado = `Vence en ${diasRestantes} días`;
                             claseEstado = 'urgente';
-                        } else if (diasRestantes <= 7) {
+                        } else if (diasRestantes <= 6) {
                             estado = `Vence en ${diasRestantes} días`;
                             claseEstado = 'proximo';
                         } else {
