@@ -1160,6 +1160,12 @@
             font-size: 1.5rem;
             font-weight: 700;
             text-align: center;
+            cursor: pointer;
+            transition: opacity 0.15s;
+        }
+
+        .calculadora-total:active {
+            opacity: 0.5;
         }
 
         .calculadora-contador {
@@ -1906,7 +1912,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">Lushibosca 0.80</div> <!-- DeltaF -->
+            <div class="menu-version">Lushibosca 0.81</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -3338,7 +3344,23 @@
                 this.renderServicios();
 
                 // Mostrar calculadora flotante
-                document.getElementById('calculadora-flotante').style.display = 'flex';
+                const flotante = document.getElementById('calculadora-flotante');
+                flotante.style.display = 'flex';
+
+                // Copiar al tocar el monto
+                flotante.onclick = () => {
+                    const arsVal = this._calcTotalARS ?? 0;
+                    const usdVal = this._calcTotalUSD ?? 0;
+                    const fmt = n => Number.isInteger(n) ? String(n) : n.toFixed(2);
+                    let texto = fmt(arsVal);
+                    if (usdVal > 0) texto += ` / ${fmt(usdVal)}`;
+                    navigator.clipboard.writeText(texto).then(() => {
+                        const contador = document.getElementById('calculadora-contador');
+                        const textoOriginal = contador.textContent;
+                        contador.textContent = '✓ Copiado';
+                        setTimeout(() => { contador.textContent = textoOriginal; }, 1200);
+                    });
+                };
 
             }
 
@@ -3430,6 +3452,8 @@
                 });
 
                 // Mostrar ARS (siempre visible, aunque sea $0)
+                this._calcTotalARS = totalARS;
+                this._calcTotalUSD = totalUSD;
                 document.getElementById('calculadora-total').textContent = this.formatearMoneda(totalARS, 'ars');
 
                 // Mostrar USD solo si hay monto
@@ -7371,7 +7395,7 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA DeltaF VERSION 0.80
+    //                 NOTAS SISTEMA DeltaF VERSION 0.81
     // ====================================================================
     
      - CAMBIOS
