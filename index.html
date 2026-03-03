@@ -4230,12 +4230,14 @@
                         if (hayIngARS && totalMesARS > 0) {
                             const porcentaje = (totalMesARS / totalIngresosARS) * 100;
                             const porcentajeTexto = porcentaje.toFixed(1) + '%';
-                            // Color según el nivel: verde < 50%, amarillo < 80%, rojo >= 80%
-                            const color = porcentaje < 50
+                            // Color según el nivel: verde < 25%, azul < 50%, amarillo < 75%, rojo >= 75%
+                            const color = porcentaje < 25
                                 ? 'var(--c-green)'
-                                : porcentaje < 80
-                                    ? 'var(--c-gold)'
-                                    : 'var(--c-red)';
+                                : porcentaje < 50
+                                    ? 'var(--c-blue)'
+                                    : porcentaje < 75
+                                        ? 'var(--c-gold)'
+                                        : 'var(--c-red)';
                             porcentajeIngresosHTML = `
     <div class="calculador-resultado-item">
         <span class="estadistica-label">% del ingreso</span>
@@ -5250,8 +5252,13 @@
                                 return new Date(ultimaB.fecha) - new Date(ultimaA.fecha);
                             }
 
-                            // PRIORIDAD 5: PAGADAS (incluye anuales vigentes)
-                            return fechaA - fechaB;
+                            // PRIORIDAD 5: PAGADAS normales
+                            if (pagadaA && !anualVigenteA && (anualVigenteB || !pagadaB)) return -1;
+                            if (pagadaB && !anualVigenteB && (anualVigenteA || !pagadaA)) return 1;
+                            if (pagadaA && pagadaA && fechaA && fechaB) return fechaA - fechaB;
+
+                            // PRIORIDAD 6: PAGADAS ANUALES VIGENTES → al final
+                            return 0;
 
                         case 'monto-desc':
                             const montoA = this.obtenerUltimaFactura(a.id)?.monto || 0;
