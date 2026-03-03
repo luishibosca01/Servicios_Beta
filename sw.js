@@ -1,7 +1,7 @@
 // sw.js
 
 // CAMBIA ESTO PARA ACTUALIZAR (Ej: v1.22)
-const CACHE_NAME = 'deltaF-v0.79-cache'; 
+const CACHE_NAME = 'deltaF-v0.79v2-cache'; 
 
 const urlsToCache = [
   './',
