@@ -949,6 +949,18 @@
             transition: opacity var(--transition-base);
         }
 
+        .resumen-monto.resumen-blur .resumen-valor,
+        .resumen-monto.resumen-blur .resumen-valor-usd {
+            filter: blur(8px);
+            user-select: none;
+            transition: filter 0.3s ease;
+        }
+
+        .resumen-monto .resumen-valor,
+        .resumen-monto .resumen-valor-usd {
+            transition: filter 0.3s ease;
+        }
+
         .resumen-monto .resumen-valor,
         .resumen-valor-usd {
             font-size: 1.8rem;
@@ -2870,6 +2882,7 @@
                 this.STORAGE_KEY = 'gestion_servicios_data';
                 this.THEME_KEY = 'gestion_servicios_theme';
                 this.mostrandoPagadoMes = localStorage.getItem('resumen-mostrar-pagado') === 'true';
+                this.resumenDesblurado = false; // Siempre empieza blureado al cargar
                 this.datosResumen = { pendiente: 0, pagadoMes: 0, totalPeriodo: 0 };
                 this.serviciosCollapseState = 'expanded'; // 'expanded', 'semi-collapsed', 'collapsed'
 
@@ -3998,6 +4011,10 @@
     `;
                 document.getElementById('resumen-mes').innerHTML = resumenHTML;
                 localStorage.setItem('resumen-mostrar-pagado', 'false');
+                if (!this.resumenDesblurado) {
+                    const el = document.getElementById('resumen-toggle');
+                    if (el) el.classList.add('resumen-blur');
+                }
                 this.ultimoEstadoResumen = estadoActual;
 
                 const cardResumen = document.getElementById('resumen-mes').closest('.card');
@@ -4061,6 +4078,10 @@
     `;
                 document.getElementById('resumen-mes').innerHTML = resumenHTML;
                 localStorage.setItem('resumen-mostrar-pagado', 'true');
+                if (!this.resumenDesblurado) {
+                    const el = document.getElementById('resumen-toggle');
+                    if (el) el.classList.add('resumen-blur');
+                }
                 this.ultimoEstadoResumen = estadoActual;
 
                 const cardResumen = document.getElementById('resumen-mes').closest('.card');
@@ -4073,25 +4094,34 @@
             toggleResumen() {
                 const resumenActual = document.getElementById('resumen-toggle');
 
-                if (resumenActual) {
-                    // Aplicar animación de salida
-                    resumenActual.style.animation = 'slideUpFade 0.2s ease-out forwards';
+                // Si está blureado, desblurear y no cambiar vista
+                if (!this.resumenDesblurado) {
+                    this.resumenDesblurado = true;
+                    if (resumenActual) resumenActual.classList.remove('resumen-blur');
+                    return;
+                }
 
-                    // Después de la animación, cambiar el contenido
+                // Ya desblurado: toggle normal de vista
+                if (resumenActual) {
+                    resumenActual.style.animation = 'slideUpFade 0.2s ease-out forwards';
                     setTimeout(() => {
                         if (this.mostrandoPagadoMes) {
                             this.mostrarPendienteEnResumen();
                         } else {
                             this.mostrarPagadoEnResumen();
                         }
+                        // Mantener desblurado tras el cambio de vista
+                        const nuevo = document.getElementById('resumen-toggle');
+                        if (nuevo) nuevo.classList.remove('resumen-blur');
                     }, 190);
                 } else {
-                    // Si no hay elemento actual, mostrar directamente
                     if (this.mostrandoPagadoMes) {
                         this.mostrarPendienteEnResumen();
                     } else {
                         this.mostrarPagadoEnResumen();
                     }
+                    const nuevo = document.getElementById('resumen-toggle');
+                    if (nuevo) nuevo.classList.remove('resumen-blur');
                 }
             }
 
@@ -7355,7 +7385,7 @@
     // ====================================================================
     
      - CAMBIOS
-     1) 
+     1) Se agrega blur al cargar la pagina
 
 
      - BUGS CONOCIDOS:
