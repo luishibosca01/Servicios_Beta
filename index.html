@@ -4018,7 +4018,7 @@
     `;
                 document.getElementById('resumen-mes').innerHTML = resumenHTML;
                 localStorage.setItem('resumen-mostrar-pagado', 'false');
-                if (!this.resumenDesblurado && !estaAlDia) {
+                if (!this.resumenDesblurado && (hayARS || hayUSD)) {
                     const el = document.getElementById('resumen-toggle');
                     if (el) el.classList.add('resumen-blur');
                 }
