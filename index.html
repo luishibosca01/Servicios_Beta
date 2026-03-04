@@ -945,7 +945,7 @@
             flex-direction: column;
             border-radius: var(--radius);
             cursor: pointer;
-            min-height: 10rem;
+            min-height: 11rem;
             transition: opacity var(--transition-base);
         }
 
@@ -1911,7 +1911,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">Lushibosca 0.81</div> <!-- DeltaF -->
+            <div class="menu-version">Lushibosca 0.82</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -3826,6 +3826,8 @@
                 let totalPagadoMesARS = 0, totalPagadoMesUSD = 0;
                 let totalPagadoDelMesActualARS = 0, totalPagadoDelMesActualUSD = 0;
                 let totalFacturasMesActualARS = 0, totalFacturasMesActualUSD = 0;
+                let cantidadPagadasVencenEsteMes = 0;
+                let cantidadPendientesEsteMes = 0;
 
                 this.servicios.filter(s => s.id !== this.SERVICIO_INGRESOS_ID).forEach(servicio => {
                     servicio.facturas.forEach(factura => {
@@ -3843,6 +3845,8 @@
                             const pagadaEsteMes = factura.pagada && factura.fechaPago &&
                                 (() => { const fp = new Date(factura.fechaPago + 'T00:00:00'); return fp.getMonth() === mesActual && fp.getFullYear() === añoActual; })();
                             const contarEnTotal = !factura.pagada || pagadaEsteMes;
+                            if (factura.pagada) cantidadPagadasVencenEsteMes++;
+                            if (!factura.pagada) cantidadPendientesEsteMes++;
                             if (moneda === 'usd') {
                                 if (!excluir && contarEnTotal) totalFacturasMesActualUSD += factura.monto;
                                 if (!factura.pagada && !excluir) { totalAPagarUSD += factura.monto; }
@@ -3873,6 +3877,8 @@
                     pagadoDelMesActualUSD: totalPagadoDelMesActualUSD,
                     totalPeriodoARS: totalFacturasMesActualARS,
                     totalPeriodoUSD: totalFacturasMesActualUSD,
+                    cantidadPagadasVencenEsteMes,
+                    cantidadPendientesEsteMes,
                     // Compatibilidad legacy (usa ARS para la barra de progreso)
                     pendiente: totalAPagarARS + totalAPagarUSD,
                     pagadoMes: totalPagadoMesARS,
@@ -3968,6 +3974,7 @@
                 const totalUSD = this.datosResumen.totalPeriodoUSD || 0;
                 const pendienteARS = this.datosResumen.pendienteARS || 0;
                 const pendienteUSD = this.datosResumen.pendienteUSD || 0;
+                const cantidadPendientesEsteMes = this.datosResumen.cantidadPendientesEsteMes || 0;
 
                 const pagadoDelMesARS = this.datosResumen.pagadoMesARS || 0;
                 const porcentajePagado = totalARS > 0 ? Math.min((pagadoDelMesARS / totalARS) * 100, 100) : (pendienteUSD === 0 ? 100 : 0);
@@ -4004,14 +4011,14 @@
                 <div class="resumen-progreso">
                     <div class="resumen-progreso-barra" style="width: ${porcentajePagado}%"></div>
                 </div>
-                <div class="resumen-label">Pendiente de pago</div>
+                <div class="resumen-label">Pendiente${cantidadPendientesEsteMes > 0 ? ` (${cantidadPendientesEsteMes})` : ''}</div>
                 <div class="resumen-fecha">${fechaFormateada}</div>
             </div>
         </div>
     `;
                 document.getElementById('resumen-mes').innerHTML = resumenHTML;
                 localStorage.setItem('resumen-mostrar-pagado', 'false');
-                if (!this.resumenDesblurado) {
+                if (!this.resumenDesblurado && !estaAlDia) {
                     const el = document.getElementById('resumen-toggle');
                     if (el) el.classList.add('resumen-blur');
                 }
@@ -4037,6 +4044,7 @@
                 const pagadoMesARS = this.datosResumen.pagadoMesARS || 0;
                 const pagadoMesUSD = this.datosResumen.pagadoMesUSD || 0;
                 const pagadoDelMesActualARS = this.datosResumen.pagadoDelMesActualARS || 0;
+                const cantidadPagadasVencenEsteMes = this.datosResumen.cantidadPagadasVencenEsteMes || 0;
 
                 const porcentajePagado = totalARS > 0
                     ? Math.min((pagadoMesARS / totalARS) * 100, 100)
@@ -4054,7 +4062,9 @@
                 const hayARS = pagadoMesARS > 0;
 
                 let valorMostrar;
-                if (hayARS && hayUSD) {
+                if (!hayARS && !hayUSD) {
+                    valorMostrar = '<span style="font-size: 2rem;">Sin pagos</span>';
+                } else if (hayARS && hayUSD) {
                     valorMostrar = `<div class="resumen-valor">${this.formatearMoneda(pagadoMesARS, 'ars')}</div>
                         <div class="resumen-valor-usd">${this.formatearMoneda(pagadoMesUSD, 'usd')}</div>`;
                 } else if (hayUSD) {
@@ -4071,14 +4081,14 @@
                 <div class="resumen-progreso">
                     <div class="resumen-progreso-barra" style="width: ${porcentajePagado}%"></div>
                 </div>
-                <div class="resumen-label">Pagado este mes</div>
+                <div class="resumen-label">Pagado${cantidadPagadasVencenEsteMes > 0 ? ` (${cantidadPagadasVencenEsteMes})` : ''}</div>
                 <div class="resumen-fecha">${fechaFormateada}</div>
             </div>
         </div>
     `;
                 document.getElementById('resumen-mes').innerHTML = resumenHTML;
                 localStorage.setItem('resumen-mostrar-pagado', 'true');
-                if (!this.resumenDesblurado) {
+                if (!this.resumenDesblurado && (hayARS || hayUSD)) {
                     const el = document.getElementById('resumen-toggle');
                     if (el) el.classList.add('resumen-blur');
                 }
@@ -4095,11 +4105,13 @@
                 const resumenActual = document.getElementById('resumen-toggle');
 
                 // Si está blureado, desblurear y no cambiar vista
-                if (!this.resumenDesblurado) {
+                const estaBlureado = resumenActual && resumenActual.classList.contains('resumen-blur');
+                if (!this.resumenDesblurado && estaBlureado) {
                     this.resumenDesblurado = true;
-                    if (resumenActual) resumenActual.classList.remove('resumen-blur');
+                    resumenActual.classList.remove('resumen-blur');
                     return;
                 }
+                if (!this.resumenDesblurado) this.resumenDesblurado = true;
 
                 // Ya desblurado: toggle normal de vista
                 if (resumenActual) {
@@ -7381,7 +7393,7 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA DeltaF VERSION 0.81
+    //                 NOTAS SISTEMA DeltaF VERSION 0.82
     // ====================================================================
     
      - CAMBIOS
