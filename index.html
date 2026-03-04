@@ -988,6 +988,88 @@
             margin-top: auto;
         }
 
+        .info-resumen-grupo {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .info-resumen-grupo-titulo {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.3rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .info-resumen-fila {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            font-size: 0.88rem;
+            padding: 0.3rem 0;
+        }
+
+        .info-resumen-fila-izq {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .info-resumen-nombre {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .info-resumen-badge {
+            flex-shrink: 0;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 0.15rem 0.5rem;
+            border-radius: 20px;
+        }
+
+        .badge-pagada-mes {
+            background: rgba(76, 172, 140, 0.2);
+            color: var(--c-green);
+        }
+
+        .badge-pagada-antes {
+            background: rgba(172, 155, 76, 0.2);
+            color: var(--c-gold);
+        }
+
+        .badge-pagada-credito {
+            background: rgba(76, 114, 172, 0.2);
+            color: var(--c-blue);
+        }
+
+        .badge-pendiente {
+            background: rgba(172, 90, 76, 0.2);
+            color: var(--c-red);
+        }
+
+        .badge-vencida {
+            background: rgba(80, 80, 80, 0.2);
+            color: var(--text-muted);
+        }
+
+        .badge-pagada-otro-mes {
+            background: rgba(129, 76, 172, 0.2);
+            color: var(--c-purple);
+        }
+
+        .info-resumen-monto {
+            flex-shrink: 0;
+            font-weight: 600;
+            font-size: 0.88rem;
+        }
+
         .resumen-fecha {
             font-size: 0.875rem;
             color: var(--text-muted);
@@ -1911,7 +1993,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">Lushibosca 0.82</div> <!-- DeltaF -->
+            <div class="menu-version">Lushibosca 0.83</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -2128,6 +2210,29 @@
                 <span>Pendientes</span>
             </div>
 
+        </div>
+    </div>
+
+    <!-- Modal Info Resumen Mes -->
+    <div class="modal" id="modal-info-resumen">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Detalle del mes</h3>
+                <button class="icon-btn transparent" onclick="app.cerrarModal('modal-info-resumen')">
+                    <svg class="icon">
+                        <use href="#icon-cancel" />
+                    </svg>
+                </button>
+            </div>
+            <div id="modal-info-resumen-body" style="display:flex; flex-direction:column; gap:1rem;">
+            </div>
+            <div class="form-actions" style="margin-top:1rem;">
+                <button onclick="app.cerrarModal('modal-info-resumen')">
+                    <svg class="icon">
+                        <use href="#icon-cancel" />
+                    </svg> Cerrar
+                </button>
+            </div>
         </div>
     </div>
 
@@ -4005,7 +4110,12 @@
 
                 const resumenHTML = `
         <div class="resumen-monto" id="resumen-toggle" style="${animacion}">
-            <div class="resumen-titulo"><svg class="icon"><use href="#icon-deuda" /></svg> Resumen de Deuda</div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div class="resumen-titulo"><svg class="icon"><use href="#icon-deuda" /></svg> Resumen de Deuda</div>
+                <button class="icon-btn transparent" style="width:32px;height:32px;" onclick="event.stopPropagation(); app.abrirModalInfoResumen()">
+                    <svg viewBox="0 0 24 24" style="width:20px;height:20px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><circle cx="12" cy="8" r="1.5" fill="currentColor" stroke="none"/></svg>
+                </button>
+            </div>
             ${(hayARS && hayUSD) ? valorMostrar : `<div class="resumen-valor">${valorMostrar}</div>`}
             <div class="resumen-footer">                
                 <div class="resumen-progreso">
@@ -4075,7 +4185,12 @@
 
                 const resumenHTML = `
         <div class="resumen-monto" id="resumen-toggle" style="${animacion}">
-            <div class="resumen-titulo"><svg class="icon"><use href="#icon-pagado" /></svg> Resumen de Pagos</div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div class="resumen-titulo"><svg class="icon"><use href="#icon-pagado" /></svg> Resumen de Pagos</div>
+                <button class="icon-btn transparent" style="width:32px;height:32px;" onclick="event.stopPropagation(); app.abrirModalInfoResumen()">
+                    <svg viewBox="0 0 24 24" style="width:20px;height:20px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><circle cx="12" cy="8" r="1.5" fill="currentColor" stroke="none"/></svg>
+                </button>
+            </div>
             ${(hayARS && hayUSD) ? valorMostrar : `<div class="resumen-valor">${valorMostrar}</div>`}
             <div class="resumen-footer">                
                 <div class="resumen-progreso">
@@ -4099,6 +4214,92 @@
                     cardResumen.classList.remove('borde-vencido', 'borde-urgente', 'borde-proximo', 'borde-lejano', 'borde-pagado');
                     if (colorBorde) cardResumen.classList.add(colorBorde);
                 }
+            }
+
+            abrirModalInfoResumen() {
+                const hoy = new Date();
+                hoy.setHours(0, 0, 0, 0);
+                const mesActual = hoy.getMonth();
+                const anioActual = hoy.getFullYear();
+
+                // Grupos de facturas
+                const vencenEsteMes = []; // facturas cuyo vencimiento es este mes
+                const pagadasOtroMes = []; // pagadas este mes pero vencían otro mes
+
+                this.servicios.filter(s => s.id !== this.SERVICIO_INGRESOS_ID).forEach(servicio => {
+                    servicio.facturas.forEach(factura => {
+                        if (factura.monto <= 0) return;
+
+                        const fechaVenc = new Date(factura.fecha + 'T00:00:00');
+                        const venceEsteMes = fechaVenc.getMonth() === mesActual && fechaVenc.getFullYear() === anioActual;
+
+                        const pagadaEsteMes = factura.pagada && factura.fechaPago && (() => {
+                            const fp = new Date(factura.fechaPago + 'T00:00:00');
+                            return fp.getMonth() === mesActual && fp.getFullYear() === anioActual;
+                        })();
+
+                        if (venceEsteMes) {
+                            let estado, badgeClass;
+                            if (factura.conCredito) {
+                                estado = 'Con crédito'; badgeClass = 'badge-pagada-credito';
+                            } else if (factura.pagada && pagadaEsteMes) {
+                                estado = 'Pagada este mes'; badgeClass = 'badge-pagada-mes';
+                            } else if (factura.pagada && !pagadaEsteMes) {
+                                const mesPago = new Date(factura.fechaPago + 'T00:00:00').toLocaleDateString('es-AR', { month: 'long' });
+                                estado = `Pagada en ${mesPago}`; badgeClass = 'badge-pagada-antes';
+                            } else if (!factura.pagada && fechaVenc < hoy) {
+                                estado = 'Vencida'; badgeClass = 'badge-vencida';
+                            } else {
+                                estado = 'Pendiente'; badgeClass = 'badge-pendiente';
+                            }
+                            vencenEsteMes.push({ servicio: servicio.nombre, factura, estado, badgeClass });
+                        } else if (pagadaEsteMes) {
+                            const mesNombre = fechaVenc.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
+                            pagadasOtroMes.push({ servicio: servicio.nombre, factura, mesVenc: mesNombre });
+                        }
+                    });
+                });
+
+                const renderFila = ({ servicio, factura, estado, badgeClass }) => `
+                    <div class="info-resumen-fila">
+                        <div class="info-resumen-fila-izq">
+                            <span class="info-resumen-nombre">${servicio}</span>
+                            <span class="info-resumen-badge ${badgeClass}">${estado}</span>
+                        </div>
+                        <span class="info-resumen-monto">${this.formatearMoneda(factura.monto, factura.moneda || 'ars')}</span>
+                    </div>`;
+
+                const renderFilaOtroMes = ({ servicio, factura, mesVenc }) => `
+                    <div class="info-resumen-fila">
+                        <div class="info-resumen-fila-izq">
+                            <span class="info-resumen-nombre">${servicio}</span>
+                            <span class="info-resumen-badge badge-pagada-otro-mes">Venció ${mesVenc}</span>
+                        </div>
+                        <span class="info-resumen-monto">${this.formatearMoneda(factura.monto, factura.moneda || 'ars')}</span>
+                    </div>`;
+
+                let html = '';
+
+                if (vencenEsteMes.length > 0) {
+                    html += `<div class="info-resumen-grupo">
+                        <div class="info-resumen-grupo-titulo">Vencen este mes</div>
+                        ${vencenEsteMes.map(renderFila).join('')}
+                    </div>`;
+                }
+
+                if (pagadasOtroMes.length > 0) {
+                    html += `<div class="info-resumen-grupo">
+                        <div class="info-resumen-grupo-titulo">Pagadas este mes (otro vencimiento)</div>
+                        ${pagadasOtroMes.map(renderFilaOtroMes).join('')}
+                    </div>`;
+                }
+
+                if (!html) {
+                    html = '<div style="color: var(--text-muted); text-align:center; padding: 1rem;">Sin movimientos este mes</div>';
+                }
+
+                document.getElementById('modal-info-resumen-body').innerHTML = html;
+                this.abrirModal('modal-info-resumen');
             }
 
             toggleResumen() {
@@ -7393,11 +7594,13 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA DeltaF VERSION 0.82
+    //                 NOTAS SISTEMA DeltaF VERSION 0.83
     // ====================================================================
     
      - CAMBIOS
      1) Se agrega blur al cargar la pagina
+     2) Se agrega modal con informacion de todos los pagos del mes y facturas que fueros pagadas antes, o que vencian
+     otro mes y fueron pagadas este mes
 
 
      - BUGS CONOCIDOS:
