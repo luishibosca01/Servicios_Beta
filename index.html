@@ -303,11 +303,6 @@
             border-color: var(--c-red) !important;
         }
 
-        #btn-sort.filtro-activo {
-            color: var(--c-red);
-            border: 1px solid var(--c-red);
-        }
-
         /* Botones de header transparentes */
         #btn-filter,
         #btn-undo,
@@ -2005,7 +2000,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">Lushibosca 0.82</div> <!-- DeltaF -->
+            <div class="menu-version">Lushibosca 0.83</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -2229,7 +2224,7 @@
     <div class="modal" id="modal-info-resumen">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Detalle del mes</h3>
+                <h3>Composición mes actual</h3>
                 <button class="icon-btn transparent" onclick="app.cerrarModal('modal-info-resumen')">
                     <svg class="icon">
                         <use href="#icon-cancel" />
@@ -2356,17 +2351,7 @@
                 <select id="select-vista">
                     <option value="todo">Servicios</option>
                     <option value="categorias">Servicios / Categorías</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Filtrar</label>
-                <select id="select-filtro-estado">
-                    <option value="">Sin filtro</option>
-                    <option value="pendiente">Pendientes</option>
-                    <option value="vencido">Vencidos</option>
-                    <option value="pagado">Pagados</option>
-                    <option value="sin-facturas-mes">Sin facturas este mes</option>
-                    <option value="sin-facturas">Sin facturas</option>
+                    <option value="estados">Servicios / Estado</option>
                 </select>
             </div>
             <div class="form-actions">
@@ -2982,8 +2967,11 @@
                     this._catColapsadas = {};
                 }
 
-                this._agrupacionActiva = localStorage.getItem('cat-agrupacion') !== 'off';
-                this.filtroEstado = '';
+                this._agrupacionActiva = localStorage.getItem('cat-agrupacion') === 'on';
+                this._vistaEstados = localStorage.getItem('vista-estados') === 'true';
+                if (!this._agrupacionActiva && !this._vistaEstados) {
+                    // si ninguna está activa, estado por defecto
+                }
                 // Modo calculadora - NUEVO
                 this.modoCalculadora = false;
                 this.modoCalculadoraTipo = 'pendientes';
@@ -3077,27 +3065,15 @@
 
                 // Botón ordenar
                 document.getElementById('btn-sort').addEventListener('click', () => {
-                    // Si hay filtro activo, tocarlo limpia el filtro
-                    if (this.filtroEstado) {
-                        this.filtroEstado = '';
-                        this._actualizarBtnSort();
-                        this.renderServicios();
-                        this.mostrarToast('Filtro eliminado', 'info');
-                        return;
-                    }
                     const select = document.getElementById('select-orden');
                     if (select) select.value = this.ordenActual;
                     const selectVista = document.getElementById('select-vista');
-                    if (selectVista) selectVista.value = this._agrupacionActiva ? 'categorias' : 'todo';
-                    const selectFiltro = document.getElementById('select-filtro-estado');
-                    if (selectFiltro) selectFiltro.value = this.filtroEstado;
+                    if (selectVista) {
+                        if (this._vistaEstados) selectVista.value = 'estados';
+                        else if (this._agrupacionActiva) selectVista.value = 'categorias';
+                        else selectVista.value = 'todo';
+                    }
                     this.abrirModal('modal-ordenar');
-                });
-
-                document.getElementById('select-filtro-estado').addEventListener('change', (e) => {
-                    this.filtroEstado = e.target.value;
-                    this._actualizarBtnSort();
-                    this.renderServicios();
                 });
 
                 document.getElementById('select-orden').addEventListener('change', () => {
@@ -3105,12 +3081,12 @@
                 });
 
                 document.getElementById('select-vista').addEventListener('change', (e) => {
-                    const activar = e.target.value === 'categorias';
-                    if (activar !== this._agrupacionActiva) {
-                        this._agrupacionActiva = activar;
-                        localStorage.setItem('cat-agrupacion', activar ? 'on' : 'off');
-                        this.renderServicios();
-                    }
+                    const val = e.target.value;
+                    this._vistaEstados = val === 'estados';
+                    this._agrupacionActiva = val === 'categorias';
+                    localStorage.setItem('cat-agrupacion', this._agrupacionActiva ? 'on' : 'off');
+                    localStorage.setItem('vista-estados', this._vistaEstados ? 'true' : 'false');
+                    this.renderServicios();
                 });
 
                 // Listeners para sincronizar botón toggle de monto con el input
@@ -4246,7 +4222,7 @@
 
                 this.servicios.filter(s => s.id !== this.SERVICIO_INGRESOS_ID).forEach(servicio => {
                     servicio.facturas.forEach(factura => {
-                        if (factura.monto <= 0) return;
+                        if (factura.monto < 0) return;
 
                         const fechaVenc = new Date(factura.fecha + 'T00:00:00');
                         const venceEsteMes = fechaVenc.getMonth() === mesActual && fechaVenc.getFullYear() === anioActual;
@@ -4524,7 +4500,7 @@
                         }
 
                         ingresosHTML = `
-    <div class="calculador-resultado-item">
+    <div class="calculador-resultado-item" style="cursor:pointer;" onclick="app.abrirDebugEstadisticas('ingresos')">
         <span class="estadistica-label">Ingresos</span>
         <span class="estadistica-valor">${ingMontoHTML}</span>
     </div>
@@ -5313,7 +5289,38 @@
                 let html = '';
 
                 // Si solo hay una categoría (o ninguna), no mostrar encabezado de grupo
-                if (catKeys.length <= 1 || !this._agrupacionActiva) {
+                if (this._vistaEstados) {
+                    const grupos = [
+                        { key: 'vencido', label: 'Vencidos', clases: ['vencido'] },
+                        { key: 'urgente', label: 'Urgentes', clases: ['urgente'] },
+                        { key: 'proximo', label: 'Próximos', clases: ['proximo'] },
+                        { key: 'lejano', label: 'Pendientes', clases: ['lejano'] },
+                        { key: 'sin-facturas-mes', label: 'Sin facturas este mes', clases: ['sin-facturas-mes'] },
+                        { key: 'pagado', label: 'Pagados', clases: ['pagado'] },
+                        { key: 'sin-facturas', label: 'Sin facturas', clases: ['sin-facturas'] },
+                    ];
+                    grupos.forEach(grupo => {
+                        const items = serviciosOrdenados.filter(s => grupo.clases.includes(this.calcularEstadoServicio(s).claseEstado));
+                        if (items.length === 0) return;
+                        const collapsed = this._catColapsadas[`__estado_${grupo.key}`] ? 'collapsed' : '';
+                        html += `
+        <div class="servicios-grupo-cat" data-cat="__estado_${grupo.key}">
+            <div class="servicios-grupo-cat-header" onclick="app.toggleGrupoCat(this)"
+                onpointerdown="app._lpStart(event,this)" onpointerup="app._lpCancel()" onpointerleave="app._lpCancel()" oncontextmenu="event.preventDefault()">
+                <div class="servicios-grupo-cat-header-info">
+                    <span class="servicios-grupo-cat-texto">${grupo.label}</span>
+                    <span class="servicios-grupo-cat-contador">(${items.length})</span>
+                </div>
+                <svg class="icon servicios-grupo-cat-chevron ${collapsed}" viewBox="0 0 24 24">
+                    <polyline points="6 9 12 15 18 9" class="icon-line" stroke="currentColor"></polyline>
+                </svg>
+            </div>
+            <div class="servicios-grupo-cat-contenido ${collapsed}">
+                ${items.map(generarItemServicio).join('')}
+            </div>
+        </div>`;
+                    });
+                } else if (catKeys.length <= 1 || !this._agrupacionActiva) {
                     html = serviciosOrdenados.map(generarItemServicio).join('');
                 } else {
                     catKeys.forEach(cat => {
@@ -5348,12 +5355,14 @@
                 onpointerdown="app._lpStart(event,this)" onpointerup="app._lpCancel()" onpointerleave="app._lpCancel()" oncontextmenu="event.preventDefault()">
                 <div class="servicios-grupo-cat-header-info">
                     <span class="servicios-grupo-cat-texto">${this.escaparHTML(catLabel)}</span>
-                    <span class="servicios-grupo-cat-contador">${cantidad} ${cantidad !== 1 ? 'servicios' : 'servicio'}</span>
-                    ${alertaIconHTML}
+                    <span class="servicios-grupo-cat-contador">(${cantidad})</span>
                 </div>
-                <svg class="icon servicios-grupo-cat-chevron ${collapsed}" viewBox="0 0 24 24">
-                    <polyline points="6 9 12 15 18 9" class="icon-line" stroke="currentColor"></polyline>
-                </svg>
+                <div style="display:flex; align-items:center; gap:0.25rem;">
+                    ${alertaIconHTML}
+                    <svg class="icon servicios-grupo-cat-chevron ${collapsed}" viewBox="0 0 24 24">
+                        <polyline points="6 9 12 15 18 9" class="icon-line" stroke="currentColor"></polyline>
+                    </svg>
+                </div>
             </div>
             <div class="servicios-grupo-cat-contenido ${collapsed}">
                 ${itemsHTML}
@@ -5458,18 +5467,6 @@
                         servicio.nombre.toLowerCase().includes(this.terminoBusqueda)
                     );
                 }
-
-                // Filtro por estado
-                if (this.filtroEstado) {
-                    resultado = resultado.filter(servicio => {
-                        const { claseEstado } = this.calcularEstadoServicio(servicio);
-                        if (this.filtroEstado === 'pendiente') {
-                            return ['urgente', 'proximo', 'lejano'].includes(claseEstado);
-                        }
-                        return claseEstado === this.filtroEstado;
-                    });
-                }
-
                 return resultado;
             }
 
@@ -5889,18 +5886,6 @@
                 if (this._modalServicioOrigen) {
                     this.abrirModal(this._modalServicioOrigen);
                     this._modalServicioOrigen = null;
-                }
-            }
-
-            _actualizarBtnSort() {
-                const btn = document.getElementById('btn-sort');
-                if (!btn) return;
-                if (this.filtroEstado) {
-                    btn.classList.add('filtro-activo');
-                    btn.title = 'Filtro activo — toca para limpiar';
-                } else {
-                    btn.classList.remove('filtro-activo');
-                    btn.title = 'Opciones de vista';
                 }
             }
 
@@ -7049,7 +7034,7 @@
                     if (el) el.classList.add('resumen-blur');
                 }
 
-                this.mostrarToast(`Ocultar montos ${this.blurHabilitado ? 'habilitado' : 'deshabilitado'}`, 'success');
+                this.mostrarToast(`Privacidad ${this.blurHabilitado ? 'habilitado' : 'deshabilitado'}`, 'success');
                 this.cerrarMenuAjustes();
             }
 
@@ -7497,7 +7482,7 @@
                         switch (tipo) {
                             case 'facturas':
                                 // Igual que cantidadFacturasMes: del mes, positivas, no ingresos
-                                incluir = esDelMes && !esServicioIngresos && factura.monto > 0;
+                                incluir = esDelMes && !esServicioIngresos && factura.monto >= 0;
                                 break;
 
                             case 'pendientes':
@@ -7514,7 +7499,7 @@
 
                             case 'pagadas':
                                 // Igual que cantidadPagadas: pagada, fechaPago en el mes seleccionado
-                                if (factura.pagada && factura.monto > 0 && factura.fechaPago && !esServicioIngresos) {
+                                if (factura.pagada && factura.monto >= 0 && factura.fechaPago && !esServicioIngresos) {
                                     const fp = new Date(factura.fechaPago + 'T00:00:00');
                                     incluir = fp.getMonth() === mesSeleccionado && fp.getFullYear() === añoSeleccionado;
                                 }
@@ -7638,15 +7623,11 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA DeltaF VERSION 0.82
+    //                 NOTAS SISTEMA DeltaF VERSION 0.83
     // ====================================================================
     
      - CAMBIOS
-     1) Se agrega blur al cargar la pagina
-     2) Se agrega modal con informacion de todos los pagos del mes y facturas que fueros pagadas antes, o que vencian
-     otro mes y fueron pagadas este mes
-     3) Se agrega opcion opcional de blureado
-     4) modificaciones en el calculo de calculadora/pagados
+     1) Se reemplaza el filtro, por vista de servicios / estados
 
 
      - BUGS CONOCIDOS:
