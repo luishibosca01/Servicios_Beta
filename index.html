@@ -13,7 +13,7 @@
                  style-src 'self' 'unsafe-inline'; 
                  img-src 'self' data: https:; 
                  font-src 'self' data:; 
-                 connect-src 'self'; 
+                 connect-src 'self' https://dolarapi.com;
                  object-src 'none'; 
                  base-uri 'self'; 
                  form-action 'self'; 
@@ -1477,6 +1477,15 @@
             padding-right: 1rem;
         }
 
+        .dolar-widget-valor {
+            font-weight: 600;
+            color: var(--c-green);
+        }
+
+        .dolar-widget-hora {
+            color: var(--text-muted);
+        }
+
         /* ============================================================
            MENÚ EMERGENTE AGREGAR
         ============================================================ */
@@ -1966,6 +1975,32 @@
                     <span>Categorías</span>
                 </div>
             </div>
+            <div class="menu-item" id="menu-categorias">
+                <svg class="icon">
+                    <use href="#icon-categorias" />
+                </svg>
+                <span>Categorías</span>
+            </div>
+            <div class="menu-item menu-item-parent" id="menu-dolar">
+                <svg class="icon">
+                    <use href="#icon-dollar" />
+                </svg>
+                <span>Dólar</span>
+                <span class="dolar-widget-hora" id="dolar-hora">-</span>
+                <svg class="icon menu-chevron" viewBox="0 0 24 24">
+                    <polyline points="6 9 12 15 18 9" class="icon-line" stroke="currentColor"></polyline>
+                </svg>
+            </div>
+            <div id="opciones-dolar" class="menu-submenu">
+                <div class="menu-item" style="cursor:default; justify-content:space-between;">
+                    <span style="color:var(--text-muted);">Oficial</span>
+                    <span class="dolar-widget-valor" id="dolar-oficial">-</span>
+                </div>
+                <div class="menu-item" style="cursor:default; justify-content:space-between;">
+                    <span style="color:var(--text-muted);">MEP</span>
+                    <span class="dolar-widget-valor" id="dolar-mep">-</span>
+                </div>
+            </div>
             <div class="menu-item" id="menu-toggle-blur">
                 <svg class="icon">
                     <use href="#icon-eye" />
@@ -1979,12 +2014,6 @@
                 </svg>
                 <span>Ingresos</span>
                 <span id="ingresos-indicator"></span>
-            </div>
-            <div class="menu-item" id="menu-categorias">
-                <svg class="icon">
-                    <use href="#icon-categorias" />
-                </svg>
-                <span>Categorías</span>
             </div>
             <div class="menu-item" id="menu-informacion">
                 <svg class="icon">
@@ -2000,7 +2029,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">Lushibosca 0.83</div> <!-- DeltaF -->
+            <div class="menu-version">Lushibosca 0.84</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -3032,6 +3061,7 @@
                 this.renderServicios();
                 this.setupEventListeners();
                 this.actualizarBotonesHistorial();
+                this.cargarCotizacionDolar();
 
                 // Inicializar indicador de ingresos
                 if (localStorage.getItem(this.INGRESOS_KEY) === null) {
@@ -3652,6 +3682,7 @@
                 document.getElementById('menu-importar-reemplazar').addEventListener('click', () => this.importarDatos('reemplazar'));
                 document.getElementById('menu-importar-combinar').addEventListener('click', () => this.importarDatos('combinar'));
                 document.getElementById('menu-limpiar').addEventListener('click', () => this.mostrarOpcionesBorrar());
+                document.getElementById('menu-dolar').addEventListener('click', () => this.toggleMenuDolar());
                 document.getElementById('menu-borrar-todo').addEventListener('click', () => this.limpiarDatos('todo'));
                 document.getElementById('menu-borrar-servicios').addEventListener('click', () => this.limpiarDatos('servicios'));
                 document.getElementById('menu-borrar-facturas').addEventListener('click', () => this.limpiarDatos('facturas'));
@@ -6744,9 +6775,10 @@
                 const padre = document.getElementById('menu-importar');
                 const abriendo = !opciones.classList.contains('open');
 
-                // Cerrar el otro submenú si está abierto
                 document.getElementById('opciones-borrar').classList.remove('open');
                 document.getElementById('menu-limpiar').classList.remove('open');
+                document.getElementById('opciones-dolar').classList.remove('open');
+                document.getElementById('menu-dolar').classList.remove('open');
 
                 opciones.classList.toggle('open', abriendo);
                 padre.classList.toggle('open', abriendo);
@@ -6920,7 +6952,23 @@
                 const padre = document.getElementById('menu-limpiar');
                 const abriendo = !opciones.classList.contains('open');
 
-                // Cerrar el otro submenú si está abierto
+                document.getElementById('opciones-importacion').classList.remove('open');
+                document.getElementById('menu-importar').classList.remove('open');
+                document.getElementById('opciones-dolar').classList.remove('open');
+                document.getElementById('menu-dolar').classList.remove('open');
+
+                opciones.classList.toggle('open', abriendo);
+                padre.classList.toggle('open', abriendo);
+            }
+
+            toggleMenuDolar() {
+                const opciones = document.getElementById('opciones-dolar');
+                const padre = document.getElementById('menu-dolar');
+                const abriendo = !opciones.classList.contains('open');
+
+                // Cerrar otros submenús
+                document.getElementById('opciones-borrar').classList.remove('open');
+                document.getElementById('menu-limpiar').classList.remove('open');
                 document.getElementById('opciones-importacion').classList.remove('open');
                 document.getElementById('menu-importar').classList.remove('open');
 
@@ -6999,6 +7047,33 @@
                 // Sincronizar ícono con el tema cargado
                 const esDark = document.body.classList.contains('dark-mode');
                 this._actualizarIconoTema(esDark);
+            }
+
+            async cargarCotizacionDolar() {
+                try {
+                    const res = await fetch('https://dolarapi.com/v1/dolares');
+                    if (!res.ok) throw new Error('Error al obtener cotización');
+                    const data = await res.json();
+
+                    const oficial = data.find(d => d.casa === 'oficial');
+                    const mep = data.find(d => d.casa === 'bolsa');
+
+                    const fmt = (v) => v != null ? `$${Number(v).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '-';
+
+                    const elOficial = document.getElementById('dolar-oficial');
+                    const elMep = document.getElementById('dolar-mep');
+                    const elHora = document.getElementById('dolar-hora');
+
+                    if (elOficial) elOficial.textContent = oficial ? fmt(oficial.venta) : '-';
+                    if (elMep) elMep.textContent = mep ? fmt(mep.venta) : '-';
+                    if (elHora) {
+                        const ahora = new Date();
+                        elHora.textContent = ahora.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+                    }
+                } catch (e) {
+                    const elHora = document.getElementById('dolar-hora');
+                    if (elHora) elHora.textContent = 'sin conexión';
+                }
             }
 
             toggleTema() {
@@ -7623,11 +7698,11 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA DeltaF VERSION 0.83
+    //                 NOTAS SISTEMA DeltaF VERSION 0.84
     // ====================================================================
     
      - CAMBIOS
-     1) Se reemplaza el filtro, por vista de servicios / estados
+     1) Se agrega item cotizacion dolar en el menu ajustes
 
 
      - BUGS CONOCIDOS:
