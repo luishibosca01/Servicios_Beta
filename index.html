@@ -5533,7 +5533,7 @@
                             // PRIORIDAD 5: PAGADAS normales
                             if (pagadaA && !anualVigenteA && (anualVigenteB || !pagadaB)) return -1;
                             if (pagadaB && !anualVigenteB && (anualVigenteA || !pagadaA)) return 1;
-                            if (pagadaA && pagadaA && fechaA && fechaB) return fechaA - fechaB;
+                            if (pagadaA && pagadaB && fechaA && fechaB) return fechaA - fechaB;
 
                             // PRIORIDAD 6: PAGADAS ANUALES VIGENTES → al final
                             return 0;
