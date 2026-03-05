@@ -1358,8 +1358,8 @@
             align-items: center;
             justify-content: center;
             gap: 0.75rem;
-            min-width: 200px;
-            max-width: 90%;
+            min-width: 300px;
+            max-width: 100%;
             padding: 1rem 1.5rem;
             border-radius: var(--radius);
             background: var(--bg-card);
@@ -1476,7 +1476,8 @@
             text-align: center;
         }
 
-        #ingresos-indicator {
+        #ingresos-indicator,
+        #blur-indicator {
             margin-left: auto;
             padding-right: 1rem;
         }
@@ -1725,6 +1726,10 @@
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" class="icon-line" stroke-width="2"
                 stroke="currentColor" fill="none"></path>
         </symbol>
+        <symbol id="icon-eye" viewBox="0 0 24 24">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" class="icon-line" stroke="currentColor"></path>
+            <circle cx="12" cy="12" r="3" class="icon-line" stroke="currentColor"></circle>
+        </symbol>
         <symbol id="icon-clock" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2" />
             <polyline points="12 7 12 12 15 15" fill="none" stroke="currentColor" stroke-width="2"
@@ -1966,6 +1971,13 @@
                     <span>Categorías</span>
                 </div>
             </div>
+            <div class="menu-item" id="menu-toggle-blur">
+                <svg class="icon">
+                    <use href="#icon-eye" />
+                </svg>
+                <span>Ocultar montos</span>
+                <span id="blur-indicator"></span>
+            </div>
             <div class="menu-item" id="menu-toggle-ingresos">
                 <svg class="icon">
                     <use href="#icon-dollar" />
@@ -1993,7 +2005,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">Lushibosca 0.83</div> <!-- DeltaF -->
+            <div class="menu-version">Lushibosca 0.82</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -2988,6 +3000,7 @@
                 this.THEME_KEY = 'gestion_servicios_theme';
                 this.mostrandoPagadoMes = localStorage.getItem('resumen-mostrar-pagado') === 'true';
                 this.resumenDesblurado = false; // Siempre empieza blureado al cargar
+                this.blurHabilitado = localStorage.getItem('blur-montos') === 'true';
                 this.datosResumen = { pendiente: 0, pagadoMes: 0, totalPeriodo: 0 };
                 this.serviciosCollapseState = 'expanded'; // 'expanded', 'semi-collapsed', 'collapsed'
 
@@ -3041,6 +3054,8 @@
                 if (indicator) {
                     indicator.textContent = ingresosHabilitado ? 'SI' : 'NO';
                 }
+                const blurIndicator = document.getElementById('blur-indicator');
+                if (blurIndicator) blurIndicator.textContent = this.blurHabilitado ? 'SI' : 'NO';
 
                 // Restaurar estado de estadísticas colapsadas
                 const estadisticasColapsadas = localStorage.getItem('estadisticas-collapsed') === 'true';
@@ -3533,7 +3548,9 @@
                                 if (!esMesActual && !esMesSiguiente && !esMesPasado) return;
                             } else if (this.modoCalculadoraTipo === 'pagados') {
                                 if (!factura.pagada) return;
-                                if (!esMesActual) return; // Solo mes en curso
+                                const fechaPago = factura.fechaPago ? new Date(factura.fechaPago + 'T00:00:00') : null;
+                                const esPagadaEsteMes = fechaPago && fechaPago.getMonth() === mesActual && fechaPago.getFullYear() === anioActual;
+                                if (!esMesActual && !esPagadaEsteMes) return;
                             }
 
                             if ((factura.moneda || 'ars') === 'usd') {
@@ -3665,6 +3682,7 @@
                 document.getElementById('menu-borrar-ingresos').addEventListener('click', () => this.limpiarDatos('ingresos'));
                 document.getElementById('menu-borrar-categorias').addEventListener('click', () => this.limpiarDatos('categorias'));
                 document.getElementById('menu-toggle-ingresos').addEventListener('click', () => this.toggleIngresos());
+                document.getElementById('menu-toggle-blur').addEventListener('click', () => this.toggleBlur());
 
                 // Menú agregar
                 document.getElementById('menu-agregar-overlay').addEventListener('click', () => this.cerrarMenuAgregar());
@@ -4128,7 +4146,7 @@
     `;
                 document.getElementById('resumen-mes').innerHTML = resumenHTML;
                 localStorage.setItem('resumen-mostrar-pagado', 'false');
-                if (!this.resumenDesblurado && (hayARS || hayUSD)) {
+                if (this.blurHabilitado && !this.resumenDesblurado && (hayARS || hayUSD)) {
                     const el = document.getElementById('resumen-toggle');
                     if (el) el.classList.add('resumen-blur');
                 }
@@ -4203,7 +4221,7 @@
     `;
                 document.getElementById('resumen-mes').innerHTML = resumenHTML;
                 localStorage.setItem('resumen-mostrar-pagado', 'true');
-                if (!this.resumenDesblurado && (hayARS || hayUSD)) {
+                if (this.blurHabilitado && !this.resumenDesblurado && (hayARS || hayUSD)) {
                     const el = document.getElementById('resumen-toggle');
                     if (el) el.classList.add('resumen-blur');
                 }
@@ -5203,7 +5221,10 @@
                             const moneda = facturaAnualVigente.moneda || 'ars';
                             montoTexto = this.formatearMoneda(facturaAnualVigente.monto, moneda);
                             fechaTexto = this.formatearFecha(facturaAnualVigente.fecha);
-                            estado = 'Pago anual';
+                            const fechaPagoAnual = facturaAnualVigente.fechaPago
+                                ? this.formatearFecha(facturaAnualVigente.fechaPago)
+                                : 'Sin fecha';
+                            estado = `Pagado ${fechaPagoAnual} · Anual`;
                             claseEstado = 'pagado';
                         } else {
                             estado = 'Sin facturas de este mes';
@@ -5790,7 +5811,7 @@
             agruparPorAno(items) {
                 const itemsPorAno = {};
                 items.forEach(item => {
-                    const ano = new Date(item.fecha).getFullYear();
+                    const ano = new Date(item.fecha + 'T00:00:00').getFullYear();
                     if (!itemsPorAno[ano]) {
                         itemsPorAno[ano] = [];
                     }
@@ -7009,6 +7030,29 @@
                 if (use) use.setAttribute('href', esDark ? '#icon-sun' : '#icon-moon');
             }
 
+            toggleBlur() {
+                this.blurHabilitado = !this.blurHabilitado;
+                localStorage.setItem('blur-montos', this.blurHabilitado.toString());
+
+                const indicator = document.getElementById('blur-indicator');
+                if (indicator) indicator.textContent = this.blurHabilitado ? 'SI' : 'NO';
+
+                // Si se deshabilita, desblurear inmediatamente
+                if (!this.blurHabilitado) {
+                    this.resumenDesblurado = true;
+                    const el = document.getElementById('resumen-toggle');
+                    if (el) el.classList.remove('resumen-blur');
+                } else {
+                    // Si se habilita, volver a blurear
+                    this.resumenDesblurado = false;
+                    const el = document.getElementById('resumen-toggle');
+                    if (el) el.classList.add('resumen-blur');
+                }
+
+                this.mostrarToast(`Ocultar montos ${this.blurHabilitado ? 'habilitado' : 'deshabilitado'}`, 'success');
+                this.cerrarMenuAjustes();
+            }
+
             toggleIngresos() {
                 const habilitado = localStorage.getItem(this.INGRESOS_KEY) !== 'false';
                 const nuevoEstado = !habilitado;
@@ -7594,13 +7638,15 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA DeltaF VERSION 0.83
+    //                 NOTAS SISTEMA DeltaF VERSION 0.82
     // ====================================================================
     
      - CAMBIOS
      1) Se agrega blur al cargar la pagina
      2) Se agrega modal con informacion de todos los pagos del mes y facturas que fueros pagadas antes, o que vencian
      otro mes y fueron pagadas este mes
+     3) Se agrega opcion opcional de blureado
+     4) modificaciones en el calculo de calculadora/pagados
 
 
      - BUGS CONOCIDOS:
