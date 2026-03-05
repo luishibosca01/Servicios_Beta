@@ -1975,12 +1975,6 @@
                     <span>Categorías</span>
                 </div>
             </div>
-            <div class="menu-item" id="menu-categorias">
-                <svg class="icon">
-                    <use href="#icon-categorias" />
-                </svg>
-                <span>Categorías</span>
-            </div>
             <div class="menu-item menu-item-parent" id="menu-dolar">
                 <svg class="icon">
                     <use href="#icon-dollar" />
@@ -2001,6 +1995,13 @@
                     <span class="dolar-widget-valor" id="dolar-mep">-</span>
                 </div>
             </div>
+            <div class="menu-item" id="menu-categorias">
+                <svg class="icon">
+                    <use href="#icon-categorias" />
+                </svg>
+                <span>Categorías</span>
+            </div>
+
             <div class="menu-item" id="menu-toggle-blur">
                 <svg class="icon">
                     <use href="#icon-eye" />
@@ -7196,8 +7197,10 @@
                 // Cerrar submenús animados
                 document.getElementById('opciones-importacion')?.classList.remove('open');
                 document.getElementById('opciones-borrar')?.classList.remove('open');
+                document.getElementById('opciones-dolar')?.classList.remove('open');
                 document.getElementById('menu-importar')?.classList.remove('open');
                 document.getElementById('menu-limpiar')?.classList.remove('open');
+                document.getElementById('menu-dolar')?.classList.remove('open');
 
                 // Restaurar scroll del body
                 document.body.classList.remove('modal-open');
