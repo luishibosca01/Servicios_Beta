@@ -2030,7 +2030,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">Lushibosca 0.84</div> <!-- DeltaF -->
+            <div class="menu-version">Lushibosca 0.85</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -2777,20 +2777,18 @@
             <div class="modal-body">
                 <div style="display: flex; flex-direction: column; gap: 1rem;">
                     <div id="perfiles-lista"></div>
-                    <div class="form-actions" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
-                        <button type="submit" id="btn-crear-perfil" onclick="app.abrirModalCrearPerfil()"
-                            style="display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
-                            <svg class="icon" style="width: 18px; height: 18px;">
-                                <use href="#icon-plus" />
-                            </svg>
-                            Crear perfil
-                        </button>
-                        <button type="button" onclick="app.cerrarModal('modal-perfiles')">
-                            <svg class="icon">
-                                <use href="#icon-cancel" />
-                            </svg>Cerrar
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <input type="text" id="perfil-nuevo-nombre" maxlength="20"
+                            placeholder="Nombre del perfil..."
+                            style="flex: 1;"
+                            onkeydown="if(event.key==='Enter'){event.preventDefault();app.crearPerfilInline();}">
+                        <button class="icon-btn" onclick="app.crearPerfilInline()" title="Agregar perfil">
+                            <svg class="icon"><use href="#icon-plus" /></svg>
                         </button>
                     </div>
+                    <button type="button" onclick="app.cerrarModal('modal-perfiles')">
+                        <svg class="icon"><use href="#icon-cancel" /></svg> Cerrar
+                    </button>
                 </div>
             </div>
         </div>
@@ -2993,6 +2991,7 @@
                 this._anoExpandidoIngresos = {};
                 try {
                     this._catColapsadas = JSON.parse(localStorage.getItem('cat-colapsadas') || '{}');
+                    this._catColapsadasAntesBusqueda = null;
                 } catch (e) {
                     this._catColapsadas = {};
                 }
@@ -3134,9 +3133,34 @@
                 const searchClear = document.getElementById('search-clear');
 
                 searchInput.addEventListener('input', (e) => {
-                    this.terminoBusqueda = e.target.value.toLowerCase().trim();
-                    this.enModoBusqueda = true; // AGREGAR
+                    const termino = e.target.value.toLowerCase().trim();
+
+                    // Al empezar a escribir, guardar estado de grupos
+                    if (!this.terminoBusqueda && termino) {
+                        this._catColapsadasAntesBusqueda = JSON.parse(JSON.stringify(this._catColapsadas));
+                    }
+
+                    this.terminoBusqueda = termino;
+                    this.enModoBusqueda = true;
                     searchClear.style.display = this.terminoBusqueda ? 'flex' : 'none';
+
+                    // Si hay búsqueda activa, expandir grupos con resultados
+                    if (this.terminoBusqueda) {
+                        this.servicios.filter(s => s.id !== this.SERVICIO_INGRESOS_ID).forEach(servicio => {
+                            const coincide = servicio.nombre.toLowerCase().includes(this.terminoBusqueda);
+                            if (coincide) {
+                                // Expandir grupo por categoría
+                                const cat = servicio.categoria || '';
+                                delete this._catColapsadas[cat];
+                                // Expandir grupo por estado
+                                const claseEstado = this.calcularEstadoServicio(servicio).claseEstado;
+                                const esPendiente = ['vencido', 'urgente', 'proximo', 'lejano'].includes(claseEstado);
+                                const keyEstado = esPendiente ? '__estado_pendiente' : `__estado_${claseEstado}`;
+                                delete this._catColapsadas[keyEstado];
+                            }
+                        });
+                    }
+
                     this.renderServicios();
                 });
 
@@ -3144,8 +3168,11 @@
                     searchInput.value = '';
                     this.terminoBusqueda = '';
                     searchClear.style.display = 'none';
+                    if (this._catColapsadasAntesBusqueda !== null) {
+                        this._catColapsadas = this._catColapsadasAntesBusqueda;
+                        this._catColapsadasAntesBusqueda = null;
+                    }
                     this.renderServicios();
-                    // Esperar a que termine el render antes de salir del modo búsqueda
                     setTimeout(() => {
                         this.enModoBusqueda = false;
                     }, 100);
@@ -3156,14 +3183,16 @@
                         searchInput.value = '';
                         this.terminoBusqueda = '';
                         searchClear.style.display = 'none';
+                        if (this._catColapsadasAntesBusqueda !== null) {
+                            this._catColapsadas = this._catColapsadasAntesBusqueda;
+                            this._catColapsadasAntesBusqueda = null;
+                        }
                         this.renderServicios();
                         searchInput.blur();
-                        // Esperar a que termine el render antes de salir del modo búsqueda
                         setTimeout(() => {
                             this.enModoBusqueda = false;
                         }, 100);
                     }
-
                 });
 
             }
@@ -3274,16 +3303,12 @@
                 const lista = document.getElementById('perfiles-lista');
                 const perfilesArray = Object.values(this.perfiles);
 
-                const btnCrear = document.getElementById('btn-crear-perfil');
-                if (perfilesArray.length >= 4) {
-                    btnCrear.disabled = true;
-                    btnCrear.style.opacity = '0.5';
-                    btnCrear.style.cursor = 'not-allowed';
-                } else {
-                    btnCrear.disabled = false;
-                    btnCrear.style.opacity = '1';
-                    btnCrear.style.cursor = 'pointer';
-                    btnCrear.title = '';
+                // Deshabilitar input si se alcanzó el máximo
+                const inputNuevo = document.getElementById('perfil-nuevo-nombre');
+                if (inputNuevo) {
+                    const maxAlcanzado = perfilesArray.length >= 4;
+                    inputNuevo.disabled = maxAlcanzado;
+                    inputNuevo.placeholder = maxAlcanzado ? 'Máximo 4 perfiles' : 'Nombre del perfil...';
                 }
 
                 lista.innerHTML = perfilesArray.map(perfil => {
@@ -3342,12 +3367,40 @@
                 }).join('');
             }
 
-            abrirModalCrearPerfil() {
-                this.perfilEditando = null;
-                document.getElementById('titulo-editar-perfil').textContent = 'Crear Perfil';
-                document.getElementById('form-perfil').reset();
-                this.cerrarModal('modal-perfiles');
-                this.abrirModal('modal-editar-perfil');
+            crearPerfilInline() {
+                const input = document.getElementById('perfil-nuevo-nombre');
+                const nombre = input.value.trim();
+
+                if (!nombre) {
+                    this.mostrarToast('Ingresá un nombre', 'error');
+                    return;
+                }
+
+                const nombreExiste = Object.values(this.perfiles).some(p =>
+                    p.nombre.toLowerCase() === nombre.toLowerCase()
+                );
+                if (nombreExiste) {
+                    this.mostrarToast('Ya existe un perfil con ese nombre', 'error');
+                    return;
+                }
+
+                if (Object.keys(this.perfiles).length >= 4) {
+                    this.mostrarToast('Máximo 4 perfiles permitidos', 'error');
+                    return;
+                }
+
+                const nuevoId = 'perfil_' + Date.now();
+                this.perfiles[nuevoId] = {
+                    id: nuevoId,
+                    nombre: nombre,
+                    creado: new Date().toISOString()
+                };
+                localStorage.setItem(`gestion_servicios_datos_${nuevoId}`, JSON.stringify([]));
+
+                input.value = '';
+                this.guardarPerfiles();
+                this.mostrarToast('Perfil creado', 'success');
+                this.abrirModalPerfiles();
             }
 
             abrirModalEditarPerfil(perfilId) {
@@ -3355,6 +3408,8 @@
                 const perfil = this.perfiles[perfilId];
                 document.getElementById('titulo-editar-perfil').textContent = 'Editar Perfil';
                 document.getElementById('perfil-nombre').value = perfil.nombre;
+                const inputNuevo = document.getElementById('perfil-nuevo-nombre');
+                if (inputNuevo) inputNuevo.value = '';
                 this.cerrarModal('modal-perfiles');
                 this.abrirModal('modal-editar-perfil');
             }
@@ -3840,13 +3895,34 @@
                 document.addEventListener('keydown', (e) => {
                     // ESC para cerrar modales o salir del modo calculadora
                     if (e.key === 'Escape') {
+                        const hayModalAbierto = document.querySelector('.modal.active');
+                        const hayMenuAbierto = document.getElementById('menu-ajustes').classList.contains('active')
+                            || document.getElementById('menu-agregar').classList.contains('active');
+
                         if (this.modoCalculadora) {
                             this.desactivarModoCalculadora();
-                        } else {
-                            this.cerrarTodosLosModales();
-                            this.cerrarMenuAjustes()
+                            return;
                         }
-                        return;
+                        if (hayModalAbierto || hayMenuAbierto) {
+                            this.cerrarTodosLosModales();
+                            this.cerrarMenuAjustes();
+                            return;
+                        }
+                        // Sin modales ni menús: limpiar búsqueda si hay una activa
+                        if (this.terminoBusqueda) {
+                            const searchInput = document.getElementById('search-input');
+                            const searchClear = document.getElementById('search-clear');
+                            searchInput.value = '';
+                            this.terminoBusqueda = '';
+                            searchClear.style.display = 'none';
+                            if (this._catColapsadasAntesBusqueda !== null) {
+                                this._catColapsadas = this._catColapsadasAntesBusqueda;
+                                this._catColapsadasAntesBusqueda = null;
+                            }
+                            this.renderServicios();
+                            setTimeout(() => { this.enModoBusqueda = false; }, 100);
+                            return;
+                        }
                     }
 
                     // Enter en modal nueva categoría
@@ -5323,10 +5399,7 @@
                 // Si solo hay una categoría (o ninguna), no mostrar encabezado de grupo
                 if (this._vistaEstados) {
                     const grupos = [
-                        { key: 'vencido', label: 'Vencidos', clases: ['vencido'] },
-                        { key: 'urgente', label: 'Urgentes', clases: ['urgente'] },
-                        { key: 'proximo', label: 'Próximos', clases: ['proximo'] },
-                        { key: 'lejano', label: 'Lejanos', clases: ['lejano'] },
+                        { key: 'pendiente', label: 'Pendientes', clases: ['vencido', 'urgente', 'proximo', 'lejano'] },
                         { key: 'sin-facturas-mes', label: 'Sin facturas este mes', clases: ['sin-facturas-mes'] },
                         { key: 'pagado', label: 'Pagados', clases: ['pagado'] },
                         { key: 'sin-facturas', label: 'Sin facturas', clases: ['sin-facturas'] },
@@ -7701,11 +7774,12 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA DeltaF VERSION 0.84
+    //                 NOTAS SISTEMA DeltaF VERSION 0.85
     // ====================================================================
     
      - CAMBIOS
-     1) Se agrega item cotizacion dolar en el menu ajustes
+     1) mejoras en la funcion de busqueda
+     2) se elimina el modal agregar perfil, y se incluye la funcion en el modal perfiles
 
 
      - BUGS CONOCIDOS:
