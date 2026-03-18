@@ -2060,7 +2060,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">Lushibosca 0.87</div> <!-- DeltaF -->
+            <div class="menu-version">Lushibosca 0.88</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -2148,6 +2148,13 @@
 
                             <div class="calculador-resultados" id="calculador-resultados"></div>
                         </div>
+
+                        <button type="button" id="btn-reporte-estadisticas"
+                            onclick="app.generarReporteEstadisticas()"
+                            style="width:100%; margin-top:1rem; display:flex; align-items:center; justify-content:center; gap:0.5rem;">
+                            <svg class="icon"><use href="#icon-download" /></svg>
+                            Exportar reporte
+                        </button>
                     </div>
                 </div>
             </div>
@@ -2397,14 +2404,45 @@
                     <button type="button" onclick="app.gistMergeAplicar('merge')">
                         <svg class="icon">
                             <use href="#icon-download" />
-                        </svg> Combinar (agregar nuevos sin tocar existentes)
+                        </svg> Combinar
                     </button>
                     <button type="button" onclick="app.gistMergeAplicar('replace')">
                         <svg class="icon">
                             <use href="#icon-broom" />
-                        </svg> Reemplazar todo con datos del Gist
+                        </svg> Reemplazar
                     </button>
                     <button type="button" class="btn-secondary" onclick="app.cerrarModal('modal-gist-merge')">
+                        <svg class="icon">
+                            <use href="#icon-cancel" />
+                        </svg> Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal confirmación importación desde archivo -->
+    <div class="modal" id="modal-import-confirm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Restaurar desde archivo</h3>
+            </div>
+            <div class="modal-body" style="display:flex; flex-direction:column; gap:1rem;">
+                <div id="import-confirm-resumen"
+                    style="font-size:0.9rem; color:var(--text-muted); background:var(--bg-body); border-radius:8px; padding:0.75rem;">
+                </div>
+                <div style="display:flex; flex-direction:column; gap:0.5rem;">
+                    <button type="button" onclick="app.importarAplicar('combinar')">
+                        <svg class="icon">
+                            <use href="#icon-download" />
+                        </svg> Combinar
+                    </button>
+                    <button type="button" onclick="app.importarAplicar('reemplazar')">
+                        <svg class="icon">
+                            <use href="#icon-broom" />
+                        </svg> Reemplazar
+                    </button>
+                    <button type="button" onclick="app.cerrarModal('modal-import-confirm')">
                         <svg class="icon">
                             <use href="#icon-cancel" />
                         </svg> Cancelar
@@ -3491,7 +3529,7 @@
                                     ${esActivo ? '<span style="color: var(--c-green); font-size: 0.9rem;">● Activo</span>' : ''}
                                 </div>
                                 <div style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.25rem;">
-                                    ${cantidadServicios} servicio${cantidadServicios !== 1 ? 's' : ''}
+                                    ${this._plural(cantidadServicios, 'servicio', 'servicios')}
                                 </div>
                             </div>
                             <div style="display: flex; gap: 0.5rem;" onclick="event.stopPropagation();">
@@ -3727,14 +3765,7 @@
                 let totalUSD = 0;
                 let contadorFacturas = 0;
 
-                // Obtener fecha actual
-                const ahora = new Date();
-                const mesActual = ahora.getMonth(); // 0-11
-                const anioActual = ahora.getFullYear();
-
-                // Calcular mes siguiente
-                const mesSiguiente = mesActual === 11 ? 0 : mesActual + 1;
-                const anioSiguiente = mesActual === 11 ? anioActual + 1 : anioActual;
+                const { mes: mesActual, anio: anioActual, mesSiguiente, anioSiguiente } = this._mesActualInfo();
 
                 this.serviciosSeleccionados.forEach(servicioId => {
                     const servicio = this.servicios.find(s => s.id === servicioId);
@@ -3751,8 +3782,7 @@
 
                             if (this.modoCalculadoraTipo === 'pendientes') {
                                 if (factura.pagada) return;
-                                const mesPasado = mesActual === 0 ? 11 : mesActual - 1;
-                                const anioPasado = mesActual === 0 ? anioActual - 1 : anioActual;
+                                const { mesPasado, anioPasado } = this._mesActualInfo();
                                 const esMesSiguiente = (mesFactura === mesSiguiente && anioFactura === anioSiguiente);
                                 const esMesPasado = (mesFactura === mesPasado && anioFactura === anioPasado);
                                 if (!esMesActual && !esMesSiguiente && !esMesPasado) return;
@@ -4178,9 +4208,7 @@
             // ========================================
 
             actualizarResumenMes() {
-                const hoy = new Date();
-                const mesActual = hoy.getMonth();
-                const añoActual = hoy.getFullYear();
+                const { mes: mesActual, anio: añoActual } = this._mesActualInfo();
 
                 let totalAPagarARS = 0, totalAPagarUSD = 0;
                 let totalPagadoMesARS = 0, totalPagadoMesUSD = 0;
@@ -4261,8 +4289,7 @@
             obtenerColorBordeMasPrioritario() {
                 const hoy = new Date();
                 hoy.setHours(0, 0, 0, 0);
-                const mesActual = hoy.getMonth();
-                const añoActual = hoy.getFullYear();
+                const { mes: mesActual, anio: añoActual } = this._mesActualInfo();
 
                 let prioridad = 5; // 1=vencido/urgente, 2=proximo, 3=lejano, 4=pagado, 5=sin estado
                 let colorBorde = '';
@@ -4321,74 +4348,40 @@
                 return colorBorde;
             }
 
-            mostrarPendienteEnResumen() {
-                this.mostrandoPagadoMes = false;
+            // ── Helpers reutilizables ──────────────────────────────────────
 
-                const fechaHoy = new Date();
-                const opciones = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
-                const fechaFormateada = fechaHoy.toLocaleDateString('es-AR', opciones);
+            _plural(n, singular, plural) {
+                return `${n} ${n !== 1 ? plural : singular}`;
+            }
 
-                const colorBorde = this.obtenerColorBordeMasPrioritario();
-
-                const totalARS = this.datosResumen.totalPeriodoARS || 0;
-                const totalUSD = this.datosResumen.totalPeriodoUSD || 0;
-                const pendienteARS = this.datosResumen.pendienteARS || 0;
-                const pendienteUSD = this.datosResumen.pendienteUSD || 0;
-                const cantidadPendientesEsteMes = this.datosResumen.cantidadPendientesEsteMes || 0;
-
-                const pagadoDelMesARS = this.datosResumen.pagadoMesARS || 0;
-                const porcentajePagado = totalARS > 0 ? Math.min((pagadoDelMesARS / totalARS) * 100, 100) : (pendienteUSD === 0 ? 100 : 0);
-
-                const estadoActual = {
-                    tipo: 'pendiente',
-                    pendienteARS, pendienteUSD, porcentajePagado, colorBorde, fecha: fechaFormateada
+            _mesActualInfo() {
+                const ahora = new Date();
+                const mes = ahora.getMonth();
+                const anio = ahora.getFullYear();
+                return {
+                    mes, anio,
+                    mesSiguiente: mes === 11 ? 0 : mes + 1,
+                    anioSiguiente: mes === 11 ? anio + 1 : anio,
+                    mesPasado: mes === 0 ? 11 : mes - 1,
+                    anioPasado: mes === 0 ? anio - 1 : anio,
                 };
+            }
 
-                const estadoCambio = this._objetosCambiaron(this.ultimoEstadoResumen, estadoActual);
-                const animacion = estadoCambio ? 'animation: slideDownFade 0.2s ease-out;' : '';
+            _postGuardado() {
+                this.guardarDatos();
+                this.guardarEstado();
+                this.renderServicios();
+                this.actualizarEstadisticas();
+            }
 
-                const estaAlDia = pendienteARS === 0 && pendienteUSD === 0;
-                const hayUSD = pendienteUSD > 0;
-                const hayARS = pendienteARS > 0;
-
-                let valorMostrar;
-                if (estaAlDia) {
-                    valorMostrar = '<span style="font-size: 2rem;">Al día</span>';
-                } else if (hayARS && hayUSD) {
-                    valorMostrar = `<div class="resumen-valor">${this.formatearMoneda(pendienteARS, 'ars')}</div>
-                        <div class="resumen-valor-usd">${this.formatearMoneda(pendienteUSD, 'usd')}</div>`;
-                } else if (hayUSD) {
-                    valorMostrar = this.formatearMoneda(pendienteUSD, 'usd');
-                } else {
-                    valorMostrar = this.formatearMoneda(pendienteARS, 'ars');
-                }
-
-                const resumenHTML = `
-        <div class="resumen-monto" id="resumen-toggle" style="${animacion}">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <div class="resumen-titulo"><svg class="icon"><use href="#icon-deuda" /></svg> Resumen de Deuda</div>
-                <button class="icon-btn transparent" style="width:32px;height:32px;" onclick="event.stopPropagation(); app.abrirModalInfoResumen()">
-                    <svg viewBox="0 0 24 24" style="width:20px;height:20px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><circle cx="12" cy="8" r="1.5" fill="currentColor" stroke="none"/></svg>
-                </button>
-            </div>
-            ${(hayARS && hayUSD) ? valorMostrar : `<div class="resumen-valor">${valorMostrar}</div>`}
-            <div class="resumen-footer">                
-                <div class="resumen-progreso">
-                    <div class="resumen-progreso-barra" style="width: ${porcentajePagado}%"></div>
-                </div>
-                <div class="resumen-label">Pendiente${cantidadPendientesEsteMes > 0 ? ` (${cantidadPendientesEsteMes})` : ''}</div>
-                <div class="resumen-fecha">${fechaFormateada}</div>
-            </div>
-        </div>
-    `;
-                document.getElementById('resumen-mes').innerHTML = resumenHTML;
-                localStorage.setItem('resumen-mostrar-pagado', 'false');
-                if (this.blurHabilitado && !this.resumenDesblurado && (hayARS || hayUSD)) {
+            _aplicarBlurResumen(hayMonto) {
+                if (this.blurHabilitado && !this.resumenDesblurado && hayMonto) {
                     const el = document.getElementById('resumen-toggle');
                     if (el) el.classList.add('resumen-blur');
                 }
-                this.ultimoEstadoResumen = estadoActual;
+            }
 
+            _actualizarBordeResumen(colorBorde) {
                 const cardResumen = document.getElementById('resumen-mes').closest('.card');
                 if (cardResumen) {
                     cardResumen.classList.remove('borde-vencido', 'borde-urgente', 'borde-proximo', 'borde-lejano', 'borde-pagado');
@@ -4396,79 +4389,92 @@
                 }
             }
 
+            _buildValorResumen(montoARS, montoUSD, textoVacio) {
+                const hayARS = montoARS > 0;
+                const hayUSD = montoUSD > 0;
+                if (!hayARS && !hayUSD) return { valorMostrar: `<span style="font-size:2rem;">${textoVacio}</span>`, hayARS, hayUSD };
+                let valorMostrar;
+                if (hayARS && hayUSD) {
+                    valorMostrar = `<div class="resumen-valor">${this.formatearMoneda(montoARS, 'ars')}</div>
+                        <div class="resumen-valor-usd">${this.formatearMoneda(montoUSD, 'usd')}</div>`;
+                } else if (hayUSD) {
+                    valorMostrar = this.formatearMoneda(montoUSD, 'usd');
+                } else {
+                    valorMostrar = this.formatearMoneda(montoARS, 'ars');
+                }
+                return { valorMostrar, hayARS, hayUSD };
+            }
+
+            // ── Resumen unificado ──────────────────────────────────────────
+
+            mostrarPendienteEnResumen() {
+                this.mostrandoPagadoMes = false;
+                this._renderResumen('pendiente');
+            }
+
             mostrarPagadoEnResumen() {
                 this.mostrandoPagadoMes = true;
+                this._renderResumen('pagado');
+            }
 
-                const fechaHoy = new Date();
-                const opciones = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
-                const fechaFormateada = fechaHoy.toLocaleDateString('es-AR', opciones);
-
+            _renderResumen(tipo) {
+                const esPendiente = tipo === 'pendiente';
+                const fechaFormateada = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
                 const colorBorde = this.obtenerColorBordeMasPrioritario();
 
                 const totalARS = this.datosResumen.totalPeriodoARS || 0;
-                const pagadoMesARS = this.datosResumen.pagadoMesARS || 0;
-                const pagadoMesUSD = this.datosResumen.pagadoMesUSD || 0;
-                const pagadoDelMesActualARS = this.datosResumen.pagadoDelMesActualARS || 0;
-                const cantidadPagadasVencenEsteMes = this.datosResumen.cantidadPagadasVencenEsteMes || 0;
 
-                const porcentajePagado = totalARS > 0
-                    ? Math.min((pagadoMesARS / totalARS) * 100, 100)
-                    : 0;
+                let montoARS, montoUSD, porcentajePagado, contador, textoVacio, icono, titulo, label;
 
-                const estadoActual = {
-                    tipo: 'pagado',
-                    pagadoMesARS, pagadoMesUSD, porcentajePagado, colorBorde, fecha: fechaFormateada
-                };
-
-                const estadoCambio = this._objetosCambiaron(this.ultimoEstadoResumen, estadoActual);
-                const animacion = estadoCambio ? 'animation: slideDownFade 0.2s ease-out;' : '';
-
-                const hayUSD = pagadoMesUSD > 0;
-                const hayARS = pagadoMesARS > 0;
-
-                let valorMostrar;
-                if (!hayARS && !hayUSD) {
-                    valorMostrar = '<span style="font-size: 2rem;">Sin pagos</span>';
-                } else if (hayARS && hayUSD) {
-                    valorMostrar = `<div class="resumen-valor">${this.formatearMoneda(pagadoMesARS, 'ars')}</div>
-                        <div class="resumen-valor-usd">${this.formatearMoneda(pagadoMesUSD, 'usd')}</div>`;
-                } else if (hayUSD) {
-                    valorMostrar = this.formatearMoneda(pagadoMesUSD, 'usd');
+                if (esPendiente) {
+                    montoARS = this.datosResumen.pendienteARS || 0;
+                    montoUSD = this.datosResumen.pendienteUSD || 0;
+                    const pagadoDelMesARS = this.datosResumen.pagadoMesARS || 0;
+                    porcentajePagado = totalARS > 0 ? Math.min((pagadoDelMesARS / totalARS) * 100, 100) : (montoUSD === 0 ? 100 : 0);
+                    contador = this.datosResumen.cantidadPendientesEsteMes || 0;
+                    textoVacio = 'Al día';
+                    icono = '#icon-deuda';
+                    titulo = 'Resumen de Deuda';
+                    label = `Pendiente${contador > 0 ? ` (${contador})` : ''}`;
                 } else {
-                    valorMostrar = this.formatearMoneda(pagadoMesARS, 'ars');
+                    montoARS = this.datosResumen.pagadoMesARS || 0;
+                    montoUSD = this.datosResumen.pagadoMesUSD || 0;
+                    porcentajePagado = totalARS > 0 ? Math.min((montoARS / totalARS) * 100, 100) : 0;
+                    contador = this.datosResumen.cantidadPagadasVencenEsteMes || 0;
+                    textoVacio = 'Sin pagos';
+                    icono = '#icon-pagado';
+                    titulo = 'Resumen de Pagos';
+                    label = `Pagado${contador > 0 ? ` (${contador})` : ''}`;
                 }
+
+                const estadoActual = { tipo, montoARS, montoUSD, porcentajePagado, colorBorde, fecha: fechaFormateada };
+                const animacion = this._objetosCambiaron(this.ultimoEstadoResumen, estadoActual) ? 'animation: slideDownFade 0.2s ease-out;' : '';
+
+                const { valorMostrar, hayARS, hayUSD } = this._buildValorResumen(montoARS, montoUSD, textoVacio);
 
                 const resumenHTML = `
         <div class="resumen-monto" id="resumen-toggle" style="${animacion}">
             <div style="display:flex; justify-content:space-between; align-items:center;">
-                <div class="resumen-titulo"><svg class="icon"><use href="#icon-pagado" /></svg> Resumen de Pagos</div>
+                <div class="resumen-titulo"><svg class="icon"><use href="${icono}" /></svg> ${titulo}</div>
                 <button class="icon-btn transparent" style="width:32px;height:32px;" onclick="event.stopPropagation(); app.abrirModalInfoResumen()">
                     <svg viewBox="0 0 24 24" style="width:20px;height:20px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><circle cx="12" cy="8" r="1.5" fill="currentColor" stroke="none"/></svg>
                 </button>
             </div>
             ${(hayARS && hayUSD) ? valorMostrar : `<div class="resumen-valor">${valorMostrar}</div>`}
-            <div class="resumen-footer">                
+            <div class="resumen-footer">
                 <div class="resumen-progreso">
                     <div class="resumen-progreso-barra" style="width: ${porcentajePagado}%"></div>
                 </div>
-                <div class="resumen-label">Pagado${cantidadPagadasVencenEsteMes > 0 ? ` (${cantidadPagadasVencenEsteMes})` : ''}</div>
+                <div class="resumen-label">${label}</div>
                 <div class="resumen-fecha">${fechaFormateada}</div>
             </div>
         </div>
     `;
                 document.getElementById('resumen-mes').innerHTML = resumenHTML;
-                localStorage.setItem('resumen-mostrar-pagado', 'true');
-                if (this.blurHabilitado && !this.resumenDesblurado && (hayARS || hayUSD)) {
-                    const el = document.getElementById('resumen-toggle');
-                    if (el) el.classList.add('resumen-blur');
-                }
+                localStorage.setItem('resumen-mostrar-pagado', esPendiente ? 'false' : 'true');
+                this._aplicarBlurResumen(hayARS || hayUSD);
                 this.ultimoEstadoResumen = estadoActual;
-
-                const cardResumen = document.getElementById('resumen-mes').closest('.card');
-                if (cardResumen) {
-                    cardResumen.classList.remove('borde-vencido', 'borde-urgente', 'borde-proximo', 'borde-lejano', 'borde-pagado');
-                    if (colorBorde) cardResumen.classList.add(colorBorde);
-                }
+                this._actualizarBordeResumen(colorBorde);
             }
 
             abrirModalInfoResumen() {
@@ -6997,6 +7003,110 @@
                 }
             }
 
+            _generarResumenComparacion(serviciosRemoto, etiqueta = 'archivo') {
+                const idsLocales = new Set(this.servicios.map(s => s.id));
+                const idsRemoto = new Set(serviciosRemoto.map(s => s.id));
+
+                const soloEnRemoto = serviciosRemoto.filter(s => !idsLocales.has(s.id));
+                const enAmbos = serviciosRemoto.filter(s => idsLocales.has(s.id));
+                const soloLocal = this.servicios.filter(s => !idsRemoto.has(s.id));
+
+                // Facturas nuevas en servicios que existen en ambos
+                let facturasNuevas = 0;
+                let facturasConflicto = 0;
+                enAmbos.forEach(sRemoto => {
+                    const sLocal = this.servicios.find(s => s.id === sRemoto.id);
+                    if (!sLocal) return;
+                    const idsFacturasLocales = new Set(sLocal.facturas.map(f => f.id));
+                    sRemoto.facturas.forEach(f => {
+                        if (!idsFacturasLocales.has(f.id)) {
+                            facturasNuevas++;
+                        } else {
+                            const fLocal = sLocal.facturas.find(fl => fl.id === f.id);
+                            if (fLocal && (fLocal.monto !== f.monto || fLocal.fecha !== f.fecha ||
+                                fLocal.pagada !== f.pagada || fLocal.fechaPago !== f.fechaPago)) {
+                                facturasConflicto++;
+                            }
+                        }
+                    });
+                });
+
+                const totalFacturasRemoto = serviciosRemoto.reduce((acc, s) => acc + s.facturas.length, 0);
+
+                return `
+                    <strong>En ${etiqueta}:</strong> ${serviciosRemoto.length} servicio(s), ${totalFacturasRemoto} factura(s)<br>
+                    <strong>Servicios nuevos (solo en ${etiqueta}):</strong> ${soloEnRemoto.length}<br>
+                    <strong>Servicios en ambos:</strong> ${enAmbos.length}
+                    ${facturasNuevas > 0 ? `<br><span style="padding-left:1rem">↳ Facturas nuevas: ${facturasNuevas}</span>` : ''}
+                    ${facturasConflicto > 0 ? `<br><span style="padding-left:1rem">↳ Facturas con cambios: ${facturasConflicto}</span>` : ''}
+                    <br><strong>Solo local (se perderían al reemplazar):</strong> ${soloLocal.length} servicio(s)
+                `;
+            }
+
+            _aplicarImportacion(modo, datos) {
+                const cantidad = datos.servicios.length;
+                const facturas = datos.servicios.reduce((acc, s) => acc + s.facturas.length, 0);
+                const cats = Array.isArray(datos.categorias) ? datos.categorias : [];
+                const catsTxt = cats.length > 0 ? `, ${this._plural(cats.length, 'categoría', 'categorías')}` : '';
+
+                if (modo === 'combinar') {
+                    let serviciosAgregados = 0, facturasAgregadas = 0, facturasActualizadas = 0, categoriasAgregadas = 0;
+
+                    datos.servicios.forEach(servicioNuevo => {
+                        const servicioExistente = this.servicios.find(s => s.id === servicioNuevo.id);
+                        if (!servicioExistente) {
+                            this.servicios.push(servicioNuevo);
+                            serviciosAgregados++;
+                            facturasAgregadas += servicioNuevo.facturas.length;
+                        } else {
+                            servicioNuevo.facturas.forEach(facturaNueva => {
+                                const idx = servicioExistente.facturas.findIndex(f => f.id === facturaNueva.id);
+                                if (idx === -1) {
+                                    servicioExistente.facturas.push(facturaNueva);
+                                    facturasAgregadas++;
+                                } else {
+                                    const fe = servicioExistente.facturas[idx];
+                                    if (fe.monto !== facturaNueva.monto || fe.fecha !== facturaNueva.fecha ||
+                                        fe.pagada !== facturaNueva.pagada || fe.fechaPago !== facturaNueva.fechaPago) {
+                                        servicioExistente.facturas[idx] = facturaNueva;
+                                        facturasActualizadas++;
+                                    }
+                                }
+                            });
+                        }
+                    });
+
+                    if (Array.isArray(datos.categorias)) {
+                        const catsActuales = this._getCategorias();
+                        const catsNuevas = datos.categorias.filter(c => !catsActuales.some(ca => ca.toLowerCase() === c.toLowerCase()));
+                        if (catsNuevas.length > 0) {
+                            this._saveCategorias([...catsActuales, ...catsNuevas].sort((a, b) => a.localeCompare(b)));
+                            categoriasAgregadas = catsNuevas.length;
+                        }
+                    }
+
+                    if (serviciosAgregados === 0 && facturasAgregadas === 0 && facturasActualizadas === 0 && categoriasAgregadas === 0) {
+                        this.mostrarToast('No hay datos nuevos para agregar', 'info');
+                        return;
+                    }
+
+                    let partes = [];
+                    if (serviciosAgregados > 0) partes.push(this._plural(serviciosAgregados, 'servicio', 'servicios'));
+                    if (facturasAgregadas > 0) partes.push(this._plural(facturasAgregadas, 'factura nueva', 'facturas nuevas'));
+                    if (facturasActualizadas > 0) partes.push(this._plural(facturasActualizadas, 'actualizada', 'actualizadas'));
+                    if (categoriasAgregadas > 0) partes.push(this._plural(categoriasAgregadas, 'categoría', 'categorías'));
+
+                    this._postGuardado();
+                    this.mostrarToast(`Importado: ${partes.join(', ')}`, 'success');
+
+                } else {
+                    this.servicios = datos.servicios;
+                    this._saveCategorias(cats);
+                    this._postGuardado();
+                    this.mostrarToast(`Restaurados ${cantidad} servicios, ${facturas} facturas${catsTxt}.`, 'success');
+                }
+            }
+
             mostrarOpcionesImportacion() {
                 const opciones = document.getElementById('opciones-importacion');
                 const padre = document.getElementById('menu-importar');
@@ -7011,7 +7121,7 @@
                 padre.classList.toggle('open', abriendo);
             }
 
-            importarDatos(modo = 'reemplazar') {
+            importarDesdeArchivo() {
                 const input = document.createElement('input');
                 input.type = 'file';
                 input.accept = 'application/json';
@@ -7020,14 +7130,83 @@
                     const file = e.target.files[0];
                     if (!file) return;
 
-                    // Validar tamaño del archivo
-                    const maxSize = 10 * 1024 * 1024; // 10MB
+                    if (file.size > 10 * 1024 * 1024) {
+                        this.mostrarToast('Archivo demasiado grande (máx 10MB)', 'error');
+                        return;
+                    }
+                    if (!file.name.endsWith('.json')) {
+                        this.mostrarToast('Solo se permiten archivos .json', 'error');
+                        return;
+                    }
+
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        try {
+                            const datos = JSON.parse(event.target.result);
+
+                            if (!datos.servicios || !Array.isArray(datos.servicios)) {
+                                throw new Error('Formato inválido: falta "servicios"');
+                            }
+                            if (!this.validarDatos(datos.servicios)) {
+                                throw new Error('Datos corruptos o inválidos');
+                            }
+
+                            this._importDatosPendientes = datos;
+
+                            // Analizar diferencias
+                            const idsLocales = new Set(this.servicios.map(s => s.id));
+                            const idsArchivo = new Set(datos.servicios.map(s => s.id));
+                            const soloEnArchivo = datos.servicios.filter(s => !idsLocales.has(s.id));
+                            const enAmbos = datos.servicios.filter(s => idsLocales.has(s.id));
+                            const soloLocal = this.servicios.filter(s => !idsArchivo.has(s.id));
+                            const totalFacturas = datos.servicios.reduce((acc, s) => acc + s.facturas.length, 0);
+
+                            const resumen = document.getElementById('import-confirm-resumen');
+                            if (resumen) {
+                                resumen.innerHTML = this._generarResumenComparacion(datos.servicios, 'archivo');
+                            }
+
+                            this.abrirModal('modal-import-confirm');
+                        } catch (err) {
+                            this.mostrarToast('Error: ' + err.message, 'error');
+                        }
+                    };
+                    reader.readAsText(file);
+                });
+
+                input.click();
+            }
+
+            importarAplicar(modo) {
+                const datos = this._importDatosPendientes;
+                if (!datos) return;
+
+                this.importarDatos(modo, datos);
+                this._importDatosPendientes = null;
+                this.cerrarModal('modal-import-confirm');
+            }
+
+            importarDatos(modo = 'reemplazar', datosPreCargados = null) {
+                if (datosPreCargados) {
+                    // Datos ya validados y cargados, aplicar directamente
+                    this._aplicarImportacion(modo, datosPreCargados);
+                    return;
+                }
+
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'application/json';
+
+                input.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+
+                    const maxSize = 10 * 1024 * 1024;
                     if (file.size > maxSize) {
                         this.mostrarToast('Archivo demasiado grande (máx 10MB)', 'error');
                         return;
                     }
 
-                    // Validar extensión
                     if (!file.name.endsWith('.json')) {
                         this.mostrarToast('Solo se permiten archivos .json', 'error');
                         return;
@@ -7124,33 +7303,27 @@
                                 }
 
                                 let mensajePartes = [];
-                                if (serviciosAgregados > 0) mensajePartes.push(`${serviciosAgregados} servicio${serviciosAgregados !== 1 ? 's' : ''}`);
-                                if (facturasAgregadas > 0) mensajePartes.push(`${facturasAgregadas} factura${facturasAgregadas !== 1 ? 's' : ''} nueva${facturasAgregadas !== 1 ? 's' : ''}`);
-                                if (facturasActualizadas > 0) mensajePartes.push(`${facturasActualizadas} actualizada${facturasActualizadas !== 1 ? 's' : ''}`);
-                                if (categoriasAgregadas > 0) mensajePartes.push(`${categoriasAgregadas} categoría${categoriasAgregadas !== 1 ? 's' : ''}`);
+                                if (serviciosAgregados > 0) mensajePartes.push(this._plural(serviciosAgregados, 'servicio', 'servicios'));
+                                if (facturasAgregadas > 0) mensajePartes.push(this._plural(facturasAgregadas, 'factura nueva', 'facturas nuevas'));
+                                if (facturasActualizadas > 0) mensajePartes.push(this._plural(facturasActualizadas, 'actualizada', 'actualizadas'));
+                                if (categoriasAgregadas > 0) mensajePartes.push(this._plural(categoriasAgregadas, 'categoría', 'categorías'));
 
                                 const mensajeFinal = `Importado: ${mensajePartes.join(', ')}`;
 
-                                this.guardarDatos();
-                                this.guardarEstado();
-                                this.renderServicios();
-                                this.actualizarEstadisticas();
+                                this._postGuardado();
                                 this.mostrarToast(mensajeFinal, 'success');
 
                             } else {
                                 // Modo reemplazar
                                 const cats = Array.isArray(datos.categorias) ? datos.categorias : [];
                                 const cantCats = cats.length;
-                                const catsTxt = cantCats > 0 ? `, ${cantCats} categoría${cantCats !== 1 ? 's' : ''}` : '';
+                                const catsTxt = cantCats > 0 ? `, ${this._plural(cantCats, 'categoría', 'categorías')}` : '';
                                 const mensaje = `Se restauraran ${cantidad} servicios, ${facturas} facturas${catsTxt}. ¿Deseas reemplazar todos los datos actuales?`;
 
                                 if (confirm(mensaje)) {
                                     this.servicios = datos.servicios;
                                     this._saveCategorias(cats);
-                                    this.guardarDatos();
-                                    this.guardarEstado();
-                                    this.renderServicios();
-                                    this.actualizarEstadisticas();
+                                    this._postGuardado();
                                     this.mostrarToast(`Restaurados ${cantidad} servicios, ${facturas} facturas${catsTxt}.`, 'success');
                                 }
                             }
@@ -7245,11 +7418,8 @@
                         this.servicios = this.servicios.map(s => ({ ...s, categoria: '' }));
                     }
 
-                    this.guardarDatos();
-                    this.guardarEstado();
-                    this.renderServicios();
+                    this._postGuardado();
                     this.actualizarBotonesHistorial();
-                    this.actualizarEstadisticas();
                     this.mostrarToast(toasts[tipo] || toasts.todo, 'success');
                     document.getElementById('opciones-borrar').classList.remove('open');
                     document.getElementById('menu-limpiar').classList.remove('open');
@@ -7951,7 +8121,7 @@
                     btnRespaldar.querySelector('use').setAttribute('href', '#icon-download');
 
                     btnRestaurar.title = 'Restaurar';
-                    btnRestaurar.onclick = () => this.mostrarOpcionesImportacion();
+                    btnRestaurar.onclick = () => this.importarDesdeArchivo();
                     btnRestaurar.querySelector('use').setAttribute('href', '#icon-upload');
                 }
             }
@@ -7998,7 +8168,7 @@
                     elSync.style.display = 'block';
                 } else {
                     elSync.style.display = 'none';
-                }                
+                }
 
                 this.abrirModal('modal-gist');
             }
@@ -8154,11 +8324,7 @@
                         // Manual: mostrar modal con resumen
                         const resumen = document.getElementById('gist-merge-resumen');
                         if (resumen) {
-                            resumen.innerHTML = `
-                                <strong>Solo en Gist (nuevos):</strong> ${soloEnGist.length} servicio(s)<br>
-                                <strong>En ambos (conflictos):</strong> ${enAmbos.length} servicio(s)<br>
-                                <strong>Solo local (no subidos):</strong> ${soloLocal.length} servicio(s)
-                            `;
+                            resumen.innerHTML = this._generarResumenComparacion(serviciosGist, 'Gist');
                         }
                         this.abrirModal('modal-gist-merge');
                     }
@@ -8216,6 +8382,304 @@
                 else if (autoSync === 2 && this.gistDentroDelRango() && !this.gistSuperaLimite('subir', 1)) {
                     setTimeout(() => this.gistSubir(), 2000);
                 }
+            }
+
+            generarReporteEstadisticas() {
+                if (this.tipoEstadisticaActual === 'individual') {
+                    this._generarReporteIndividual();
+                    return;
+                }
+                const hoy = new Date();
+                hoy.setHours(0, 0, 0, 0);
+                const mesActual = hoy.getMonth();
+                const añoActual = hoy.getFullYear();
+
+                const selectMes = document.getElementById('select-mes-estadisticas');
+                let mesSeleccionado, añoSeleccionado;
+                if (selectMes && selectMes.value) {
+                    const [año, mes] = selectMes.value.split('-');
+                    añoSeleccionado = parseInt(año);
+                    mesSeleccionado = parseInt(mes) - 1;
+                } else {
+                    mesSeleccionado = mesActual;
+                    añoSeleccionado = añoActual;
+                }
+
+                const categoriaActiva = this._estadisticaCategoriaActiva || null;
+                const nombreMes = new Date(añoSeleccionado, mesSeleccionado, 1)
+                    .toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
+                const nombreMesCorto = new Date(añoSeleccionado, mesSeleccionado, 1)
+                    .toLocaleDateString('es-AR', { month: 'long' });
+
+                // Recolectar facturas involucradas
+                const facturasMes = [];       // vencen en el mes seleccionado
+                const facturasPagadasMes = []; // pagadas en el mes pero vencen otro mes
+                const ingresos = [];
+
+                this.servicios.forEach(servicio => {
+                    if (categoriaActiva && servicio.id !== this.SERVICIO_INGRESOS_ID) {
+                        if ((servicio.categoria || '') !== categoriaActiva) return;
+                    }
+
+                    servicio.facturas.forEach(factura => {
+                        const fechaVenc = new Date(factura.fecha + 'T00:00:00');
+                        const venceEsteMes = fechaVenc.getMonth() === mesSeleccionado && fechaVenc.getFullYear() === añoSeleccionado;
+
+                        if (servicio.id === this.SERVICIO_INGRESOS_ID) {
+                            const fechaIngreso = new Date(factura.fecha + 'T00:00:00');
+                            if (fechaIngreso.getMonth() === mesSeleccionado && fechaIngreso.getFullYear() === añoSeleccionado) {
+                                ingresos.push({ servicio, factura });
+                            }
+                            return;
+                        }
+
+                        if (venceEsteMes) {
+                            facturasMes.push({ servicio, factura, venceEsteMes: true });
+                        } else if (factura.pagada && factura.fechaPago) {
+                            const fechaPago = new Date(factura.fechaPago + 'T00:00:00');
+                            if (fechaPago.getMonth() === mesSeleccionado && fechaPago.getFullYear() === añoSeleccionado) {
+                                facturasPagadasMes.push({ servicio, factura, venceEsteMes: false });
+                            }
+                        }
+                    });
+                });
+
+                // Helper para formatear fecha legible
+                const fmtFecha = (str) => {
+                    if (!str) return '—';
+                    return new Date(str + 'T00:00:00').toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                };
+
+                // Helper estado factura
+                const estadoFactura = (factura) => {
+                    if (factura.conCredito) return 'Con crédito';
+                    if (factura.pagada) {
+                        const mp = factura.fechaPago ? new Date(factura.fechaPago + 'T00:00:00').toLocaleDateString('es-AR', { month: 'long' }) : '';
+                        return `Pagada${mp ? ` en ${mp}` : ''}`;
+                    }
+                    const venc = new Date(factura.fecha + 'T00:00:00');
+                    venc.setHours(0, 0, 0, 0);
+                    return venc < hoy ? 'Vencida (pendiente)' : 'Pendiente';
+                };
+
+                // Calcular totales
+                const sumar = (lista, pagada) => lista
+                    .filter(({ factura: f }) => pagada ? f.pagada : !f.pagada)
+                    .reduce((acc, { factura: f }) => {
+                        if ((f.moneda || 'ars') === 'usd') acc.usd += f.monto;
+                        else acc.ars += f.monto;
+                        return acc;
+                    }, { ars: 0, usd: 0 });
+
+                const totalVencenARS = facturasMes.reduce((a, { factura: f }) => !f.conCredito && (f.moneda || 'ars') !== 'usd' && f.monto > 0 ? a + f.monto : a, 0);
+                const totalVencenUSD = facturasMes.reduce((a, { factura: f }) => !f.conCredito && (f.moneda || 'ars') === 'usd' && f.monto > 0 ? a + f.monto : a, 0);
+                const pagadasMes = sumar(facturasMes.filter(({ factura: f }) => !f.conCredito), true);
+                const pendientesMes = sumar(facturasMes.filter(({ factura: f }) => !f.conCredito), false);
+                const totalPagadasOtroMesARS = facturasPagadasMes.reduce((a, { factura: f }) => !f.conCredito && (f.moneda || 'ars') !== 'usd' ? a + f.monto : a, 0);
+                const totalPagadasOtroMesUSD = facturasPagadasMes.reduce((a, { factura: f }) => !f.conCredito && (f.moneda || 'ars') === 'usd' ? a + f.monto : a, 0);
+                const totalIngresosARS = ingresos.reduce((a, { factura: f }) => (f.moneda || 'ars') !== 'usd' ? a + f.monto : a, 0);
+                const totalIngresosUSD = ingresos.reduce((a, { factura: f }) => (f.moneda || 'ars') === 'usd' ? a + f.monto : a, 0);
+
+                const sep = '─'.repeat(48);
+                const sep2 = '═'.repeat(48);
+                const linea = (label, valor) => `  ${label.padEnd(28)} ${valor}`;
+                const fmt = (m, mon) => this.formatearMoneda(m, mon);
+
+                let txt = '';
+                txt += `${'═'.repeat(48)}\n`;
+                txt += `  REPORTE DE ESTADÍSTICAS\n`;
+                txt += `  Período: ${nombreMes.toUpperCase()}${categoriaActiva ? `  |  Categoría: ${categoriaActiva}` : ''}\n`;
+                txt += `  Generado: ${new Date().toLocaleString('es-AR')}\n`;
+                txt += `${sep2}\n\n`;
+
+                // ── Facturas que vencen en el mes ──
+                txt += `FACTURAS QUE VENCEN EN ${nombreMesCorto.toUpperCase()}\n`;
+                txt += `${sep}\n`;
+                if (facturasMes.length === 0) {
+                    txt += `  (ninguna)\n`;
+                } else {
+                    facturasMes.forEach(({ servicio, factura }) => {
+                        const monto = factura.monto < 0
+                            ? `  [saldo a favor ${fmt(Math.abs(factura.monto), factura.moneda || 'ars')}]`
+                            : fmt(factura.monto, factura.moneda || 'ars');
+                        txt += `\n  ${servicio.nombre}\n`;
+                        txt += linea('  Vencimiento:', fmtFecha(factura.fecha)) + '\n';
+                        txt += linea('  Monto:', monto) + '\n';
+                        txt += linea('  Estado:', estadoFactura(factura)) + '\n';
+                        if (factura.pagada && factura.fechaPago) {
+                            txt += linea('  Fecha de pago:', fmtFecha(factura.fechaPago)) + '\n';
+                        }
+                    });
+                    txt += `\n${sep}\n`;
+                    if (totalVencenARS > 0) txt += linea('  Total del mes (ARS):', fmt(totalVencenARS, 'ars')) + '\n';
+                    if (totalVencenUSD > 0) txt += linea('  Total del mes (USD):', fmt(totalVencenUSD, 'usd')) + '\n';
+                    if (pagadasMes.ars > 0) txt += linea('  Pagado (ARS):', fmt(pagadasMes.ars, 'ars')) + '\n';
+                    if (pagadasMes.usd > 0) txt += linea('  Pagado (USD):', fmt(pagadasMes.usd, 'usd')) + '\n';
+                    if (pendientesMes.ars > 0) txt += linea('  Pendiente (ARS):', fmt(pendientesMes.ars, 'ars')) + '\n';
+                    if (pendientesMes.usd > 0) txt += linea('  Pendiente (USD):', fmt(pendientesMes.usd, 'usd')) + '\n';
+                }
+
+                // ── Pagadas en el mes pero con otro vencimiento ──
+                txt += `\nPAGADAS EN ${nombreMesCorto.toUpperCase()} (VENCIMIENTO OTRO MES)\n`;
+                txt += `${sep}\n`;
+                if (facturasPagadasMes.length === 0) {
+                    txt += `  (ninguna)\n`;
+                } else {
+                    facturasPagadasMes.forEach(({ servicio, factura }) => {
+                        const mesVenc = new Date(factura.fecha + 'T00:00:00').toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
+                        txt += `\n  ${servicio.nombre}\n`;
+                        txt += linea('  Vencimiento original:', `${fmtFecha(factura.fecha)} (${mesVenc})`) + '\n';
+                        txt += linea('  Monto:', fmt(factura.monto, factura.moneda || 'ars')) + '\n';
+                        txt += linea('  Fecha de pago:', fmtFecha(factura.fechaPago)) + '\n';
+                    });
+                    txt += `\n${sep}\n`;
+                    if (totalPagadasOtroMesARS > 0) txt += linea('  Subtotal (ARS):', fmt(totalPagadasOtroMesARS, 'ars')) + '\n';
+                    if (totalPagadasOtroMesUSD > 0) txt += linea('  Subtotal (USD):', fmt(totalPagadasOtroMesUSD, 'usd')) + '\n';
+                }
+
+                // ── Ingresos ──
+                if (this.ingresosHabilitado() && ingresos.length > 0) {
+                    txt += `\nINGRESOS DEL MES\n`;
+                    txt += `${sep}\n`;
+                    ingresos.forEach(({ factura }) => {
+                        txt += `\n  ${factura.tipo || 'regular'}\n`;
+                        txt += linea('  Fecha:', fmtFecha(factura.fecha)) + '\n';
+                        txt += linea('  Monto:', fmt(factura.monto, factura.moneda || 'ars')) + '\n';
+                    });
+                    txt += `\n${sep}\n`;
+                    if (totalIngresosARS > 0) txt += linea('  Total ingresos (ARS):', fmt(totalIngresosARS, 'ars')) + '\n';
+                    if (totalIngresosUSD > 0) txt += linea('  Total ingresos (USD):', fmt(totalIngresosUSD, 'usd')) + '\n';
+                }
+
+                txt += `\n${sep2}\n`;
+                txt += `  Fin del reporte\n`;
+                txt += `${'═'.repeat(48)}\n`;
+
+                // Descargar como .txt
+                const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `reporte_${nombreMes.replace(' ', '_')}.txt`;
+                a.click();
+                URL.revokeObjectURL(url);
+                this.mostrarToast('Reporte generado', 'success');
+            }
+
+            _generarReporteIndividual() {
+                const selectServicio = document.getElementById('calculador-servicio');
+                const inputDesde = document.getElementById('calculador-desde');
+                const inputHasta = document.getElementById('calculador-hasta');
+
+                const servicioId = selectServicio?.value;
+                const desde = inputDesde?.value;
+                const hasta = inputHasta?.value;
+
+                if (!servicioId) {
+                    this.mostrarToast('Seleccioná un servicio primero', 'info');
+                    return;
+                }
+
+                const servicio = this.servicios.find(s => s.id === servicioId);
+                if (!servicio) return;
+
+                const fmtFecha = (str) => {
+                    if (!str) return '—';
+                    return new Date(str + 'T00:00:00').toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                };
+
+                const hoy = new Date();
+                hoy.setHours(0, 0, 0, 0);
+
+                // Filtrar facturas por rango
+                let facturas = [...servicio.facturas];
+                if (desde) facturas = facturas.filter(f => new Date(f.fecha + 'T00:00:00') >= new Date(desde + 'T00:00:00'));
+                if (hasta) facturas = facturas.filter(f => new Date(f.fecha + 'T00:00:00') <= new Date(hasta + 'T00:00:00'));
+                facturas.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+
+                // Totales
+                let totalARS = 0, totalUSD = 0;
+                let pagadasARS = 0, pagadasUSD = 0;
+                let pendientesARS = 0, pendientesUSD = 0;
+
+                facturas.forEach(f => {
+                    const moneda = f.moneda || 'ars';
+                    const monto = f.monto;
+                    if (moneda === 'usd') { totalUSD += monto; if (f.pagada) pagadasUSD += monto; else pendientesUSD += monto; }
+                    else { totalARS += monto; if (f.pagada) pagadasARS += monto; else pendientesARS += monto; }
+                });
+
+                const promARS = facturas.filter(f => (f.moneda || 'ars') === 'ars').length > 0
+                    ? totalARS / facturas.filter(f => (f.moneda || 'ars') === 'ars').length : 0;
+                const promUSD = facturas.filter(f => (f.moneda || 'ars') === 'usd').length > 0
+                    ? totalUSD / facturas.filter(f => (f.moneda || 'ars') === 'usd').length : 0;
+
+                const fmt = (m, mon) => this.formatearMoneda(m, mon);
+                const sep  = '─'.repeat(48);
+                const sep2 = '═'.repeat(48);
+                const linea = (label, valor) => `  ${label.padEnd(28)} ${valor}`;
+
+                const periodoTxt = desde || hasta
+                    ? `${desde ? fmtFecha(desde) : '—'}  →  ${hasta ? fmtFecha(hasta) : '—'}`
+                    : 'Sin filtro de fechas';
+
+                let txt = '';
+                txt += `${sep2}\n`;
+                txt += `  REPORTE INDIVIDUAL\n`;
+                txt += `  Servicio: ${servicio.nombre}\n`;
+                txt += `  Período: ${periodoTxt}\n`;
+                txt += `  Generado: ${new Date().toLocaleString('es-AR')}\n`;
+                txt += `${sep2}\n\n`;
+
+                txt += `DETALLE DE FACTURAS (${facturas.length})\n`;
+                txt += `${sep}\n`;
+
+                if (facturas.length === 0) {
+                    txt += `  (ninguna en el período seleccionado)\n`;
+                } else {
+                    facturas.forEach((f, i) => {
+                        const moneda = f.moneda || 'ars';
+                        let estadoTxt;
+                        if (f.conCredito) estadoTxt = 'Con crédito';
+                        else if (f.pagada) {
+                            const mp = f.fechaPago ? new Date(f.fechaPago + 'T00:00:00').toLocaleDateString('es-AR', { month: 'long', year: 'numeric' }) : '';
+                            estadoTxt = `Pagada${mp ? ` (${mp})` : ''}`;
+                        } else {
+                            const venc = new Date(f.fecha + 'T00:00:00');
+                            venc.setHours(0, 0, 0, 0);
+                            estadoTxt = venc < hoy ? 'Vencida (pendiente)' : 'Pendiente';
+                        }
+
+                        txt += `\n  #${String(i + 1).padStart(2, '0')}  ${fmtFecha(f.fecha)}\n`;
+                        txt += linea('  Monto:', fmt(f.monto, moneda)) + '\n';
+                        txt += linea('  Estado:', estadoTxt) + '\n';
+                        if (f.pagada && f.fechaPago) txt += linea('  Fecha de pago:', fmtFecha(f.fechaPago)) + '\n';
+                        if (f.tipo && f.tipo !== 'mensual') txt += linea('  Tipo:', f.tipo) + '\n';
+                    });
+
+                    txt += `\n${sep}\n`;
+                    txt += `  RESUMEN\n`;
+                    txt += `${sep}\n`;
+                    if (totalARS !== 0) txt += linea('  Total ARS:', fmt(totalARS, 'ars')) + '\n';
+                    if (totalUSD !== 0) txt += linea('  Total USD:', fmt(totalUSD, 'usd')) + '\n';
+                    if (promARS !== 0) txt += linea('  Promedio ARS:', fmt(promARS, 'ars')) + '\n';
+                    if (promUSD !== 0) txt += linea('  Promedio USD:', fmt(promUSD, 'usd')) + '\n';
+                    if (pagadasARS > 0) txt += linea('  Pagado ARS:', fmt(pagadasARS, 'ars')) + '\n';
+                    if (pagadasUSD > 0) txt += linea('  Pagado USD:', fmt(pagadasUSD, 'usd')) + '\n';
+                    if (pendientesARS > 0) txt += linea('  Pendiente ARS:', fmt(pendientesARS, 'ars')) + '\n';
+                    if (pendientesUSD > 0) txt += linea('  Pendiente USD:', fmt(pendientesUSD, 'usd')) + '\n';
+                }
+
+                txt += `\n${sep2}\n  Fin del reporte\n${sep2}\n`;
+
+                const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `reporte_${servicio.nombre.replace(/\s+/g, '_')}_${desde || 'inicio'}_${hasta || 'hoy'}.txt`;
+                a.click();
+                URL.revokeObjectURL(url);
+                this.mostrarToast('Reporte generado', 'success');
             }
 
             mostrarToast(mensaje, tipo = 'success') {
@@ -8293,7 +8757,7 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA DeltaF VERSION 0.87
+    //                 NOTAS SISTEMA DeltaF VERSION 0.88
     // ====================================================================
     
      - CAMBIOS
