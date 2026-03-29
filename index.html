@@ -632,15 +632,18 @@
            Usado por: tarjetas principales, grupos de facturas y categorías
         ============================================================ */
         .collapsible-content {
-            max-height: 1500px;
+            max-height: 0;
             opacity: 0;
             visibility: hidden;
+            overflow: hidden;
             transition: max-height var(--transition-base), opacity var(--transition-base), visibility var(--transition-base);
         }
 
         .collapsible-content:not(.collapsed) {
+            max-height: none;
             opacity: 1;
             visibility: visible;
+            overflow: visible;
         }
 
         .collapsible-content.collapsed {
@@ -648,9 +651,10 @@
             opacity: 0;
         }
 
-        #servicios-content:not(.collapsed) {
+        #servicios-content:not(.collapsed),
+        #estadisticas-content:not(.collapsed) {
             overflow-y: visible;
-            overflow-x: hidden;
+            overflow-x: visible;
         }
 
         /* Grupos de facturas por año y grupos de categorías — mismo patrón */
@@ -1629,10 +1633,6 @@
                 max-height: 5000px;
             }
 
-            .collapsible-content {
-                max-height: 5000px;
-            }
-
             .btn-add {
                 bottom: 7.5rem;
                 right: 0.5rem;
@@ -2085,7 +2085,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">Lushibosca 0.90</div> <!-- DeltaF -->
+            <div class="menu-version">Lushibosca 0.89</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -2174,10 +2174,11 @@
                             <div class="calculador-resultados" id="calculador-resultados"></div>
                         </div>
 
-                        <button type="button" id="btn-reporte-estadisticas"
-                            onclick="app.generarReporteEstadisticas()"
+                        <button type="button" id="btn-reporte-estadisticas" onclick="app.generarReporteEstadisticas()"
                             style="width:100%; margin-top:1rem; display:flex; align-items:center; justify-content:center; gap:0.5rem;">
-                            <svg class="icon"><use href="#icon-download" /></svg>
+                            <svg class="icon">
+                                <use href="#icon-download" />
+                            </svg>
                             Reporte
                         </button>
                     </div>
@@ -2359,7 +2360,9 @@
                             autocomplete="off" style="flex:1;">
                         <button type="button" class="icon-btn" title="Mostrar/ocultar token"
                             onclick="const i=document.getElementById('gist-token'); i.type=i.type==='password'?'text':'password';">
-                            <svg class="icon"><use href="#icon-lock" /></svg>
+                            <svg class="icon">
+                                <use href="#icon-lock" />
+                            </svg>
                         </button>
                     </div>
                 </div>
@@ -2434,14 +2437,20 @@
                 <div style="display:flex; flex-direction:column; gap:0.5rem;">
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem;">
                         <button type="button" onclick="app.gistMergeAplicar('merge')">
-                            <svg class="icon"><use href="#icon-combine" /></svg> Combinar
+                            <svg class="icon">
+                                <use href="#icon-combine" />
+                            </svg> Combinar
                         </button>
                         <button type="button" onclick="app.gistMergeAplicar('replace')">
-                            <svg class="icon"><use href="#icon-replace-swap" /></svg> Reemplazar
+                            <svg class="icon">
+                                <use href="#icon-replace-swap" />
+                            </svg> Reemplazar
                         </button>
                     </div>
                     <button type="button" class="btn-secondary" onclick="app.cerrarModal('modal-gist-merge')">
-                        <svg class="icon"><use href="#icon-cancel" /></svg> Cancelar
+                        <svg class="icon">
+                            <use href="#icon-cancel" />
+                        </svg> Cancelar
                     </button>
                 </div>
             </div>
@@ -2461,14 +2470,20 @@
                 <div style="display:flex; flex-direction:column; gap:0.5rem;">
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem;">
                         <button type="button" onclick="app.importarAplicar('combinar')">
-                            <svg class="icon"><use href="#icon-combine" /></svg> Combinar
+                            <svg class="icon">
+                                <use href="#icon-combine" />
+                            </svg> Combinar
                         </button>
                         <button type="button" onclick="app.importarAplicar('reemplazar')">
-                            <svg class="icon"><use href="#icon-replace-swap" /></svg> Reemplazar
+                            <svg class="icon">
+                                <use href="#icon-replace-swap" />
+                            </svg> Reemplazar
                         </button>
                     </div>
                     <button type="button" onclick="app.cerrarModal('modal-import-confirm')">
-                        <svg class="icon"><use href="#icon-cancel" /></svg> Cancelar
+                        <svg class="icon">
+                            <use href="#icon-cancel" />
+                        </svg> Cancelar
                     </button>
                 </div>
             </div>
@@ -8241,9 +8256,10 @@
                 if (inputToken && inputToken.value.trim()) localStorage.setItem('gist_token', inputToken.value.trim());
                 if (inputId && inputId.value.trim()) this.gistSetPerfil({ gistId: inputId.value.trim() });
 
-                const datos = JSON.stringify(this.servicios);
+                const categorias = this._getCategorias();
+                const datos = JSON.stringify({ servicios: this.servicios, categorias }, null, 2);
                 const hash = await this.gistCalcularHash(datos);
-                const contenido = JSON.stringify({ hash, datos });
+                const contenido = JSON.stringify({ hash, servicios: this.servicios, categorias }, null, 2);
                 const nombreArchivo = `deltaF_${this.perfilActivo}.json`;
 
                 const btnSubir = document.getElementById('gist-btn-subir');
@@ -8314,13 +8330,15 @@
                 let parsed;
                 try { parsed = JSON.parse(archivoObj.content); } catch { throw new Error('JSON inválido'); }
 
-                const hashEsperado = await this.gistCalcularHash(parsed.datos);
+                const datosStr = JSON.stringify({ servicios: parsed.servicios, categorias: parsed.categorias || [] }, null, 2);
+                const hashEsperado = await this.gistCalcularHash(datosStr);
                 if (hashEsperado !== parsed.hash) throw new Error('Hash no coincide — datos corruptos');
 
-                const servicios = JSON.parse(parsed.datos);
+                const servicios = parsed.servicios;
+                const categorias = parsed.categorias || [];
                 if (!Array.isArray(servicios)) throw new Error('Estructura inválida');
 
-                return servicios;
+                return { servicios, categorias };
             }
 
             async gistBajar(esAutomatico = false) {
@@ -8335,7 +8353,7 @@
 
                 try {
                     this.mostrarToast('Bajando...', 'info');
-                    const serviciosGist = await this._gistDescargar();
+                    const { servicios: serviciosGist, categorias: categoriasGist } = await this._gistDescargar();
 
                     // Analizar diferencias
                     const fechasLocales = new Set(this.servicios.map(s => s.id));
@@ -8345,13 +8363,11 @@
                     const enAmbos = serviciosGist.filter(s => fechasLocales.has(s.id));
                     const soloLocal = this.servicios.filter(s => !fechasGist.has(s.id));
 
-                    this._gistDatosPendientes = serviciosGist;
+                    this._gistDatosPendientes = { servicios: serviciosGist, categorias: categoriasGist };
 
                     if (esAutomatico) {
-                        // Aplicar directamente según comportamiento configurado
                         this.gistMergeAplicar(this.gistGetMergeBehavior(), true);
                     } else {
-                        // Manual: mostrar modal con resumen
                         const resumen = document.getElementById('gist-merge-resumen');
                         if (resumen) {
                             resumen.innerHTML = this._generarResumenComparacion(serviciosGist, 'Gist');
@@ -8367,13 +8383,20 @@
             }
 
             gistMergeAplicar(modo, esAutomatico = false) {
-                const serviciosGist = this._gistDatosPendientes;
+                const { servicios: serviciosGist, categorias: categoriasGist } = this._gistDatosPendientes || {};
                 if (!serviciosGist) return;
 
                 if (modo === 'replace') {
                     this.servicios = serviciosGist;
+                    this._saveCategorias(categoriasGist.length > 0 ? categoriasGist : this._getCategorias());
                 } else {
-                    // Combinar: agregar servicios nuevos y facturas nuevas dentro de servicios existentes
+                    // Combinar categorías igual que importación local
+                    const catsActuales = this._getCategorias();
+                    const catsNuevas = categoriasGist.filter(c => !catsActuales.some(ca => ca.toLowerCase() === c.toLowerCase()));
+                    if (catsNuevas.length > 0) {
+                        this._saveCategorias([...catsActuales, ...catsNuevas].sort((a, b) => a.localeCompare(b)));
+                    }
+
                     serviciosGist.forEach(servicioRemoto => {
                         const servicioLocal = this.servicios.find(s => s.id === servicioRemoto.id);
                         if (!servicioLocal) {
@@ -8653,7 +8676,7 @@
                     ? totalUSD / facturas.filter(f => (f.moneda || 'ars') === 'usd').length : 0;
 
                 const fmt = (m, mon) => this.formatearMoneda(m, mon);
-                const sep  = '─'.repeat(48);
+                const sep = '─'.repeat(48);
                 const sep2 = '═'.repeat(48);
                 const linea = (label, valor) => `  ${label.padEnd(28)} ${valor}`;
 
@@ -8745,11 +8768,9 @@
                 }, 150);
             }
         }
-        // Inicializar aplicación (global para Service Worker)
         window.app = new GestionServicios();
     </script>
     <script>
-        // Registro del Service Worker Optimizado
         if ('serviceWorker' in navigator) {
             let newWorker;
 
@@ -8757,21 +8778,15 @@
                 navigator.serviceWorker.register('./sw.js')
                     .then(registration => {
                         console.log('✅ SW registrado:', registration.scope);
-
-                        // Detectar si hay una actualización esperando
                         registration.addEventListener('updatefound', () => {
                             newWorker = registration.installing;
 
                             newWorker.addEventListener('statechange', () => {
-                                // Cuando el nuevo SW está instalado
                                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                                     console.log('🚀 Nueva versión disponible. Actualizando...');
-                                    // Notificar al usuario (opcional) o forzar la actualización
                                     if (window.app && typeof window.app.mostrarToast === 'function') {
                                         window.app.mostrarToast('Actualizando aplicación...', 'info');
                                     }
-                                    // No necesitamos enviar mensaje SKIP_WAITING porque el SW nuevo 
-                                    // ya tiene self.skipWaiting() en la fase de install.
                                 }
                             });
                         });
@@ -8779,8 +8794,6 @@
                     .catch(err => console.error('❌ Error registro SW:', err));
             });
 
-            // Escuchar cuando el controlador cambia (cuando el nuevo SW toma el control)
-            // Esto sucede después de que el nuevo SW se activa
             let refreshing = false;
             navigator.serviceWorker.addEventListener('controllerchange', () => {
                 if (refreshing) return;
@@ -8795,11 +8808,12 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA DeltaF VERSION 0.90
+    //                 NOTAS SISTEMA DeltaF VERSION 0.89
     // ====================================================================
     
      - CAMBIOS
      1) Se agrega "reporte" en la tarjeta de estadisticas
+     2) Se corrige el parseo en gist
 
 
      - BUGS CONOCIDOS:
