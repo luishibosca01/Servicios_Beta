@@ -923,13 +923,6 @@
             margin-top: 0.25rem;
         }
 
-        .factura-actions {
-            display: flex;
-            gap: 0.5rem;
-            border: 1px solid var(--text-main);
-            border-radius: var(--radius);
-        }
-
         /* Badge de estado de factura */
         .factura-estado-pagado,
         .factura-estado-vencido,
@@ -1860,6 +1853,10 @@
             <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" class="icon-line" stroke="currentColor">
             </polygon>
         </symbol>
+        <symbol id="icon-chevron-down" viewBox="0 0 24 24">
+            <polyline points="6 9 12 15 18 9" class="icon-line" stroke="currentColor" stroke-width="2" fill="none">
+            </polyline>
+        </symbol>
         <symbol id="icon-install" viewBox="0 0 24 24">
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2" class="icon-line" stroke="currentColor"></rect>
             <path d="M7 11V7a5 5 0 0 1 10 0v4" class="icon-line" stroke="currentColor"></path>
@@ -1992,8 +1989,8 @@
                     <use href="#icon-upload" />
                 </svg>
                 <span>Restaurar</span>
-                <svg class="icon menu-chevron" viewBox="0 0 24 24">
-                    <polyline points="6 9 12 15 18 9" class="icon-line" stroke="currentColor"></polyline>
+                <svg class="icon menu-chevron">
+                    <use href="#icon-chevron-down" />
                 </svg>
             </div>
             <div id="opciones-importacion" class="menu-submenu">
@@ -2009,8 +2006,8 @@
                     <use href="#icon-trash" />
                 </svg>
                 <span>Borrar</span>
-                <svg class="icon menu-chevron" viewBox="0 0 24 24">
-                    <polyline points="6 9 12 15 18 9" class="icon-line" stroke="currentColor"></polyline>
+                <svg class="icon menu-chevron">
+                    <use href="#icon-chevron-down" />
                 </svg>
             </div>
             <div id="opciones-borrar" class="menu-submenu">
@@ -2036,8 +2033,8 @@
                 </svg>
                 <span>Dólar</span>
                 <span class="dolar-widget-hora" id="dolar-hora">-</span>
-                <svg class="icon menu-chevron" viewBox="0 0 24 24">
-                    <polyline points="6 9 12 15 18 9" class="icon-line" stroke="currentColor"></polyline>
+                <svg class="icon menu-chevron">
+                    <use href="#icon-chevron-down" />
                 </svg>
             </div>
             <div id="opciones-dolar" class="menu-submenu">
@@ -2107,9 +2104,8 @@
                             </svg>
                             Estadísticas
                         </span>
-                        <svg class="icon chevron-icon" id="estadisticas-chevron" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="6 9 12 15 18 9"></polyline>
+                        <svg class="icon chevron-icon" id="estadisticas-chevron">
+                            <use href="#icon-chevron-down" />
                         </svg>
                     </h2>
                     <div id="estadisticas-content" class="collapsible-content collapsed">
@@ -2188,7 +2184,7 @@
             <!-- Columna derecha (contenido principal) -->
             <div class="main-content">
                 <!-- Tarjeta de Servicios -->
-                <div class="card card-fade-in" style="animation-delay: 0.3s;">
+                <div class="card card-fade-in" style="animation-delay: 0.2s;">
                     <h2 class="card-header-collapsible" id="servicios-header">
                         <span style="display: flex; align-items: center; gap: 0.5rem;">
                             <svg class="icon">
@@ -2196,9 +2192,8 @@
                             </svg>
                             Servicios
                         </span>
-                        <svg class="icon chevron-icon" id="servicios-chevron" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="6 9 12 15 18 9"></polyline>
+                        <svg class="icon chevron-icon" id="servicios-chevron">
+                            <use href="#icon-chevron-down" />
                         </svg>
                     </h2>
                     <div id="servicios-content" class="collapsible-content custom-scroll collapsed">
@@ -2428,7 +2423,9 @@
     <div class="modal" id="modal-gist-merge">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Sincronización desde Gist</h3>
+                <h3><svg class="icon">
+                        <use href="#icon-cloud-download" />
+                    </svg> Resumen de datos</h3>
             </div>
             <div class="modal-body" style="display:flex; flex-direction:column; gap:1rem;">
                 <div id="gist-merge-resumen">
@@ -2456,38 +2453,7 @@
         </div>
     </div>
 
-    <!-- Modal confirmación importación desde archivo -->
-    <div class="modal" id="modal-import-confirm">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Restaurar desde archivo</h3>
-            </div>
-            <div class="modal-body" style="display:flex; flex-direction:column; gap:1rem;">
-                <div id="import-confirm-resumen"
-                    style="font-size:0.9rem; color:var(--text-muted); background:var(--bg-body); border-radius:8px; padding:0.75rem;">
-                </div>
-                <div style="display:flex; flex-direction:column; gap:0.5rem;">
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem;">
-                        <button type="button" onclick="app.importarAplicar('combinar')">
-                            <svg class="icon">
-                                <use href="#icon-combine" />
-                            </svg> Combinar
-                        </button>
-                        <button type="button" onclick="app.importarAplicar('reemplazar')">
-                            <svg class="icon">
-                                <use href="#icon-replace-swap" />
-                            </svg> Reemplazar
-                        </button>
-                    </div>
-                    <button type="button" onclick="app.cerrarModal('modal-import-confirm')">
-                        <svg class="icon">
-                            <use href="#icon-cancel" />
-                        </svg> Cancelar
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
+
 
     <!-- Modal Agregar Servicio -->
     <div class="modal" id="modal-agregar-servicio">
@@ -2988,11 +2954,11 @@
         <div class="modal-overlay" id="modal-perfiles-overlay"></div>
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Gestión de Perfiles</h2>
+                <h2>Perfiles</h2>
             </div>
             <div class="modal-body">
                 <div style="display: flex; flex-direction: column; gap: 1rem;">
-                    <div id="perfiles-lista"></div>
+                    <div id="perfiles-lista" style="display:flex; flex-direction:column; gap:0.5rem;"></div>
                     <div style="display: flex; gap: 0.5rem; align-items: center;">
                         <input type="text" id="perfil-nuevo-nombre" maxlength="20" placeholder="Nombre del perfil..."
                             style="flex: 1;"
@@ -5612,9 +5578,7 @@
                     <span class="servicios-grupo-cat-texto">${grupo.label}</span>
                     <span class="servicios-grupo-cat-contador">(${items.length})</span>
                 </div>
-                <svg class="icon servicios-grupo-cat-chevron ${collapsed}" viewBox="0 0 24 24">
-                    <polyline points="6 9 12 15 18 9" class="icon-line" stroke="currentColor"></polyline>
-                </svg>
+                <svg class="icon servicios-grupo-cat-chevron ${collapsed}"><use href="#icon-chevron-down"/></svg>
             </div>
             <div class="servicios-grupo-cat-contenido ${collapsed}">
                 ${items.map(generarItemServicio).join('')}
@@ -5660,9 +5624,7 @@
                 </div>
                 <div style="display:flex; align-items:center; gap:0.25rem;">
                     ${alertaIconHTML}
-                    <svg class="icon servicios-grupo-cat-chevron ${collapsed}" viewBox="0 0 24 24">
-                        <polyline points="6 9 12 15 18 9" class="icon-line" stroke="currentColor"></polyline>
-                    </svg>
+                    <svg class="icon servicios-grupo-cat-chevron ${collapsed}"><use href="#icon-chevron-down"/></svg>
                 </div>
             </div>
             <div class="servicios-grupo-cat-contenido ${collapsed}">
@@ -5862,54 +5824,7 @@
                 this.renderServicios();
                 this.mostrarToast('Orden aplicado', 'success');
             }
-
-            actualizarServicioIndividual(servicioId) {
-                const servicio = this.servicios.find(s => s.id === servicioId);
-                if (!servicio) return;
-
-                const wrapper = document.querySelector(`.servicio-wrapper[data-id="${servicioId}"]`);
-                if (!wrapper) return;
-
-                // Actualizar header del servicio usando la función compartida
-                const { estado, claseEstado, montoTexto, fechaTexto } = this.calcularEstadoServicio(servicio);
-
-                // Actualizar el servicio-item manteniendo el estado expanded
-                const servicioItem = wrapper.querySelector('.servicio-item');
-                const estaExpandido = servicioItem.classList.contains('expanded');
-
-                servicioItem.className = `servicio-item ${claseEstado}`;
-                if (estaExpandido) {
-                    servicioItem.classList.add('expanded');
-                }
-
-                servicioItem.querySelector('.servicio-nombre').textContent = servicio.nombre;
-                servicioItem.querySelector('.servicio-monto').textContent = montoTexto;
-
-                const infoDiv = servicioItem.querySelector('.servicio-info');
-                const fechaSpan = infoDiv.querySelector('.servicio-fecha');
-                if (fechaTexto) {
-                    if (fechaSpan) {
-                        fechaSpan.textContent = fechaTexto;
-                    } else {
-                        infoDiv.innerHTML += `<span class="servicio-fecha">${fechaTexto}</span>`;
-                    }
-                } else if (fechaSpan) {
-                    fechaSpan.remove();
-                }
-
-                const estadoElement = servicioItem.querySelector('.servicio-estado');
-                if (estado) {
-                    if (estadoElement) {
-                        estadoElement.className = `servicio-estado estado-${claseEstado}`;
-                        estadoElement.textContent = estado;
-                    } else {
-                        servicioItem.innerHTML += `<span class="servicio-estado estado-${claseEstado}">${estado}</span>`;
-                    }
-                } else if (estadoElement) {
-                    estadoElement.remove();
-                }
-            }
-
+            
             abrirModalFacturasServicio(servicioId) {
                 const servicio = this.servicios.find(s => s.id === servicioId);
                 if (!servicio) return;
@@ -6137,9 +6052,7 @@
                     <span class="facturas-grupo-ano-texto">${ano}</span>
                     <span class="facturas-grupo-contador">${cantidad} ${labelPlural}</span>
                 </div>
-                <svg class="icon facturas-grupo-chevron ${collapsed}" viewBox="0 0 24 24">
-                    <polyline points="6 9 12 15 18 9" class="icon-line" stroke="currentColor"></polyline>
-                </svg>
+                <svg class="icon facturas-grupo-chevron ${collapsed}"><use href="#icon-chevron-down"/></svg>
             </div>
             <div class="facturas-grupo-contenido ${collapsed}">
                 ${itemHTML}
@@ -7041,15 +6954,17 @@
             }
 
             _generarResumenComparacion(serviciosRemoto, etiqueta = 'archivo', categoriasRemoto = []) {
+                const INGRESOS_ID = this.SERVICIO_INGRESOS_ID;
                 const idsLocales = new Set(this.servicios.map(s => s.id));
                 const idsRemoto = new Set(serviciosRemoto.map(s => s.id));
 
-                const soloEnRemoto = serviciosRemoto.filter(s => !idsLocales.has(s.id));
-                const enAmbos = serviciosRemoto.filter(s => idsLocales.has(s.id));
-                const soloLocal = this.servicios.filter(s => !idsRemoto.has(s.id));
+                const soloEnRemoto = serviciosRemoto.filter(s => !idsLocales.has(s.id) && s.id !== INGRESOS_ID);
+                const enAmbos = serviciosRemoto.filter(s => idsLocales.has(s.id) && s.id !== INGRESOS_ID);
+                const servicioIngresosRemoto = serviciosRemoto.find(s => s.id === INGRESOS_ID);
+                const servicioIngresosLocal = this.servicios.find(s => s.id === INGRESOS_ID);
 
-                let facturasNuevas = 0;
-                let facturasConflicto = 0;
+                let facturasNuevas = 0, facturasConflicto = 0, ingresosNuevos = 0;
+
                 enAmbos.forEach(sRemoto => {
                     const sLocal = this.servicios.find(s => s.id === sRemoto.id);
                     if (!sLocal) return;
@@ -7067,93 +6982,118 @@
                     });
                 });
 
-                const totalFacturasRemoto = serviciosRemoto.reduce((acc, s) => acc + s.facturas.length, 0);
+                if (servicioIngresosRemoto) {
+                    const idsIngLocal = new Set((servicioIngresosLocal?.facturas || []).map(f => f.id));
+                    ingresosNuevos = servicioIngresosRemoto.facturas.filter(f => !idsIngLocal.has(f.id)).length;
+                }
 
-                // Categorías nuevas que aportaría el remoto
+                const totalFacturasRemoto = serviciosRemoto
+                    .filter(s => s.id !== INGRESOS_ID)
+                    .reduce((acc, s) => acc + s.facturas.length, 0);
+                const totalIngresosRemoto = servicioIngresosRemoto?.facturas.length || 0;
+                const totalServiciosRemoto = serviciosRemoto.filter(s => s.id !== INGRESOS_ID).length;
+
+                // Categorías nuevas
                 const catsActuales = this._getCategorias();
                 const catsNuevas = categoriasRemoto.filter(c => !catsActuales.some(ca => ca.toLowerCase() === c.toLowerCase()));
 
                 // Qué haría combinar
+                const facturasEnServiciosNuevos = soloEnRemoto.reduce((acc, s) => acc + s.facturas.length, 0);
                 const partesCombi = [];
                 if (soloEnRemoto.length > 0) partesCombi.push(this._plural(soloEnRemoto.length, 'servicio nuevo', 'servicios nuevos'));
-                if (facturasNuevas > 0) partesCombi.push(this._plural(facturasNuevas, 'factura nueva', 'facturas nuevas'));
+                if (facturasEnServiciosNuevos > 0) partesCombi.push(this._plural(facturasEnServiciosNuevos, 'factura nueva', 'facturas nuevas'));
+                if (facturasNuevas > 0) partesCombi.push(this._plural(facturasNuevas, 'factura nueva en servicios existentes', 'facturas nuevas en servicios existentes'));
+                if (ingresosNuevos > 0) partesCombi.push(this._plural(ingresosNuevos, 'ingreso nuevo', 'ingresos nuevos'));
                 if (catsNuevas.length > 0) partesCombi.push(this._plural(catsNuevas.length, 'categoría nueva', 'categorías nuevas'));
                 const textoCombinar = partesCombi.length > 0 ? `Agrega ${partesCombi.join(', ')}` : 'No modifica nada';
 
                 // Qué haría reemplazar
                 const partesReempl = [];
-                if (serviciosRemoto.length > 0) partesReempl.push(this._plural(serviciosRemoto.length, 'servicio', 'servicios'));
+                if (totalServiciosRemoto > 0) partesReempl.push(this._plural(totalServiciosRemoto, 'servicio', 'servicios'));
                 if (totalFacturasRemoto > 0) partesReempl.push(this._plural(totalFacturasRemoto, 'factura', 'facturas'));
+                if (totalIngresosRemoto > 0) partesReempl.push(this._plural(totalIngresosRemoto, 'ingreso', 'ingresos'));
                 if (categoriasRemoto.length > 0) partesReempl.push(this._plural(categoriasRemoto.length, 'categoría', 'categorías'));
                 const textoReemplazar = partesReempl.length > 0 ? `Carga ${partesReempl.join(', ')}` : 'No modifica nada';
 
                 return `
-                    <strong>Combinar:</strong> ${textoCombinar}<br>
-                    <strong>Reemplazar:</strong> ${textoReemplazar}
-                `;
+        <strong>Combinar:</strong> ${textoCombinar}<br>
+        <strong>Reemplazar:</strong> ${textoReemplazar}
+    `;
+            }
+
+            _mergeServicios(serviciosRemoto) {
+                let serviciosAgregados = 0, facturasAgregadas = 0, facturasActualizadas = 0, ingresosAgregados = 0;
+                serviciosRemoto.forEach(servicioRemoto => {
+                    const esIngresos = servicioRemoto.id === this.SERVICIO_INGRESOS_ID;
+                    const servicioLocal = this.servicios.find(s => s.id === servicioRemoto.id);
+                    if (!servicioLocal) {
+                        this.servicios.push(servicioRemoto);
+                        if (!esIngresos) {
+                            serviciosAgregados++;
+                            facturasAgregadas += servicioRemoto.facturas.length;
+                        } else {
+                            ingresosAgregados += servicioRemoto.facturas.length;
+                        }
+                    } else {
+                        servicioRemoto.facturas.forEach(f => {
+                            const idx = servicioLocal.facturas.findIndex(fl => fl.id === f.id);
+                            if (idx === -1) {
+                                servicioLocal.facturas.push(f);
+                                esIngresos ? ingresosAgregados++ : facturasAgregadas++;
+                            } else {
+                                const fe = servicioLocal.facturas[idx];
+                                if (fe.monto !== f.monto || fe.fecha !== f.fecha ||
+                                    fe.pagada !== f.pagada || fe.fechaPago !== f.fechaPago) {
+                                    servicioLocal.facturas[idx] = f;
+                                    if (!esIngresos) facturasActualizadas++;
+                                }
+                            }
+                        });
+                    }
+                });
+                return { serviciosAgregados, facturasAgregadas, facturasActualizadas, ingresosAgregados };
             }
 
             _aplicarImportacion(modo, datos) {
-                const cantidad = datos.servicios.length;
-                const facturas = datos.servicios.reduce((acc, s) => acc + s.facturas.length, 0);
                 const cats = Array.isArray(datos.categorias) ? datos.categorias : [];
-                const catsTxt = cats.length > 0 ? `, ${this._plural(cats.length, 'categoría', 'categorías')}` : '';
 
                 if (modo === 'combinar') {
-                    let serviciosAgregados = 0, facturasAgregadas = 0, facturasActualizadas = 0, categoriasAgregadas = 0;
+                    const { serviciosAgregados, facturasAgregadas, facturasActualizadas, ingresosAgregados } = this._mergeServicios(datos.servicios);
+                    const categoriasAgregadas = this._mergeCategorias(datos.categorias);
 
-                    datos.servicios.forEach(servicioNuevo => {
-                        const servicioExistente = this.servicios.find(s => s.id === servicioNuevo.id);
-                        if (!servicioExistente) {
-                            this.servicios.push(servicioNuevo);
-                            serviciosAgregados++;
-                            facturasAgregadas += servicioNuevo.facturas.length;
-                        } else {
-                            servicioNuevo.facturas.forEach(facturaNueva => {
-                                const idx = servicioExistente.facturas.findIndex(f => f.id === facturaNueva.id);
-                                if (idx === -1) {
-                                    servicioExistente.facturas.push(facturaNueva);
-                                    facturasAgregadas++;
-                                } else {
-                                    const fe = servicioExistente.facturas[idx];
-                                    if (fe.monto !== facturaNueva.monto || fe.fecha !== facturaNueva.fecha ||
-                                        fe.pagada !== facturaNueva.pagada || fe.fechaPago !== facturaNueva.fechaPago) {
-                                        servicioExistente.facturas[idx] = facturaNueva;
-                                        facturasActualizadas++;
-                                    }
-                                }
-                            });
-                        }
-                    });
-
-                    if (Array.isArray(datos.categorias)) {
-                        const catsActuales = this._getCategorias();
-                        const catsNuevas = datos.categorias.filter(c => !catsActuales.some(ca => ca.toLowerCase() === c.toLowerCase()));
-                        if (catsNuevas.length > 0) {
-                            this._saveCategorias([...catsActuales, ...catsNuevas].sort((a, b) => a.localeCompare(b)));
-                            categoriasAgregadas = catsNuevas.length;
-                        }
-                    }
-
-                    if (serviciosAgregados === 0 && facturasAgregadas === 0 && facturasActualizadas === 0 && categoriasAgregadas === 0) {
+                    if (serviciosAgregados === 0 && facturasAgregadas === 0 && facturasActualizadas === 0 && ingresosAgregados === 0 && categoriasAgregadas === 0) {
                         this.mostrarToast('No hay datos nuevos para agregar', 'info');
                         return;
                     }
 
-                    let partes = [];
+                    const partes = [];
                     if (serviciosAgregados > 0) partes.push(this._plural(serviciosAgregados, 'servicio', 'servicios'));
                     if (facturasAgregadas > 0) partes.push(this._plural(facturasAgregadas, 'factura nueva', 'facturas nuevas'));
                     if (facturasActualizadas > 0) partes.push(this._plural(facturasActualizadas, 'actualizada', 'actualizadas'));
+                    if (ingresosAgregados > 0) partes.push(this._plural(ingresosAgregados, 'ingreso nuevo', 'ingresos nuevos'));
                     if (categoriasAgregadas > 0) partes.push(this._plural(categoriasAgregadas, 'categoría', 'categorías'));
 
                     this._postGuardado();
                     this.mostrarToast(`Importado: ${partes.join(', ')}`, 'success');
-
                 } else {
                     this.servicios = datos.servicios;
                     this._saveCategorias(cats);
                     this._postGuardado();
-                    this.mostrarToast(`Restaurados ${cantidad} servicios, ${facturas} facturas${catsTxt}.`, 'success');
+
+                    const cantidad = datos.servicios.filter(s => s.id !== this.SERVICIO_INGRESOS_ID).length;
+                    const facturas = datos.servicios
+                        .filter(s => s.id !== this.SERVICIO_INGRESOS_ID)
+                        .reduce((acc, s) => acc + s.facturas.length, 0);
+                    const ingresos = datos.servicios
+                        .find(s => s.id === this.SERVICIO_INGRESOS_ID)?.facturas.length || 0;
+
+                    const partes = [];
+                    partes.push(this._plural(cantidad, 'servicio', 'servicios'));
+                    if (facturas > 0) partes.push(this._plural(facturas, 'factura', 'facturas'));
+                    if (ingresos > 0) partes.push(this._plural(ingresos, 'ingreso', 'ingresos'));
+                    if (cats.length > 0) partes.push(this._plural(cats.length, 'categoría', 'categorías'));
+
+                    this.mostrarToast(`Restaurados: ${partes.join(', ')}`, 'success');
                 }
             }
 
@@ -7169,80 +7109,9 @@
 
                 opciones.classList.toggle('open', abriendo);
                 padre.classList.toggle('open', abriendo);
-            }
+            }            
 
-            importarDesdeArchivo() {
-                const input = document.createElement('input');
-                input.type = 'file';
-                input.accept = 'application/json';
-
-                input.addEventListener('change', (e) => {
-                    const file = e.target.files[0];
-                    if (!file) return;
-
-                    if (file.size > 10 * 1024 * 1024) {
-                        this.mostrarToast('Archivo demasiado grande (máx 10MB)', 'error');
-                        return;
-                    }
-                    if (!file.name.endsWith('.json')) {
-                        this.mostrarToast('Solo se permiten archivos .json', 'error');
-                        return;
-                    }
-
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                        try {
-                            const datos = JSON.parse(event.target.result);
-
-                            if (!datos.servicios || !Array.isArray(datos.servicios)) {
-                                throw new Error('Formato inválido: falta "servicios"');
-                            }
-                            if (!this.validarDatos(datos.servicios)) {
-                                throw new Error('Datos corruptos o inválidos');
-                            }
-
-                            this._importDatosPendientes = datos;
-
-                            // Analizar diferencias
-                            const idsLocales = new Set(this.servicios.map(s => s.id));
-                            const idsArchivo = new Set(datos.servicios.map(s => s.id));
-                            const soloEnArchivo = datos.servicios.filter(s => !idsLocales.has(s.id));
-                            const enAmbos = datos.servicios.filter(s => idsLocales.has(s.id));
-                            const soloLocal = this.servicios.filter(s => !idsArchivo.has(s.id));
-                            const totalFacturas = datos.servicios.reduce((acc, s) => acc + s.facturas.length, 0);
-
-                            const resumen = document.getElementById('import-confirm-resumen');
-                            if (resumen) {
-                                resumen.innerHTML = this._generarResumenComparacion(datos.servicios, 'archivo');
-                            }
-
-                            this.abrirModal('modal-import-confirm');
-                        } catch (err) {
-                            this.mostrarToast('Error: ' + err.message, 'error');
-                        }
-                    };
-                    reader.readAsText(file);
-                });
-
-                input.click();
-            }
-
-            importarAplicar(modo) {
-                const datos = this._importDatosPendientes;
-                if (!datos) return;
-
-                this.importarDatos(modo, datos);
-                this._importDatosPendientes = null;
-                this.cerrarModal('modal-import-confirm');
-            }
-
-            importarDatos(modo = 'reemplazar', datosPreCargados = null) {
-                if (datosPreCargados) {
-                    // Datos ya validados y cargados, aplicar directamente
-                    this._aplicarImportacion(modo, datosPreCargados);
-                    return;
-                }
-
+            importarDatos(modo = 'reemplazar') {
                 const input = document.createElement('input');
                 input.type = 'file';
                 input.accept = 'application/json';
@@ -7286,95 +7155,27 @@
                                 throw new Error('Datos corruptos o inválidos en el archivo');
                             }
 
-                            const cantidad = datos.servicios.length;
-                            const facturas = datos.servicios.reduce((acc, s) => acc + s.facturas.length, 0);
+                            const cantidad = datos.servicios.filter(s => s.id !== this.SERVICIO_INGRESOS_ID).length;
+                            const facturas = datos.servicios
+                                .filter(s => s.id !== this.SERVICIO_INGRESOS_ID)
+                                .reduce((acc, s) => acc + s.facturas.length, 0);
+                            const ingresos = datos.servicios
+                                .find(s => s.id === this.SERVICIO_INGRESOS_ID)?.facturas.length || 0;
 
                             if (modo === 'combinar') {
-                                // Modo combinar: agregar servicios y facturas nuevos, actualizar existentes
-                                let serviciosAgregados = 0;
-                                let facturasAgregadas = 0;
-                                let facturasActualizadas = 0;
-
-                                datos.servicios.forEach(servicioNuevo => {
-                                    const servicioExistente = this.servicios.find(s => s.id === servicioNuevo.id);
-
-                                    if (!servicioExistente) {
-                                        // Servicio no existe, agregarlo completo
-                                        this.servicios.push(servicioNuevo);
-                                        serviciosAgregados++;
-                                        facturasAgregadas += servicioNuevo.facturas.length;
-                                    } else {
-                                        // Servicio existe, agregar facturas nuevas o actualizar existentes
-                                        servicioNuevo.facturas.forEach(facturaNueva => {
-                                            const facturaExistenteIndex = servicioExistente.facturas.findIndex(f => f.id === facturaNueva.id);
-
-                                            if (facturaExistenteIndex === -1) {
-                                                // Factura no existe, agregarla
-                                                servicioExistente.facturas.push(facturaNueva);
-                                                facturasAgregadas++;
-                                            } else {
-                                                // Factura existe, verificar si los datos son diferentes
-                                                const facturaExistente = servicioExistente.facturas[facturaExistenteIndex];
-                                                const sonDiferentes =
-                                                    facturaExistente.monto !== facturaNueva.monto ||
-                                                    facturaExistente.fecha !== facturaNueva.fecha ||
-                                                    facturaExistente.pagada !== facturaNueva.pagada ||
-                                                    facturaExistente.fechaPago !== facturaNueva.fechaPago ||
-                                                    facturaExistente.tipo !== facturaNueva.tipo;
-
-                                                if (sonDiferentes) {
-                                                    // Actualizar la factura existente con los nuevos datos
-                                                    servicioExistente.facturas[facturaExistenteIndex] = facturaNueva;
-                                                    facturasActualizadas++;
-                                                }
-                                            }
-                                        });
-                                    }
-                                });
-
-                                // Combinar categorías
-                                let categoriasAgregadas = 0;
-                                if (Array.isArray(datos.categorias)) {
-                                    const catsActuales = this._getCategorias();
-                                    const catsNuevas = datos.categorias.filter(c => !catsActuales.some(ca => ca.toLowerCase() === c.toLowerCase()));
-                                    if (catsNuevas.length > 0) {
-                                        const catsMerge = [...catsActuales, ...catsNuevas].sort((a, b) => a.localeCompare(b));
-                                        this._saveCategorias(catsMerge);
-                                        categoriasAgregadas = catsNuevas.length;
-                                    }
-                                }
-
-                                // Construir mensaje según lo que se hizo
-                                if (serviciosAgregados === 0 && facturasAgregadas === 0 && facturasActualizadas === 0 && categoriasAgregadas === 0) {
-                                    this.mostrarToast('No hay datos nuevos para agregar', 'info');
-                                    document.getElementById('opciones-importacion').classList.remove('open');
-                                    document.getElementById('menu-importar').classList.remove('open');
-                                    return;
-                                }
-
-                                let mensajePartes = [];
-                                if (serviciosAgregados > 0) mensajePartes.push(this._plural(serviciosAgregados, 'servicio', 'servicios'));
-                                if (facturasAgregadas > 0) mensajePartes.push(this._plural(facturasAgregadas, 'factura nueva', 'facturas nuevas'));
-                                if (facturasActualizadas > 0) mensajePartes.push(this._plural(facturasActualizadas, 'actualizada', 'actualizadas'));
-                                if (categoriasAgregadas > 0) mensajePartes.push(this._plural(categoriasAgregadas, 'categoría', 'categorías'));
-
-                                const mensajeFinal = `Importado: ${mensajePartes.join(', ')}`;
-
-                                this._postGuardado();
-                                this.mostrarToast(mensajeFinal, 'success');
-
+                                this._aplicarImportacion('combinar', datos);
                             } else {
-                                // Modo reemplazar
                                 const cats = Array.isArray(datos.categorias) ? datos.categorias : [];
                                 const cantCats = cats.length;
-                                const catsTxt = cantCats > 0 ? `, ${this._plural(cantCats, 'categoría', 'categorías')}` : '';
-                                const mensaje = `Se restauraran ${cantidad} servicios, ${facturas} facturas${catsTxt}. ¿Deseas reemplazar todos los datos actuales?`;
+                                const partes = [];
+                                partes.push(this._plural(cantidad, 'servicio', 'servicios'));
+                                if (facturas > 0) partes.push(this._plural(facturas, 'factura', 'facturas'));
+                                if (ingresos > 0) partes.push(this._plural(ingresos, 'ingreso', 'ingresos'));
+                                if (cantCats > 0) partes.push(this._plural(cantCats, 'categoría', 'categorías'));
 
+                                const mensaje = `Se restaurarán ${partes.join(', ')}. ¿Deseas reemplazar todos los datos actuales?`;
                                 if (confirm(mensaje)) {
-                                    this.servicios = datos.servicios;
-                                    this._saveCategorias(cats);
-                                    this._postGuardado();
-                                    this.mostrarToast(`Restaurados ${cantidad} servicios, ${facturas} facturas${catsTxt}.`, 'success');
+                                    this._aplicarImportacion('reemplazar', datos);
                                 }
                             }
                         } catch (error) {
@@ -8171,7 +7972,7 @@
                     btnRespaldar.querySelector('use').setAttribute('href', '#icon-download');
 
                     btnRestaurar.title = 'Restaurar';
-                    btnRestaurar.onclick = () => this.importarDesdeArchivo();
+                    btnRestaurar.onclick = () => this.mostrarOpcionesImportacion();
                     btnRestaurar.querySelector('use').setAttribute('href', '#icon-upload');
                 }
             }
@@ -8250,16 +8051,20 @@
                 this.actualizarBotonesGist();
             }
 
+            _gistGuardarCredencialesModal() {
+                const inputToken = document.getElementById('gist-token');
+                const inputId = document.getElementById('gist-id');
+                if (inputToken?.value.trim()) localStorage.setItem('gist_token', inputToken.value.trim());
+                if (inputId?.value.trim()) this.gistSetPerfil({ gistId: inputId.value.trim() });
+            }
+
             async gistSubir() {
                 const token = this.gistGetToken();
                 const perfil = this.gistGetPerfil();
                 if (!token) { this.mostrarToast('Falta el token', 'error'); return; }
 
-                // Guardar credenciales del modal si está abierto
-                const inputToken = document.getElementById('gist-token');
+                this._gistGuardarCredencialesModal();
                 const inputId = document.getElementById('gist-id');
-                if (inputToken && inputToken.value.trim()) localStorage.setItem('gist_token', inputToken.value.trim());
-                if (inputId && inputId.value.trim()) this.gistSetPerfil({ gistId: inputId.value.trim() });
 
                 const categorias = this._getCategorias();
                 const datos = JSON.stringify({ servicios: this.servicios, categorias }, null, 2);
@@ -8347,11 +8152,7 @@
             }
 
             async gistBajar(esAutomatico = false) {
-                // Guardar credenciales del modal si está abierto
-                const inputToken = document.getElementById('gist-token');
-                const inputId = document.getElementById('gist-id');
-                if (inputToken && inputToken.value.trim()) localStorage.setItem('gist_token', inputToken.value.trim());
-                if (inputId && inputId.value.trim()) this.gistSetPerfil({ gistId: inputId.value.trim() });
+                this._gistGuardarCredencialesModal();
 
                 const btnBajar = document.getElementById('gist-btn-bajar');
                 if (btnBajar) btnBajar.disabled = true;
@@ -8387,38 +8188,45 @@
                 }
             }
 
+            _mergeCategorias(catsNuevas) {
+                if (!Array.isArray(catsNuevas) || catsNuevas.length === 0) return 0;
+                const actuales = this._getCategorias();
+                const nuevas = catsNuevas.filter(c => !actuales.some(ca => ca.toLowerCase() === c.toLowerCase()));
+                if (nuevas.length > 0) this._saveCategorias([...actuales, ...nuevas].sort((a, b) => a.localeCompare(b)));
+                return nuevas.length;
+            }
+
             gistMergeAplicar(modo, esAutomatico = false) {
                 const { servicios: serviciosGist, categorias: categoriasGist } = this._gistDatosPendientes || {};
                 if (!serviciosGist) return;
 
+                let toastMsg;
+
                 if (modo === 'replace') {
                     this.servicios = serviciosGist;
                     this._saveCategorias(categoriasGist.length > 0 ? categoriasGist : this._getCategorias());
+                    toastMsg = 'Datos reemplazados ✓';
                 } else {
-                    // Combinar categorías igual que importación local
-                    const catsActuales = this._getCategorias();
-                    const catsNuevas = categoriasGist.filter(c => !catsActuales.some(ca => ca.toLowerCase() === c.toLowerCase()));
-                    if (catsNuevas.length > 0) {
-                        this._saveCategorias([...catsActuales, ...catsNuevas].sort((a, b) => a.localeCompare(b)));
+                    const { serviciosAgregados, facturasAgregadas, facturasActualizadas, ingresosAgregados } = this._mergeServicios(serviciosGist);
+                    const categoriasAgregadas = this._mergeCategorias(categoriasGist);
+
+                    if (serviciosAgregados === 0 && facturasAgregadas === 0 && facturasActualizadas === 0 && ingresosAgregados === 0 && categoriasAgregadas === 0) {
+                        this._gistDatosPendientes = null;
+                        this.cerrarModal('modal-gist-merge');
+                        this.mostrarToast('No hay datos nuevos para agregar', 'info');
+                        return;
                     }
 
-                    serviciosGist.forEach(servicioRemoto => {
-                        const servicioLocal = this.servicios.find(s => s.id === servicioRemoto.id);
-                        if (!servicioLocal) {
-                            // Servicio nuevo: agregar completo
-                            this.servicios.push(servicioRemoto);
-                        } else {
-                            // Servicio existente: agregar solo facturas que no existen localmente
-                            const idsLocales = new Set(servicioLocal.facturas.map(f => f.id));
-                            const facturasNuevas = servicioRemoto.facturas.filter(f => !idsLocales.has(f.id));
-                            servicioLocal.facturas.push(...facturasNuevas);
-                        }
-                    });
+                    const partes = [];
+                    if (serviciosAgregados > 0) partes.push(this._plural(serviciosAgregados, 'servicio', 'servicios'));
+                    if (facturasAgregadas > 0) partes.push(this._plural(facturasAgregadas, 'factura nueva', 'facturas nuevas'));
+                    if (facturasActualizadas > 0) partes.push(this._plural(facturasActualizadas, 'actualizada', 'actualizadas'));
+                    if (ingresosAgregados > 0) partes.push(this._plural(ingresosAgregados, 'ingreso nuevo', 'ingresos nuevos'));
+                    if (categoriasAgregadas > 0) partes.push(this._plural(categoriasAgregadas, 'categoría', 'categorías'));
+                    toastMsg = `Importado: ${partes.join(', ')}`;
                 }
 
-                this.guardarDatos();
-                this.renderServicios();
-                this.actualizarResumenMes();
+                this._postGuardado();
 
                 const ahora = new Date().toLocaleString('es-AR');
                 this.gistSetPerfil({ gistLastSync: ahora });
@@ -8429,9 +8237,7 @@
 
                 this._gistDatosPendientes = null;
                 this.cerrarModal('modal-gist-merge');
-
-                const etiqueta = modo === 'replace' ? 'Datos reemplazados ✓' : 'Datos combinados ✓';
-                this.mostrarToast(etiqueta, 'success');
+                this.mostrarToast(toastMsg, 'success');
             }
 
             async gistAutoSyncInit() {
@@ -8813,13 +8619,11 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA LUSHIBOSCA VERSION 100
+    //                 NOTAS SISTEMA LUSHIBOSCA VERSION 101
     // ====================================================================
     
      - CAMBIOS
-     1) Se agrega "reporte" en la tarjeta de estadisticas
-     2) Se corrige el parseo en gist
-     2) Nombre definitivo y versionado
+     1) Refactorizacion de funciones importacion exportacion
 
 
      - BUGS CONOCIDOS:
