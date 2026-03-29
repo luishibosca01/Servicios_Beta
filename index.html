@@ -2085,7 +2085,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">Lushibosca 0.89</div> <!-- DeltaF -->
+            <div class="menu-version">LUSHIBOSCA 100</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -2431,8 +2431,7 @@
                 <h3>Sincronización desde Gist</h3>
             </div>
             <div class="modal-body" style="display:flex; flex-direction:column; gap:1rem;">
-                <div id="gist-merge-resumen"
-                    style="font-size:0.9rem; color:var(--text-muted); background:var(--bg-body); border-radius:8px; padding:0.75rem;">
+                <div id="gist-merge-resumen">
                 </div>
                 <div style="display:flex; flex-direction:column; gap:0.5rem;">
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem;">
@@ -3048,7 +3047,7 @@
     <div class="modal" id="modal-informacion">
         <div class="modal-content" style="max-width: 600px;">
             <div class="modal-header">
-                <h3>📊 Estadística individual</h3>
+                <h3>📊 Informacion</h3>
             </div>
             <div class="info-content">
                 <p style="margin-bottom: 1rem; color: var(--text-muted);">
@@ -7041,7 +7040,7 @@
                 }
             }
 
-            _generarResumenComparacion(serviciosRemoto, etiqueta = 'archivo') {
+            _generarResumenComparacion(serviciosRemoto, etiqueta = 'archivo', categoriasRemoto = []) {
                 const idsLocales = new Set(this.servicios.map(s => s.id));
                 const idsRemoto = new Set(serviciosRemoto.map(s => s.id));
 
@@ -7070,16 +7069,22 @@
 
                 const totalFacturasRemoto = serviciosRemoto.reduce((acc, s) => acc + s.facturas.length, 0);
 
+                // Categorías nuevas que aportaría el remoto
+                const catsActuales = this._getCategorias();
+                const catsNuevas = categoriasRemoto.filter(c => !catsActuales.some(ca => ca.toLowerCase() === c.toLowerCase()));
+
                 // Qué haría combinar
                 const partesCombi = [];
                 if (soloEnRemoto.length > 0) partesCombi.push(this._plural(soloEnRemoto.length, 'servicio nuevo', 'servicios nuevos'));
                 if (facturasNuevas > 0) partesCombi.push(this._plural(facturasNuevas, 'factura nueva', 'facturas nuevas'));
+                if (catsNuevas.length > 0) partesCombi.push(this._plural(catsNuevas.length, 'categoría nueva', 'categorías nuevas'));
                 const textoCombinar = partesCombi.length > 0 ? `Agrega ${partesCombi.join(', ')}` : 'No modifica nada';
 
                 // Qué haría reemplazar
                 const partesReempl = [];
                 if (serviciosRemoto.length > 0) partesReempl.push(this._plural(serviciosRemoto.length, 'servicio', 'servicios'));
                 if (totalFacturasRemoto > 0) partesReempl.push(this._plural(totalFacturasRemoto, 'factura', 'facturas'));
+                if (categoriasRemoto.length > 0) partesReempl.push(this._plural(categoriasRemoto.length, 'categoría', 'categorías'));
                 const textoReemplazar = partesReempl.length > 0 ? `Carga ${partesReempl.join(', ')}` : 'No modifica nada';
 
                 return `
@@ -8370,7 +8375,7 @@
                     } else {
                         const resumen = document.getElementById('gist-merge-resumen');
                         if (resumen) {
-                            resumen.innerHTML = this._generarResumenComparacion(serviciosGist, 'Gist');
+                            resumen.innerHTML = this._generarResumenComparacion(serviciosGist, 'Gist', categoriasGist);
                         }
                         this.abrirModal('modal-gist-merge');
                     }
@@ -8808,12 +8813,13 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA DeltaF VERSION 0.89
+    //                 NOTAS SISTEMA LUSHIBOSCA VERSION 100
     // ====================================================================
     
      - CAMBIOS
      1) Se agrega "reporte" en la tarjeta de estadisticas
      2) Se corrige el parseo en gist
+     2) Nombre definitivo y versionado
 
 
      - BUGS CONOCIDOS:
