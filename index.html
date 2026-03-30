@@ -2082,7 +2082,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">LUSHIBOSCA 101</div> <!-- DeltaF -->
+            <div class="menu-version">LUSHIBOSCA 103</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -2347,8 +2347,8 @@
             <div class="modal-header">
                 <h3>GitHub Gist</h3>
             </div>
-            <div class="modal-body" style="display:flex; flex-direction:column; gap:1rem;">
-                <div class="form-group">
+            <div class="modal-body" style="display:flex; flex-direction:column; gap:0.75rem;">
+                <div>
                     <label for="gist-token">Personal Access Token</label>
                     <div style="display:flex; gap:0.5rem;">
                         <input type="password" id="gist-token" placeholder="ghp_xxxxxxxxxxxx" maxlength="200"
@@ -2361,58 +2361,51 @@
                         </button>
                     </div>
                 </div>
-                <div class="form-group">
+                <div>
                     <label for="gist-id">Gist ID</label>
                     <input type="text" id="gist-id" placeholder="se crea automáticamente si esta vacío" maxlength="100"
                         autocomplete="off">
                 </div>
-                <!-- Acciones manuales -->
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem;">
-                    <button type="button" id="gist-btn-subir" onclick="app.gistSubir()">
-                        <svg class="icon">
-                            <use href="#icon-upload" />
-                        </svg> Subir
-                    </button>
-                    <button type="button" id="gist-btn-bajar" onclick="app.gistBajar()">
-                        <svg class="icon">
-                            <use href="#icon-download" />
-                        </svg> Bajar
-                    </button>
+                <div>
+                    <label>Acciones</label>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem;">
+                        <button type="button" id="gist-btn-subir" onclick="app.gistSubir()">
+                            <svg class="icon"><use href="#icon-upload" /></svg> Subir
+                        </button>
+                        <button type="button" id="gist-btn-bajar" onclick="app.gistBajar()">
+                            <svg class="icon"><use href="#icon-download" /></svg> Bajar
+                        </button>
+                    </div>
                 </div>
-                <!-- Toggle modo auto-sync -->
-                <div class="form-group">
+                <div>
                     <label>Automatización</label>
-                    <button type="button" id="gist-autosync-btn" onclick="app.gistCiclarAutoSync()">
-                        Sin automatizar
-                    </button>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem;">
+                        <button type="button" id="gist-autosync-btn" onclick="app.gistCiclarAutoSync()">
+                            Sin automatizar
+                        </button>
+                        <button type="button" id="gist-merge-btn" onclick="app.gistCiclarMerge()">
+                            Combinar
+                        </button>
+                    </div>
                 </div>
                 <!-- Rango horario (se muestra solo en modo 1 y 2) -->
-                <div id="gist-rango-container" style="display:none; display:flex; flex-direction:column; gap:0.5rem;">
-                    <label style="display:block; margin-bottom:0.25rem;">Rango horario</label>
+                <div id="gist-rango-container" style="display:none; flex-direction:column;">
+                    <label>Rango horario</label>
                     <div style="display:flex; gap:0.5rem; align-items:center;">
                         <input type="time" id="gist-rango-desde" style="flex:1;">
                         <span style="color:var(--text-muted);">a</span>
                         <input type="time" id="gist-rango-hasta" style="flex:1;">
                     </div>
-                    <!-- Comportamiento al bajar automáticamente -->
-                    <label style="display:block; margin-top:0.25rem;">Al bajar automáticamente</label>
-                    <button type="button" id="gist-merge-btn" onclick="app.gistCiclarMerge()">
-                        Combinar (no reemplaza existentes)
-                    </button>
                 </div>
-                <!-- Última sync y contadores -->
+                <!-- Última sync -->
                 <div id="gist-ultima-sync" style="font-size:0.8rem; color:var(--text-muted); display:none;"></div>
-                <!-- Guardar / Volver -->
+                <!-- Guardar / Cerrar -->
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem;">
                     <button type="button" onclick="app.gistGuardarConfig()">
-                        <svg class="icon">
-                            <use href="#icon-save" />
-                        </svg> Guardar
+                        <svg class="icon"><use href="#icon-save" /></svg> Guardar
                     </button>
-                    <button type="button" onclick="app.cerrarModal('modal-gist'); app.toggleMenuAjustes();">
-                        <svg class="icon">
-                            <use href="#icon-cancel" />
-                        </svg> Cerrar
+                    <button type="button" onclick="app.cerrarModal('modal-gist');">
+                        <svg class="icon"><use href="#icon-cancel" /></svg> Cerrar
                     </button>
                 </div>
             </div>
@@ -7987,7 +7980,7 @@
 
             gistCiclarMerge() {
                 const opciones = ['merge', 'replace'];
-                const etiquetas = ['Combinar (no reemplaza existentes)', 'Reemplazar todo con datos del Gist'];
+                const etiquetas = ['Combinar', 'Reemplazar'];
                 const actual = this._gistMergeBehaviorTemp ?? (this.gistGetMergeBehavior());
                 const siguiente = actual === 'merge' ? 'replace' : 'merge';
                 this._gistMergeBehaviorTemp = siguiente;
@@ -8000,7 +7993,7 @@
                 const autoSync = perfil.gistAutoSync ?? 0;
                 const merge = perfil.gistMergeBehavior || 'merge';
                 const estados = ['Sin automatizar', 'Restaurar al iniciar', 'Respaldo automático'];
-                const etiquetasMerge = { merge: 'Combinar (no reemplaza existentes)', replace: 'Reemplazar todo con datos del Gist' };
+                const etiquetasMerge = { merge: 'Combinar', replace: 'Reemplazar' };
 
                 this._gistAutoSyncTemp = autoSync;
                 this._gistMergeBehaviorTemp = merge;
@@ -8619,7 +8612,7 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA LUSHIBOSCA VERSION 101
+    //                 NOTAS SISTEMA LUSHIBOSCA VERSION 103
     // ====================================================================
     
      - CAMBIOS
