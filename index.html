@@ -408,8 +408,75 @@
         }
 
         /* ============================================================
-           SCROLLBAR (reutilizable)
+           MENÚ CONTEXTUAL SERVICIO
         ============================================================ */
+        .ctx-menu {
+            position: fixed;
+            z-index: 300;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: calc(var(--radius) * 0.7);
+            box-shadow: var(--shadow-modal);
+            padding: 0.4rem;
+            min-width: 210px;
+            opacity: 0;
+            transform: scale(0.92);
+            transform-origin: top left;
+            transition: opacity 0.15s ease, transform 0.15s ease;
+            pointer-events: none;
+        }
+
+        .ctx-menu.active {
+            opacity: 1;
+            transform: scale(1);
+            pointer-events: auto;
+        }
+
+        .ctx-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            width: 100%;
+            padding: 0.6rem 0.75rem;
+            border-radius: calc(var(--radius) * 0.5);
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-main);
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            text-align: left;
+            transition: background var(--transition-fast);
+        }
+
+        .ctx-menu-item:active {
+            transform: none;
+        }
+
+        .ctx-menu-item:hover {
+            background: var(--input-bg);
+        }
+
+        .ctx-menu-item svg {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+            opacity: 0.8;
+        }
+
+        .ctx-menu-item:disabled {
+            opacity: 0.38;
+            cursor: not-allowed;
+            background: transparent !important;
+        }
+
+        .ctx-menu-separator {
+            height: 1px;
+            background: var(--border);
+            margin: 0.3rem 0.4rem;
+        }
+
+
         .custom-scroll,
         .modal-content {
             overflow-y: auto;
@@ -2082,7 +2149,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">LUSHIBOSCA 103</div> <!-- DeltaF -->
+            <div class="menu-version">LUSHIBOSCA 112</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -2347,8 +2414,8 @@
             <div class="modal-header">
                 <h3>GitHub Gist</h3>
             </div>
-            <div class="modal-body" style="display:flex; flex-direction:column; gap:0.75rem;">
-                <div>
+            <div class="modal-body" style="display:flex; flex-direction:column; gap:1rem;">
+                <div class="form-group">
                     <label for="gist-token">Personal Access Token</label>
                     <div style="display:flex; gap:0.5rem;">
                         <input type="password" id="gist-token" placeholder="ghp_xxxxxxxxxxxx" maxlength="200"
@@ -2361,51 +2428,58 @@
                         </button>
                     </div>
                 </div>
-                <div>
+                <div class="form-group">
                     <label for="gist-id">Gist ID</label>
                     <input type="text" id="gist-id" placeholder="se crea automáticamente si esta vacío" maxlength="100"
                         autocomplete="off">
                 </div>
-                <div>
-                    <label>Acciones</label>
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem;">
-                        <button type="button" id="gist-btn-subir" onclick="app.gistSubir()">
-                            <svg class="icon"><use href="#icon-upload" /></svg> Subir
-                        </button>
-                        <button type="button" id="gist-btn-bajar" onclick="app.gistBajar()">
-                            <svg class="icon"><use href="#icon-download" /></svg> Bajar
-                        </button>
-                    </div>
+                <!-- Acciones manuales -->
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem;">
+                    <button type="button" id="gist-btn-subir" onclick="app.gistSubir()">
+                        <svg class="icon">
+                            <use href="#icon-upload" />
+                        </svg> Subir
+                    </button>
+                    <button type="button" id="gist-btn-bajar" onclick="app.gistBajar()">
+                        <svg class="icon">
+                            <use href="#icon-download" />
+                        </svg> Bajar
+                    </button>
                 </div>
-                <div>
+                <!-- Toggle modo auto-sync -->
+                <div class="form-group">
                     <label>Automatización</label>
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem;">
-                        <button type="button" id="gist-autosync-btn" onclick="app.gistCiclarAutoSync()">
-                            Sin automatizar
-                        </button>
-                        <button type="button" id="gist-merge-btn" onclick="app.gistCiclarMerge()">
-                            Combinar
-                        </button>
-                    </div>
+                    <button type="button" id="gist-autosync-btn" onclick="app.gistCiclarAutoSync()">
+                        Sin automatizar
+                    </button>
                 </div>
                 <!-- Rango horario (se muestra solo en modo 1 y 2) -->
-                <div id="gist-rango-container" style="display:none; flex-direction:column;">
-                    <label>Rango horario</label>
+                <div id="gist-rango-container" style="display:none; display:flex; flex-direction:column; gap:0.5rem;">
+                    <label style="display:block; margin-bottom:0.25rem;">Rango horario</label>
                     <div style="display:flex; gap:0.5rem; align-items:center;">
                         <input type="time" id="gist-rango-desde" style="flex:1;">
                         <span style="color:var(--text-muted);">a</span>
                         <input type="time" id="gist-rango-hasta" style="flex:1;">
                     </div>
+                    <!-- Comportamiento al bajar automáticamente -->
+                    <label style="display:block; margin-top:0.25rem;">Al bajar automáticamente</label>
+                    <button type="button" id="gist-merge-btn" onclick="app.gistCiclarMerge()">
+                        Combinar (no reemplaza existentes)
+                    </button>
                 </div>
-                <!-- Última sync -->
+                <!-- Última sync y contadores -->
                 <div id="gist-ultima-sync" style="font-size:0.8rem; color:var(--text-muted); display:none;"></div>
-                <!-- Guardar / Cerrar -->
+                <!-- Guardar / Volver -->
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem;">
                     <button type="button" onclick="app.gistGuardarConfig()">
-                        <svg class="icon"><use href="#icon-save" /></svg> Guardar
+                        <svg class="icon">
+                            <use href="#icon-save" />
+                        </svg> Guardar
                     </button>
-                    <button type="button" onclick="app.cerrarModal('modal-gist');">
-                        <svg class="icon"><use href="#icon-cancel" /></svg> Cerrar
+                    <button type="button" onclick="app.cerrarModal('modal-gist'); app.toggleMenuAjustes();">
+                        <svg class="icon">
+                            <use href="#icon-cancel" />
+                        </svg> Cerrar
                     </button>
                 </div>
             </div>
@@ -3148,6 +3222,24 @@
     <!-- Toast de notificaciones -->
     <div class="toast" id="toast"></div>
 
+    <!-- Menú contextual servicios -->
+    <div class="ctx-menu" id="ctx-menu-servicio">
+        <button class="ctx-menu-item" id="ctx-seleccionar">
+            <svg class="icon icon-line" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            Seleccionar
+        </button>
+        <div class="ctx-menu-separator"></div>
+        <button class="ctx-menu-item" id="ctx-copiar-monto">
+            <svg class="icon icon-line" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Copiar monto
+        </button>
+        <div class="ctx-menu-separator"></div>
+        <button class="ctx-menu-item" id="ctx-pagar-factura">
+            <svg class="icon icon-line" viewBox="0 0 24 24"><path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+            Pagar factura del mes
+        </button>
+    </div>
+
 
     <script>
         // ============================================
@@ -3207,6 +3299,7 @@
                 this.ordenActual = localStorage.getItem('gestion_servicios_orden') || 'nombre';
                 this.terminoBusqueda = '';
                 this.enModoBusqueda = false;
+                this._ctxServicioId = null;
 
                 // Timer para el toast
                 this.toastTimeout = null;
@@ -3376,6 +3469,9 @@
 
                 // Inicializar botones de respaldo/restauración según Gist
                 this.actualizarBotonesGist();
+
+                // Inicializar menú contextual
+                this._ctxInit();
 
             }
 
@@ -3686,53 +3782,49 @@
             // MENÚ CONTEXTUAL Y CALCULADORA
             // ========================================
 
-            activarModoCalculadora() {
+            activarModoCalculadora(silencioso = false) {
                 this.modoCalculadora = true;
                 this.serviciosSeleccionados.clear();
 
-                // Cambiar apariencia del botón add
                 const btnAdd = document.getElementById('btn-agregar-servicio');
                 btnAdd.classList.add('modo-calculadora');
 
                 this.actualizarCalculadora();
                 this.renderServicios();
 
-                // Mostrar calculadora flotante
-                const flotante = document.getElementById('calculadora-flotante');
-                flotante.style.display = 'flex';
+                if (!silencioso) {
+                    const flotante = document.getElementById('calculadora-flotante');
+                    flotante.style.display = 'flex';
 
-                // Copiar al tocar el monto
-                flotante.onclick = () => {
-                    const arsVal = this._calcTotalARS ?? 0;
-                    const usdVal = this._calcTotalUSD ?? 0;
-                    const fmt = n => Number.isInteger(n) ? String(n) : n.toFixed(2);
-                    let texto = fmt(arsVal);
-                    if (usdVal > 0) texto += ` / ${fmt(usdVal)}`;
-                    navigator.clipboard.writeText(texto).then(() => {
-                        const contador = document.getElementById('calculadora-contador');
-                        const textoOriginal = contador.textContent;
-                        contador.textContent = '✓ Copiado';
-                        setTimeout(() => { contador.textContent = textoOriginal; }, 1200);
-                    });
-                };
-
+                    flotante.onclick = () => {
+                        const arsVal = this._calcTotalARS ?? 0;
+                        const usdVal = this._calcTotalUSD ?? 0;
+                        const fmt = n => Number.isInteger(n) ? String(n) : n.toFixed(2);
+                        let texto = fmt(arsVal);
+                        if (usdVal > 0) texto += ` / ${fmt(usdVal)}`;
+                        navigator.clipboard.writeText(texto).then(() => {
+                            const contador = document.getElementById('calculadora-contador');
+                            const textoOriginal = contador.textContent;
+                            contador.textContent = '✓ Copiado';
+                            setTimeout(() => { contador.textContent = textoOriginal; }, 1200);
+                        });
+                    };
+                }
             }
 
-            desactivarModoCalculadora() {
+            desactivarModoCalculadora(silencioso = false) {
                 this.modoCalculadora = false;
                 this.modoCalculadoraTipo = 'pendientes';
                 this.serviciosSeleccionados.clear();
 
-                // Restaurar apariencia del botón add
                 const btnAdd = document.getElementById('btn-agregar-servicio');
                 btnAdd.classList.remove('modo-calculadora');
 
                 this.actualizarCalculadora();
                 this.renderServicios();
 
-                // Ocultar calculadora flotante
                 document.getElementById('calculadora-flotante').style.display = 'none';
-                this.mostrarToast('Calculadora Desactivada', 'info');
+                if (!silencioso) this.mostrarToast('Calculadora Desactivada', 'info');
             }
 
             toggleServicioCalculadora(servicioId) {
@@ -5251,6 +5343,10 @@
                         this.terminoBusqueda = '';
                         searchClear.style.display = 'none';
                         this.enModoBusqueda = false;
+                        if (this._catColapsadasAntesBusqueda !== null) {
+                            this._catColapsadas = this._catColapsadasAntesBusqueda;
+                            this._catColapsadasAntesBusqueda = null;
+                        }
                         this.renderServicios();
                     }
                     return;
@@ -5294,6 +5390,10 @@
                         this.terminoBusqueda = '';
                         searchClear.style.display = 'none';
                         this.enModoBusqueda = false;
+                        if (this._catColapsadasAntesBusqueda !== null) {
+                            this._catColapsadas = this._catColapsadasAntesBusqueda;
+                            this._catColapsadasAntesBusqueda = null;
+                        }
                         this.renderServicios();
                     }
                 }
@@ -5684,6 +5784,13 @@
                             this.abrirModalFacturasServicio(servicioId);
                         }
                     });
+
+                    // Menú contextual (solo servicios normales, no ingresos)
+                    if (!esIngresos) {
+                        item.addEventListener('contextmenu', (e) => {
+                            this._ctxAbrir(e, servicioId);
+                        });
+                    }
 
                     // Actualizar menú flotante
                     this.actualizarMenuAgregar();
@@ -6992,13 +7099,16 @@
 
                 // Qué haría combinar
                 const facturasEnServiciosNuevos = soloEnRemoto.reduce((acc, s) => acc + s.facturas.length, 0);
-                const partesCombi = [];
-                if (soloEnRemoto.length > 0) partesCombi.push(this._plural(soloEnRemoto.length, 'servicio nuevo', 'servicios nuevos'));
-                if (facturasEnServiciosNuevos > 0) partesCombi.push(this._plural(facturasEnServiciosNuevos, 'factura nueva', 'facturas nuevas'));
-                if (facturasNuevas > 0) partesCombi.push(this._plural(facturasNuevas, 'factura nueva en servicios existentes', 'facturas nuevas en servicios existentes'));
-                if (ingresosNuevos > 0) partesCombi.push(this._plural(ingresosNuevos, 'ingreso nuevo', 'ingresos nuevos'));
-                if (catsNuevas.length > 0) partesCombi.push(this._plural(catsNuevas.length, 'categoría nueva', 'categorías nuevas'));
-                const textoCombinar = partesCombi.length > 0 ? `Agrega ${partesCombi.join(', ')}` : 'No modifica nada';
+                const partesAgregar = [];
+                if (soloEnRemoto.length > 0) partesAgregar.push(this._plural(soloEnRemoto.length, 'servicio nuevo', 'servicios nuevos'));
+                if (facturasEnServiciosNuevos > 0) partesAgregar.push(this._plural(facturasEnServiciosNuevos, 'factura nueva', 'facturas nuevas'));
+                if (facturasNuevas > 0) partesAgregar.push(this._plural(facturasNuevas, 'factura nueva en servicios existentes', 'facturas nuevas en servicios existentes'));
+                if (ingresosNuevos > 0) partesAgregar.push(this._plural(ingresosNuevos, 'ingreso nuevo', 'ingresos nuevos'));
+                if (catsNuevas.length > 0) partesAgregar.push(this._plural(catsNuevas.length, 'categoría nueva', 'categorías nuevas'));
+                const partes = [];
+                if (partesAgregar.length > 0) partes.push(`Agrega ${partesAgregar.join(', ')}`);
+                if (facturasConflicto > 0) partes.push(facturasConflicto === 1 ? 'Se actualiza 1 factura' : `Se actualizan ${facturasConflicto} facturas`);
+                const textoCombinar = partes.length > 0 ? partes.join('. ') : 'No modifica nada';
 
                 // Qué haría reemplazar
                 const partesReempl = [];
@@ -7965,7 +8075,7 @@
                     btnRespaldar.querySelector('use').setAttribute('href', '#icon-download');
 
                     btnRestaurar.title = 'Restaurar';
-                    btnRestaurar.onclick = () => this.mostrarOpcionesImportacion();
+                    btnRestaurar.onclick = () => this.importarDatos('reemplazar');
                     btnRestaurar.querySelector('use').setAttribute('href', '#icon-upload');
                 }
             }
@@ -7980,7 +8090,7 @@
 
             gistCiclarMerge() {
                 const opciones = ['merge', 'replace'];
-                const etiquetas = ['Combinar', 'Reemplazar'];
+                const etiquetas = ['Combinar (no reemplaza existentes)', 'Reemplazar todo con datos del Gist'];
                 const actual = this._gistMergeBehaviorTemp ?? (this.gistGetMergeBehavior());
                 const siguiente = actual === 'merge' ? 'replace' : 'merge';
                 this._gistMergeBehaviorTemp = siguiente;
@@ -7993,7 +8103,7 @@
                 const autoSync = perfil.gistAutoSync ?? 0;
                 const merge = perfil.gistMergeBehavior || 'merge';
                 const estados = ['Sin automatizar', 'Restaurar al iniciar', 'Respaldo automático'];
-                const etiquetasMerge = { merge: 'Combinar', replace: 'Reemplazar' };
+                const etiquetasMerge = { merge: 'Combinar (no reemplaza existentes)', replace: 'Reemplazar todo con datos del Gist' };
 
                 this._gistAutoSyncTemp = autoSync;
                 this._gistMergeBehaviorTemp = merge;
@@ -8547,6 +8657,149 @@
                 this.mostrarToast('Reporte generado', 'success');
             }
 
+            // ========================================
+            // MENÚ CONTEXTUAL SERVICIOS
+            // ========================================
+
+            _ctxInit() {
+                const menu = document.getElementById('ctx-menu-servicio');
+
+                document.addEventListener('pointerdown', (e) => {
+                    if (!menu.contains(e.target)) this._ctxCerrar();
+                }, true);
+
+                document.addEventListener('scroll', () => this._ctxCerrar(), true);
+
+                document.getElementById('ctx-seleccionar').addEventListener('click', () => {
+                    const id = this._ctxServicioId;
+                    this._ctxCerrar();
+                    this._ctxSeleccionar(id);
+                });
+
+                document.getElementById('ctx-copiar-monto').addEventListener('click', () => {
+                    this._ctxCopiarMonto();
+                    this._ctxCerrar();
+                });
+
+                document.getElementById('ctx-pagar-factura').addEventListener('click', () => {
+                    this._ctxPagarFactura();
+                    this._ctxCerrar();
+                });
+            }
+
+            _ctxAbrir(e, servicioId) {
+                e.preventDefault();
+                this._ctxServicioId = servicioId;
+
+                const estaSeleccionado = this.serviciosSeleccionados.has(servicioId);
+
+                // Texto de seleccionar
+                const btnSeleccionar = document.getElementById('ctx-seleccionar');
+                btnSeleccionar.childNodes[btnSeleccionar.childNodes.length - 1].textContent =
+                    estaSeleccionado ? ' Deseleccionar' : ' Seleccionar';
+
+                // Pagar: si está seleccionado, paga todas las seleccionadas; sino solo esta
+                // Habilitado si hay al menos una factura del mes pagable en el scope
+                const btnPagar = document.getElementById('ctx-pagar-factura');
+                const btnPagarText = btnPagar.childNodes[btnPagar.childNodes.length - 1];
+                if (estaSeleccionado && this.serviciosSeleccionados.size > 1) {
+                    const hayPagables = [...this.serviciosSeleccionados].some(id => {
+                        const f = this.obtenerUltimaFactura(id);
+                        return f && !f.pagada && !f.conCredito;
+                    });
+                    btnPagar.disabled = !hayPagables;
+                    btnPagarText.textContent = ` Pagar ${this.serviciosSeleccionados.size} seleccionados`;
+                } else {
+                    const factura = this.obtenerUltimaFactura(servicioId);
+                    btnPagar.disabled = !factura || factura.pagada || !!factura.conCredito;
+                    btnPagarText.textContent = ' Pagar factura del mes';
+                }
+
+                const menu = document.getElementById('ctx-menu-servicio');
+                const margen = 8;
+                let x = e.clientX;
+                let y = e.clientY;
+
+                menu.style.left = '0px';
+                menu.style.top = '0px';
+                menu.classList.add('active');
+
+                const mw = menu.offsetWidth;
+                const mh = menu.offsetHeight;
+
+                if (x + mw + margen > window.innerWidth) x = window.innerWidth - mw - margen;
+                if (y + mh + margen > window.innerHeight) y = window.innerHeight - mh - margen;
+
+                menu.style.left = `${x}px`;
+                menu.style.top = `${y}px`;
+            }
+
+            _ctxCerrar() {
+                document.getElementById('ctx-menu-servicio').classList.remove('active');
+                this._ctxServicioId = null;
+            }
+
+            _ctxSeleccionar(servicioId) {
+                if (!this.modoCalculadora) {
+                    this.activarModoCalculadora(true);
+                    this.serviciosSeleccionados.add(servicioId);
+                    this.actualizarCalculadora();
+                    this.renderServicios();
+                    return;
+                }
+                if (this.serviciosSeleccionados.has(servicioId)) {
+                    this.serviciosSeleccionados.delete(servicioId);
+                    if (this.serviciosSeleccionados.size === 0) {
+                        this.desactivarModoCalculadora(true);
+                        return;
+                    }
+                } else {
+                    this.serviciosSeleccionados.add(servicioId);
+                }
+                this.actualizarCalculadora();
+                this.renderServicios();
+            }
+
+            _ctxCopiarMonto() {
+                const factura = this.obtenerUltimaFactura(this._ctxServicioId);
+                if (!factura) { this.mostrarToast('Sin factura del mes', 'info'); return; }
+                const moneda = factura.moneda || 'ars';
+                const texto = this.formatearMoneda(factura.monto, moneda);
+                navigator.clipboard?.writeText(texto).then(() => {
+                    this.mostrarToast(`Copiado: ${texto}`, 'success');
+                }).catch(() => {
+                    this.mostrarToast('No se pudo copiar', 'error');
+                });
+            }
+
+            _ctxPagarFactura() {
+                const estaSeleccionado = this.serviciosSeleccionados.has(this._ctxServicioId);
+                const ids = (estaSeleccionado && this.serviciosSeleccionados.size > 1)
+                    ? [...this.serviciosSeleccionados]
+                    : [this._ctxServicioId];
+
+                const hoy = this.obtenerFechaLocal();
+                let pagadas = 0;
+
+                ids.forEach(id => {
+                    const servicio = this.servicios.find(s => s.id === id);
+                    const factura = this.obtenerUltimaFactura(id);
+                    if (!servicio || !factura || factura.pagada || factura.conCredito) return;
+                    const idx = servicio.facturas.findIndex(f => f.id === factura.id);
+                    if (idx === -1) return;
+                    servicio.facturas[idx] = { ...servicio.facturas[idx], pagada: true, fechaPago: hoy };
+                    pagadas++;
+                });
+
+                if (pagadas === 0) return;
+
+                if (estaSeleccionado && this.modoCalculadora) {
+                    this.desactivarModoCalculadora(true);
+                }
+                this._postGuardado();
+                this.mostrarToast(pagadas === 1 ? 'Factura pagada ✓' : `${pagadas} facturas pagadas ✓`, 'success');
+            }
+
             mostrarToast(mensaje, tipo = 'success') {
                 const toast = document.getElementById('toast');
 
@@ -8612,11 +8865,11 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA LUSHIBOSCA VERSION 103
+    //                 NOTAS SISTEMA LUSHIBOSCA VERSION 112
     // ====================================================================
     
      - CAMBIOS
-     1) Refactorizacion de funciones importacion exportacion
+     1) 
 
 
      - BUGS CONOCIDOS:
