@@ -1217,6 +1217,85 @@
             transition: opacity var(--transition-fast);
         }
 
+        /* ============================================================
+           CUSTOM DROPDOWN
+        ============================================================ */
+        .custom-select-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        .custom-select-trigger {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 1rem;
+            background: var(--input-bg);
+            color: var(--text-main);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.5rem;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .custom-select-trigger .csd-label {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .custom-select-trigger .csd-arrow {
+            flex-shrink: 0;
+            width: 1.2em;
+            height: 1.2em;
+            fill: currentColor;
+            transition: transform var(--transition-fast);
+        }
+
+        .custom-select-wrapper.open .csd-arrow {
+            transform: rotate(180deg);
+        }
+
+        .custom-select-dropdown {
+            display: none;
+            position: absolute;
+            left: 0;
+            right: 0;
+            z-index: 300;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-float);
+            max-height: 260px;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+        }
+
+        .custom-select-wrapper.open .custom-select-dropdown {
+            display: block;
+        }
+
+        .custom-select-option {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            color: var(--text-main);
+            font-size: 1rem;
+            transition: background var(--transition-fast);
+        }
+
+        .custom-select-option:active {
+            background: var(--input-bg);
+        }
+
+        .custom-select-option.selected {
+            font-weight: 600;
+        }
+
         .est-cat-tags-row {
             display: flex;
             flex-wrap: wrap;
@@ -2149,7 +2228,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">LUSHIBOSCA 115</div> <!-- DeltaF -->
+            <div class="menu-version">LUSHIBOSCA 116</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -2195,9 +2274,16 @@
                                 <div class="calculador-campo">
                                     <label class="calculador-label">Servicio</label>
                                     <div style="display: flex; gap: 0.5rem;">
-                                        <select id="calculador-servicio" class="calculador-select" style="flex: 1;">
-                                            <option value="">Seleccionar servicio...</option>
-                                        </select>
+                                        <div style="flex: 1; position: relative;">
+                                            <div class="custom-select-wrapper" id="calculador-servicio-csd">
+                                                <div class="custom-select-trigger">
+                                                    <span class="csd-label">Seleccionar servicio...</span>
+                                                    <svg class="csd-arrow" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+                                                </div>
+                                                <div class="custom-select-dropdown"></div>
+                                            </div>
+                                            <select id="calculador-servicio" style="display:none;"></select>
+                                        </div>
                                         <button type="button" class="icon-btn" id="btn-calculador-ver-facturas"
                                             title="Ver facturas del servicio">
                                             <svg class="icon">
@@ -2589,6 +2675,11 @@
                             </svg>
                         </button>
                     </div>
+                </div>
+                <div class="form-group">
+                    <button type="button" class="button" id="btn-borrar-facturas-servicio" style="width:100%;">
+                        <svg class="icon"><use href="#icon-trash" /></svg> Borrar todas las facturas
+                    </button>
                 </div>
                 <div class="form-actions" style="display: grid; grid-template-columns: 1fr 1fr;">
                     <button type="submit">
@@ -4113,6 +4204,7 @@
                 document.getElementById('form-factura').addEventListener('submit', (e) => this.guardarFactura(e));
                 document.getElementById('form-editar-factura').addEventListener('submit', (e) => this.guardarFactura(e));
                 document.getElementById('btn-eliminar-servicio').addEventListener('click', () => this.eliminarServicio());
+                document.getElementById('btn-borrar-facturas-servicio').addEventListener('click', () => this.borrarFacturasServicio());
                 document.getElementById('btn-fecha-hoy').addEventListener('click', () => this.establecerFechaHoy('factura'));
                 document.getElementById('btn-editar-fecha-hoy').addEventListener('click', () => this.establecerFechaHoy('factura', 'editar'));
                 document.getElementById('btn-eliminar-factura-modal').addEventListener('click', () => this.eliminarFacturaDesdeModal());
@@ -4923,22 +5015,26 @@
                     const estadisticasHTML = `
     <div class="calculador-campo">
     <label class="calculador-label">Mes</label>
-    <select id="select-mes-estadisticas" class="estadisticas-selector">
-            ${this.generarOpcionesMeses(mesSeleccionado, añoSeleccionado)}
-        </select>
+    <div class="custom-select-wrapper" id="select-mes-estadisticas-csd">
+        <div class="custom-select-trigger">
+            <span class="csd-label"></span>
+            <svg class="csd-arrow" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+        </div>
+        <div class="custom-select-dropdown"></div>
+    </div>
+    <select id="select-mes-estadisticas" style="display:none;"></select>
     </div>
     <div id="estadisticas-categorias-tags"></div>
     <div class="estadisticas-lista"></div>
 `;
                     document.getElementById('estadisticas-mensual-container').innerHTML = estadisticasHTML;
 
-                    // Agregar event listener al select
+                    // Poblar select nativo y montar custom dropdown
                     const select = document.getElementById('select-mes-estadisticas');
-                    if (select) {
-                        select.addEventListener('change', () => {
-                            this.actualizarEstadisticas();
-                        });
-                    }
+                    select.innerHTML = this.generarOpcionesMeses(mesSeleccionado, añoSeleccionado);
+                    const wrapper = document.getElementById('select-mes-estadisticas-csd');
+                    const cs = new CustomSelect(wrapper, select, () => this.actualizarEstadisticas());
+                    wrapper._customSelect = cs;
 
                     // Renderizar tags de categoría
                     this._renderTagsCategoriaEstadisticas();
@@ -4957,6 +5053,9 @@
                         if (Array.from(selectActual.options).some(opt => opt.value === valorActual)) {
                             selectActual.value = valorActual;
                         }
+                        // Refrescar custom dropdown
+                        const csd = document.getElementById('select-mes-estadisticas-csd');
+                        if (csd && csd._customSelect) csd._customSelect.refresh();
                     }
 
                     // Actualizar tags de categoría
@@ -5061,6 +5160,13 @@
 
                 this.actualizarSelectServicios();
 
+                // Montar custom dropdown de servicio
+                const csdWrapper = document.getElementById('calculador-servicio-csd');
+                if (csdWrapper && !csdWrapper._customSelect) {
+                    const cs = new CustomSelect(csdWrapper, selectServicio, () => this.calcularPeriodo());
+                    csdWrapper._customSelect = cs;
+                }
+
                 const inputDesde = document.getElementById('calculador-desde');
                 const inputHasta = document.getElementById('calculador-hasta');
                 const btnDesde = document.getElementById('btn-calculador-desde-hoy');
@@ -5111,6 +5217,10 @@
                 }
 
                 select.innerHTML = html;
+
+                // Refrescar custom dropdown si ya existe
+                const csdWrapper = document.getElementById('calculador-servicio-csd');
+                if (csdWrapper && csdWrapper._customSelect) csdWrapper._customSelect.refresh();
 
                 // Si el servicio seleccionado ya no existe, limpiar la selección y recalcular
                 if (valorActual && !this.servicios.find(s => s.id === valorActual)) {
@@ -6361,6 +6471,21 @@
                     this.cerrarModal('modal-editar-servicio');
                     // No volver al modal de facturas porque eliminamos el servicio
                     this.mostrarToast('Servicio eliminado', 'success');
+                }
+            }
+
+            borrarFacturasServicio() {
+                if (!this.servicioActual) return;
+                const servicio = this.servicios.find(s => s.id === this.servicioActual);
+                if (!servicio) return;
+                const total = servicio.facturas?.length || 0;
+                if (total === 0) { this.mostrarToast('No hay facturas para borrar', 'info'); return; }
+
+                if (confirm(`¿Borrar las ${total} factura${total !== 1 ? 's' : ''} de "${servicio.nombre}"? Esta acción no se puede deshacer.`)) {
+                    servicio.facturas = [];
+                    this.guardarDatos();
+                    this.renderServicios();
+                    this.mostrarToast(`${total} factura${total !== 1 ? 's' : ''} eliminada${total !== 1 ? 's' : ''}`, 'success');
                 }
             }
 
@@ -8704,6 +8829,11 @@
                 btnSeleccionar.childNodes[btnSeleccionar.childNodes.length - 1].textContent =
                     this.modoCalculadora ? ' Cancelar selección' : ' Seleccionar';
 
+                // Texto de copiar monto
+                const btnCopiar = document.getElementById('ctx-copiar-monto');
+                btnCopiar.childNodes[btnCopiar.childNodes.length - 1].textContent =
+                    (estaSeleccionado && this.serviciosSeleccionados.size > 1) ? ' Copiar total' : ' Copiar monto';
+
                 // Pagar: si está seleccionado, paga todas las seleccionadas; sino solo esta
                 // Habilitado si hay al menos una factura del mes pagable en el scope
                 const btnPagar = document.getElementById('ctx-pagar-factura');
@@ -8851,6 +8981,81 @@
                 }, 150);
             }
         }
+
+        // ============================================================
+        // CUSTOM SELECT — dropdown con scroll, sincroniza select oculto
+        // ============================================================
+        class CustomSelect {
+            constructor(wrapper, nativeSelect, onChange) {
+                this.wrapper = wrapper;
+                this.native = nativeSelect;
+                this.onChange = onChange;
+                this.trigger = wrapper.querySelector('.custom-select-trigger');
+                this.labelEl = wrapper.querySelector('.csd-label');
+                this.dropdown = wrapper.querySelector('.custom-select-dropdown');
+                this._boundClose = this._onOutsideClick.bind(this);
+                this.trigger.addEventListener('pointerdown', e => {
+                    e.stopPropagation();
+                    this.toggle();
+                });
+                this.refresh();
+            }
+
+            refresh() {
+                const options = Array.from(this.native.options);
+                this.dropdown.innerHTML = options.map(opt =>
+                    `<div class="custom-select-option${opt.selected ? ' selected' : ''}" data-value="${opt.value}">${opt.text}</div>`
+                ).join('');
+                this.dropdown.querySelectorAll('.custom-select-option').forEach(el => {
+                    el.addEventListener('pointerdown', e => {
+                        e.stopPropagation();
+                        this.select(el.dataset.value);
+                    });
+                });
+                const sel = this.native.options[this.native.selectedIndex];
+                this.labelEl.textContent = sel ? sel.text : '';
+            }
+
+            select(value) {
+                this.native.value = value;
+                this.close();
+                this.refresh();
+                if (this.onChange) this.onChange();
+            }
+
+            toggle() {
+                this.wrapper.classList.contains('open') ? this.close() : this.open();
+            }
+
+            open() {
+                const rect = this.wrapper.getBoundingClientRect();
+                const spaceBelow = window.innerHeight - rect.bottom;
+                const spaceAbove = rect.top;
+                if (spaceBelow < 260 && spaceAbove > spaceBelow) {
+                    this.dropdown.style.bottom = '100%';
+                    this.dropdown.style.top = 'auto';
+                    this.dropdown.style.marginBottom = '4px';
+                    this.dropdown.style.marginTop = '';
+                } else {
+                    this.dropdown.style.top = '100%';
+                    this.dropdown.style.bottom = 'auto';
+                    this.dropdown.style.marginTop = '4px';
+                    this.dropdown.style.marginBottom = '';
+                }
+                this.wrapper.classList.add('open');
+                document.addEventListener('pointerdown', this._boundClose, true);
+            }
+
+            close() {
+                this.wrapper.classList.remove('open');
+                document.removeEventListener('pointerdown', this._boundClose, true);
+            }
+
+            _onOutsideClick(e) {
+                if (!this.wrapper.contains(e.target)) this.close();
+            }
+        }
+
         window.app = new GestionServicios();
     </script>
     <script>
@@ -8891,7 +9096,7 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA LUSHIBOSCA VERSION 115
+    //                 NOTAS SISTEMA LUSHIBOSCA VERSION 116
     // ====================================================================
     
      - CAMBIOS
