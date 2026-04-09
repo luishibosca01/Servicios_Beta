@@ -2149,7 +2149,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">LUSHIBOSCA 112</div> <!-- DeltaF -->
+            <div class="menu-version">LUSHIBOSCA 115</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -2930,6 +2930,7 @@
                     <select id="ingreso-tipo" required>
                         <option value="regular">Regular</option>
                         <option value="complementario">Complementario</option>
+                        <option value="transferencia">Transferencia</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -2982,6 +2983,7 @@
                     <select id="editar-ingreso-tipo" required>
                         <option value="regular">Regular</option>
                         <option value="complementario">Complementario</option>
+                        <option value="transferencia">Transferencia</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -7008,7 +7010,7 @@
 
                         // Validar tipo (opcional)
                         if (factura.tipo !== undefined) {
-                            const tiposValidos = ['mensual', 'bimestral', 'semestral', 'anual', 'regular', 'complementario'];
+                            const tiposValidos = ['mensual', 'bimestral', 'semestral', 'anual', 'regular', 'complementario', 'transferencia'];
                             if (!tiposValidos.includes(factura.tipo)) {
                                 console.error(`Validación: factura[${fidx}].tipo inválido en servicio[${idx}]`);
                                 return false;
@@ -7719,8 +7721,8 @@
 
                     lista.innerHTML = grupos.map((grupo, index) => {
                         const ingresosHTML = grupo.items.map(ingreso => {
-                            const tipoTexto = ingreso.tipo === 'complementario' ? 'Complementario' : 'Regular';
-                            const tipoEmoji = ingreso.tipo === 'complementario' ? '💼' : '💵';
+                            const tipoTexto = ingreso.tipo === 'complementario' ? 'Complementario' : ingreso.tipo === 'transferencia' ? 'Transferencia' : 'Regular';
+                            const tipoEmoji = ingreso.tipo === 'complementario' ? '💼' : ingreso.tipo === 'transferencia' ? '🔄' : '💵';
                             const monedaIngreso = ingreso.moneda || 'ars';
                             const badgeClass = monedaIngreso === 'usd' ? 'usd' : 'ars';
 
@@ -8673,7 +8675,11 @@
                 document.getElementById('ctx-seleccionar').addEventListener('click', () => {
                     const id = this._ctxServicioId;
                     this._ctxCerrar();
-                    this._ctxSeleccionar(id);
+                    if (this.modoCalculadora) {
+                        this.desactivarModoCalculadora(true);
+                    } else {
+                        this._ctxSeleccionar(id);
+                    }
                 });
 
                 document.getElementById('ctx-copiar-monto').addEventListener('click', () => {
@@ -8696,7 +8702,7 @@
                 // Texto de seleccionar
                 const btnSeleccionar = document.getElementById('ctx-seleccionar');
                 btnSeleccionar.childNodes[btnSeleccionar.childNodes.length - 1].textContent =
-                    estaSeleccionado ? ' Deseleccionar' : ' Seleccionar';
+                    this.modoCalculadora ? ' Cancelar selección' : ' Seleccionar';
 
                 // Pagar: si está seleccionado, paga todas las seleccionadas; sino solo esta
                 // Habilitado si hay al menos una factura del mes pagable en el scope
@@ -8761,10 +8767,30 @@
             }
 
             _ctxCopiarMonto() {
-                const factura = this.obtenerUltimaFactura(this._ctxServicioId);
-                if (!factura) { this.mostrarToast('Sin factura del mes', 'info'); return; }
-                const moneda = factura.moneda || 'ars';
-                const texto = this.formatearMoneda(factura.monto, moneda);
+                const estaSeleccionado = this.serviciosSeleccionados.has(this._ctxServicioId);
+                const ids = (estaSeleccionado && this.serviciosSeleccionados.size > 1)
+                    ? [...this.serviciosSeleccionados]
+                    : [this._ctxServicioId];
+
+                let totalARS = 0;
+                let totalUSD = 0;
+
+                ids.forEach(id => {
+                    const factura = this.obtenerUltimaFactura(id);
+                    if (!factura) return;
+                    if ((factura.moneda || 'ars') === 'usd') {
+                        totalUSD += factura.monto;
+                    } else {
+                        totalARS += factura.monto;
+                    }
+                });
+
+                const partes = [];
+                if (totalARS > 0) partes.push(this.formatearMoneda(totalARS, 'ars'));
+                if (totalUSD > 0) partes.push(this.formatearMoneda(totalUSD, 'usd'));
+                if (partes.length === 0) { this.mostrarToast('Sin factura del mes', 'info'); return; }
+
+                const texto = partes.join(' + ');
                 navigator.clipboard?.writeText(texto).then(() => {
                     this.mostrarToast(`Copiado: ${texto}`, 'success');
                 }).catch(() => {
@@ -8793,10 +8819,10 @@
 
                 if (pagadas === 0) return;
 
-                if (estaSeleccionado && this.modoCalculadora) {
+                this._postGuardado();
+                if (estaSeleccionado && this.serviciosSeleccionados.size > 1) {
                     this.desactivarModoCalculadora(true);
                 }
-                this._postGuardado();
                 this.mostrarToast(pagadas === 1 ? 'Factura pagada ✓' : `${pagadas} facturas pagadas ✓`, 'success');
             }
 
@@ -8865,7 +8891,7 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA LUSHIBOSCA VERSION 112
+    //                 NOTAS SISTEMA LUSHIBOSCA VERSION 115
     // ====================================================================
     
      - CAMBIOS
