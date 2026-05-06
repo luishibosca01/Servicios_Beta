@@ -2228,7 +2228,7 @@
                 </svg>
                 Cerrar menú
             </button>
-            <div class="menu-version">LUSHIBOSCA 116</div> <!-- DeltaF -->
+            <div class="menu-version">LUSHIBOSCA 117</div> <!-- DeltaF -->
         </div>
     </div>
 
@@ -8995,6 +8995,7 @@
                 this.dropdown = wrapper.querySelector('.custom-select-dropdown');
                 this._boundClose = this._onOutsideClick.bind(this);
                 this.trigger.addEventListener('pointerdown', e => {
+                    e.preventDefault();
                     e.stopPropagation();
                     this.toggle();
                 });
@@ -9008,6 +9009,7 @@
                 ).join('');
                 this.dropdown.querySelectorAll('.custom-select-option').forEach(el => {
                     el.addEventListener('pointerdown', e => {
+                        e.preventDefault();
                         e.stopPropagation();
                         this.select(el.dataset.value);
                     });
@@ -9052,7 +9054,10 @@
             }
 
             _onOutsideClick(e) {
-                if (!this.wrapper.contains(e.target)) this.close();
+                if (!this.wrapper.contains(e.target)) {
+                    e.preventDefault();
+                    this.close();
+                }
             }
         }
 
@@ -9096,11 +9101,13 @@
 </html>
 
 <!--// ====================================================================
-    //                 NOTAS SISTEMA LUSHIBOSCA VERSION 116
+    //                 NOTAS SISTEMA LUSHIBOSCA VERSION 117
     // ====================================================================
     
      - CAMBIOS
-     1) 
+     1) Fix click-through en CustomSelect en móvil: agregado e.preventDefault() en pointerdown
+        del trigger y las opciones para cancelar el click sintético que el OS genera post-touch,
+        evitando que active elementos detrás del dropdown al seleccionar una opción.
 
 
      - BUGS CONOCIDOS:
