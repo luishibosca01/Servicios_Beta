@@ -1237,7 +1237,7 @@ class GestionServicios {
         // ---- Delegación de eventos para HTML generado dinámicamente ----
 
         // Perfiles: cambiar / eliminar / editar
-        document.getElementById('lista-perfiles')?.addEventListener('click', (e) => {
+        document.getElementById('perfiles-lista')?.addEventListener('click', (e) => {
             const card = e.target.closest('[data-action="cambiar-perfil"]');
             const btnEliminar = e.target.closest('[data-action="eliminar-perfil"]');
             const btnEditar = e.target.closest('[data-action="editar-perfil"]');
@@ -1254,11 +1254,27 @@ class GestionServicios {
             if (item) this.abrirDebugEstadisticas(item.dataset.tipo);
         });
 
-        // Lista de servicios: toggle grupos por categoría
-        document.getElementById('lista-servicios')?.addEventListener('click', (e) => {
-            const header = e.target.closest('[data-action="toggle-grupo-cat"]');
-            if (header) this.toggleGrupoCat(header);
-        });
+        // Lista de servicios: toggle grupos por categoría + long press
+        const listaSvc = document.getElementById('servicios-lista');
+        if (listaSvc) {
+            listaSvc.addEventListener('click', (e) => {
+                const header = e.target.closest('[data-action="toggle-grupo-cat"]');
+                if (header) this.toggleGrupoCat(header);
+            });
+            listaSvc.addEventListener('pointerdown', (e) => {
+                const header = e.target.closest('[data-lp="true"]');
+                if (header) this._lpStart(e, header);
+            });
+            listaSvc.addEventListener('pointerup', (e) => {
+                if (e.target.closest('[data-lp="true"]')) this._lpCancel();
+            });
+            listaSvc.addEventListener('pointerleave', (e) => {
+                if (e.target.closest('[data-lp="true"]')) this._lpCancel();
+            });
+            listaSvc.addEventListener('contextmenu', (e) => {
+                if (e.target.closest('[data-lp="true"]')) e.preventDefault();
+            });
+        }
 
         // Modal facturas servicio: toggle grupos por año + editar factura al click
         document.getElementById('lista-facturas-modal')?.addEventListener('click', (e) => {
@@ -2704,8 +2720,7 @@ class GestionServicios {
                 const collapsed = this._catColapsadas[`__estado_${grupo.key}`] ? 'collapsed' : '';
                 html += `
         <div class="servicios-grupo-cat" data-cat="__estado_${grupo.key}">
-            <div class="servicios-grupo-cat-header" data-action="toggle-grupo-cat"
-                onpointerdown="app._lpStart(event,this)" onpointerup="app._lpCancel()" onpointerleave="app._lpCancel()" oncontextmenu="event.preventDefault()">
+            <div class="servicios-grupo-cat-header" data-action="toggle-grupo-cat" data-lp="true">
                 <div class="servicios-grupo-cat-header-info">
                     <span class="servicios-grupo-cat-texto">${grupo.label}</span>
                     <span class="servicios-grupo-cat-contador">(${items.length})</span>
@@ -2748,8 +2763,7 @@ class GestionServicios {
 
                 html += `
         <div class="servicios-grupo-cat" data-cat="${this.escaparAtributoHTML(cat)}">
-            <div class="servicios-grupo-cat-header" data-action="toggle-grupo-cat"
-                onpointerdown="app._lpStart(event,this)" onpointerup="app._lpCancel()" onpointerleave="app._lpCancel()" oncontextmenu="event.preventDefault()">
+            <div class="servicios-grupo-cat-header" data-action="toggle-grupo-cat" data-lp="true">
                 <div class="servicios-grupo-cat-header-info">
                     <span class="servicios-grupo-cat-texto">${this.escaparHTML(catLabel)}</span>
                     <span class="servicios-grupo-cat-contador">(${cantidad})</span>

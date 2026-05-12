@@ -2123,6 +2123,7 @@
 
 /* Menu vistas (principal / calcular) */
 #menu-vista-principal.hidden-vista { display: none !important; }
+#menu-vista-calcular.hidden-vista  { display: none !important; }
 #menu-vista-calcular.visible-vista { display: block !important; }
 #menu-vista-calcular.anim-slide-up  { animation: slideUp 0.2s ease; }
 #menu-vista-principal.anim-slide-up { animation: slideUp 0.2s ease; }
@@ -2182,3 +2183,21 @@
 .select-mes-oculto { display: none; }
 .sin-categorias-text { font-size: 0.85rem; color: var(--text-muted); }
 .sin-facturas-text { padding: 0.5rem 0; }
+
+/* Estado inicial oculto para elementos de gist (reemplaza d-none que conflictuaba con .visible) */
+#gist-rango-container.gist-rango-oculto:not(.visible) { display: none !important; }
+#gist-ultima-sync.gist-ultima-oculto:not(.visible)    { display: none !important; }
+
+/* Estado inicial oculto para menu-agregar-recibo */
+#menu-agregar-recibo:not(.visible) { display: none !important; }
+
+/* calculadora-total-usd: oculto por defecto, visible con .visible */
+#calculadora-total-usd:not(.visible) { display: none !important; }
+
+/* btn-toggle-credito: oculto por defecto hasta que JS lo active */
+#btn-toggle-credito:not(.btn-credito-visible)       { display: none !important; }
+#btn-editar-toggle-credito:not(.btn-credito-visible) { display: none !important; }
+
+/* badge-categoria: oculto hasta que JS agregue .visible */
+#modal-facturas-categoria:not(.visible) { display: none !important; }
+.badge-categoria.visible { display: inline-block !important; }

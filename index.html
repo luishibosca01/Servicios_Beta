@@ -566,7 +566,7 @@
     <div class="calculadora-flotante" id="calculadora-flotante">
         <div class="d-flex flex-column align-items-center gap-1">
             <div class="calculadora-total" id="calculadora-total">$0,00</div>
-            <div class="calculadora-total d-none" id="calculadora-total-usd"></div>
+            <div class="calculadora-total" id="calculadora-total-usd"></div>
             <div class="calculadora-contador" id="calculadora-contador">0 facturas</div>
         </div>
     </div>
@@ -603,7 +603,7 @@
             </div>
         </div>
         <!-- Vista calcular -->
-        <div id="menu-vista-calcular" class="d-none">
+        <div id="menu-vista-calcular" class="hidden-vista">
             <div class="menu-item" id="menu-calcular-volver">
                 <svg class="icon">
                     <use href="#icon-undo" />
@@ -694,7 +694,7 @@
                     </button>
                 </div>
                 <!-- Rango horario (se muestra solo en modo 1 y 2) -->
-                <div id="gist-rango-container" class="d-none flex-column gap-2">
+                <div id="gist-rango-container" class="flex-column gap-2 gist-rango-oculto">
                     <label class="d-block mb-1">Rango horario</label>
                     <div class="d-flex align-items-center gap-2">
                         <input type="time" id="gist-rango-desde" class="flex-1">
@@ -708,7 +708,7 @@
                     </button>
                 </div>
                 <!-- Última sync y contadores -->
-                <div id="gist-ultima-sync" class="text-sm text-muted d-none"></div>
+                <div id="gist-ultima-sync" class="text-sm text-muted gist-ultima-oculto"></div>
                 <!-- Guardar / Volver -->
                 <div class="d-grid grid-cols-2 gap-2">
                     <button type="button" id="btn-gist-guardar">
@@ -968,7 +968,7 @@
                     <label for="factura-fecha-pago">Fecha de pago</label>
                     <div class="d-flex align-items-center gap-2">
                         <input type="date" id="factura-fecha-pago" disabled class="flex-1">
-                        <button type="button" id="btn-toggle-credito" class="icon-btn d-none"
+                        <button type="button" id="btn-toggle-credito" class="icon-btn"
                             title="Contado / Crédito">
                             <svg class="icon">
                                 <use href="#icon-cash" />
@@ -1051,7 +1051,7 @@
                     <label for="editar-factura-fecha-pago">Fecha de pago</label>
                     <div class="d-flex align-items-center gap-2">
                         <input type="date" id="editar-factura-fecha-pago" disabled class="flex-1">
-                        <button type="button" id="btn-editar-toggle-credito" class="icon-btn d-none"
+                        <button type="button" id="btn-editar-toggle-credito" class="icon-btn"
                             title="Contado / crédito">
                             <svg class="icon">
                                 <use href="#icon-cash" />
@@ -1091,7 +1091,7 @@
             <div class="modal-header modal-facturas-header">
                 <div>
                     <h3 id="modal-facturas-titulo"></h3>
-                    <span id="modal-facturas-categoria" class="badge-categoria d-none mt-1 d-inline-block"></span>
+                    <span id="modal-facturas-categoria" class="badge-categoria mt-1 d-inline-block"></span>
                 </div>
                 <button class="icon-btn transparent" id="btn-editar-servicio-desde-modal"
                     title="Editar servicio" class="ml-auto">
