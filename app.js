@@ -1242,7 +1242,6 @@ class GestionServicios {
             const btnEliminar = e.target.closest('[data-action="eliminar-perfil"]');
             const btnEditar = e.target.closest('[data-action="editar-perfil"]');
             const stop = e.target.closest('[data-action="stop-propagation"]');
-            if (stop) { e.stopPropagation(); return; }
             if (btnEliminar) { e.stopPropagation(); this.eliminarPerfil(btnEliminar.dataset.perfilId); return; }
             if (btnEditar) { e.stopPropagation(); this.abrirModalEditarPerfil(btnEditar.dataset.perfilId); return; }
             if (card) this.cambiarPerfil(card.dataset.perfilId);
@@ -1281,7 +1280,7 @@ class GestionServicios {
             const headerAno = e.target.closest('[data-action="toggle-grupo-ano"]');
             if (headerAno) { this.toggleGrupoAno(headerAno); return; }
             const facturaInfo = e.target.closest('[data-action="factura-click"]');
-            if (facturaInfo && facturaInfo.dataset.facturaAcion === 'editar-factura') {
+            if (facturaInfo && facturaInfo.dataset.facturaAccion === 'editar-factura') {
                 this.editarFactura(facturaInfo.dataset.facturaId);
             }
         });

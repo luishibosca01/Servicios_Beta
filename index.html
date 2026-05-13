@@ -340,13 +340,15 @@
                     <use href="#icon-chevron-down" />
                 </svg>
             </div>
-            <div class="menu-item cursor-default justify-content-between">
-                <span class="text-muted">Oficial</span>
-                <span class="dolar-widget-valor" id="dolar-oficial">-</span>
-            </div>
-            <div class="menu-item cursor-default justify-content-between">
-                <span class="text-muted">MEP</span>
-                <span class="dolar-widget-valor" id="dolar-mep">-</span>
+            <div id="opciones-dolar" class="menu-submenu">
+                <div class="menu-item cursor-default justify-content-between">
+                    <span class="text-muted">Oficial</span>
+                    <span class="dolar-widget-valor" id="dolar-oficial">-</span>
+                </div>
+                <div class="menu-item cursor-default justify-content-between">
+                    <span class="text-muted">MEP</span>
+                    <span class="dolar-widget-valor" id="dolar-mep">-</span>
+                </div>
             </div>
             <div class="menu-item" id="menu-categorias">
                 <svg class="icon">
@@ -1256,13 +1258,11 @@
 
     <!-- Modal de Perfiles -->
     <div class="modal" id="modal-perfiles">
-        <div class="modal-overlay" id="modal-perfiles-overlay"></div>
         <div class="modal-content">
             <div class="modal-header">
                 <h2>Perfiles</h2>
             </div>
-            <div class="modal-body">
-                <div class="modal-body d-flex flex-column gap-3">
+            <div class="modal-body d-flex flex-column gap-3">
                     <div id="perfiles-lista" class="d-flex flex-column gap-2"></div>
                     <div class="d-flex align-items-center gap-2">
                         <input type="text" id="perfil-nuevo-nombre" maxlength="20" placeholder="Nombre del perfil..."
@@ -1278,14 +1278,12 @@
                             <use href="#icon-cancel" />
                         </svg> Cerrar
                     </button>
-                </div>
             </div>
         </div>
     </div>
 
     <!-- Modal Crear/Editar Perfil -->
     <div class="modal" id="modal-editar-perfil">
-        <div class="modal-overlay" id="modal-editar-perfil-overlay"></div>
         <div class="modal-content">
             <div class="modal-header">
                 <h2 id="titulo-editar-perfil">Editar Perfil</h2>
@@ -1451,12 +1449,13 @@
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Toast de notificaciones -->
-        <div class="toast" id="toast"></div>
+    <!-- Toast de notificaciones -->
+    <div class="toast" id="toast"></div>
 
-        <!-- Menú contextual servicios -->
-        <div class="ctx-menu" id="ctx-menu-servicio">
+    <!-- Menú contextual servicios -->
+    <div class="ctx-menu" id="ctx-menu-servicio">
             <button class="ctx-menu-item" id="ctx-seleccionar">
                 <svg class="icon icon-line" viewBox="0 0 24 24">
                     <path d="M9 11l3 3L22 4" />

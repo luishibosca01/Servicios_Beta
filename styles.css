@@ -166,8 +166,8 @@
             user-select: none;
         }
 
+        /* Extiende la transición base para animar también el padding en tarjetas colapsables */
         .card-header-collapsible+.collapsible-content {
-            padding-top: 0;
             transition: max-height var(--transition-base), opacity var(--transition-base), padding var(--transition-base);
         }
 
@@ -384,6 +384,9 @@
         ============================================================ */
         .ctx-menu {
             position: fixed;
+            /* posición inyectada desde JS via custom properties */
+            left: var(--ctx-x, 0px);
+            top:  var(--ctx-y, 0px);
             z-index: 300;
             background: var(--bg-card);
             border: 1px solid var(--border);
@@ -670,6 +673,18 @@
            COLLAPSIBLE CONTENT (patrón unificado)
            Usado por: tarjetas principales, grupos de facturas y categorías
         ============================================================ */
+        /*
+         * PATRÓN COLLAPSIBLE — tarjetas principales (servicios, estadísticas)
+         *
+         * Estado inicial = cerrado (max-height:0, invisible).
+         * JS agrega/quita la clase .collapsed para alternar.
+         * Se usa visibility además de opacity para que los elementos
+         * colapsados no sean focusables con teclado/tab.
+         *
+         * Nota: .facturas-grupo-contenido y .servicios-grupo-cat-contenido
+         * usan un patrón simplificado (sin visibility) porque son listas
+         * internas que no necesitan bloquear el foco — ver sección GRUPOS.
+         */
         .collapsible-content {
             max-height: 0;
             opacity: 0;
@@ -685,18 +700,22 @@
             overflow: visible;
         }
 
-        .collapsible-content.collapsed {
-            max-height: 0;
-            opacity: 0;
-        }
-
+        /* Excepción: servicios y estadísticas necesitan overflow visible
+           para que los dropdowns internos no queden recortados */
         #servicios-content:not(.collapsed),
         #estadisticas-content:not(.collapsed) {
             overflow-y: visible;
             overflow-x: visible;
         }
 
-        /* Grupos de facturas por año y grupos de categorías — mismo patrón */
+        /*
+         * PATRÓN COLLAPSIBLE — grupos de facturas y categorías
+         *
+         * Variante simplificada sin visibility: estos contenedores son
+         * listas internas donde el foco ya queda bloqueado por el padre.
+         * Usan max-height fija (2000px) en lugar de none para que la
+         * transición de cierre sea animable (none no se puede animar).
+         */
         .facturas-grupo-contenido,
         .servicios-grupo-cat-contenido {
             display: flex;
@@ -1737,119 +1756,192 @@
         }
 
         /* ============================================================
-   CLASES UTILITARIAS (Fase 1)
-============================================================ */
-        .d-none {
-            display: none !important;
+           UTILIDADES
+           Sistema unificado. Nomenclatura: kebab-case semántico.
+           Evitar agregar !important salvo casos documentados.
+        ============================================================ */
+
+        /* --- Display --- */
+        .hidden          { display: none !important; }
+        .d-block         { display: block; }
+        .d-inline-block  { display: inline-block; }
+        .d-flex          { display: flex; }
+        .d-grid          { display: grid; }
+
+        /* Variantes con !important para sobreescribir JS que usa .hidden */
+        .d-flex-force    { display: flex !important; }
+        .d-block-force   { display: block !important; }
+
+        /* --- Aliases bootstrap-like (usados en HTML y app.js) --- */
+        .w-100            { width: 100%; }
+        .d-none           { display: none !important; }
+        .flex-column      { flex-direction: column; }
+        .align-items-center   { align-items: center; }
+        .align-items-stretch  { align-items: stretch; }
+        .justify-content-center  { justify-content: center; }
+        .justify-content-between { justify-content: space-between; }
+        .d-flex-imp       { display: flex !important; }
+
+        /* --- Flex --- */
+        .flex-col        { flex-direction: column; }
+        .flex-wrap       { flex-wrap: wrap; }
+        .flex-1          { flex: 1; }
+        .flex-shrink-0   { flex-shrink: 0; }
+
+        /* --- Align / Justify --- */
+        .items-center    { align-items: center; }
+        .items-stretch   { align-items: stretch; }
+        .justify-center  { justify-content: center; }
+        .justify-between { justify-content: space-between; }
+
+        /* --- Gap --- */
+        .gap-1  { gap: 0.25rem; }
+        .gap-2  { gap: 0.5rem; }
+        .gap-3  { gap: 1rem; }
+
+        /* --- Grid --- */
+        .grid-cols-2 { grid-template-columns: 1fr 1fr; }
+
+        /* --- Dimensiones --- */
+        .w-full { width: 100%; }
+
+        /* --- Spacing --- */
+        .mt-1 { margin-top: 0.25rem; }
+        .mt-2 { margin-top: 0.5rem; }
+        .mt-3 { margin-top: 1rem; }
+        .mb-1 { margin-bottom: 0.25rem; }
+        .mb-2 { margin-bottom: 0.5rem; }
+        .mb-3 { margin-bottom: 1rem; }
+        .ml-auto { margin-left: auto; }
+
+        /* --- Posición --- */
+        .pos-relative { position: relative; }
+
+        /* --- Tipografía --- */
+        .text-sm      { font-size: 0.9rem; }
+        .text-center  { text-align: center; }
+        .text-muted   { color: var(--text-muted) !important; }
+        .text-green   { color: var(--c-green); font-weight: 600; }
+        .text-blue    { color: var(--c-blue);  font-weight: 600; }
+        .text-gold    { color: var(--c-gold);  font-weight: 600; }
+        .text-red     { color: var(--c-red);   font-weight: 600; }
+        .text-danger  { color: var(--c-red) !important; }
+        .text-center-muted {
+            color: var(--text-muted);
+            text-align: center;
+            padding: 1rem;
         }
 
-        .d-flex {
-            display: flex;
+        /* --- Opacidad / Visibilidad (usados desde JS) --- */
+        .opacity-0 { opacity: 0; }
+        .opacity-1 { opacity: 1; }
+
+        /* --- Overflow --- */
+        .max-h-60vh {
+            max-height: 60vh;
+            overflow-y: auto;
         }
 
-        .d-grid {
-            display: grid;
+        /* --- Misc --- */
+        .cursor-default { cursor: default; }
+        .min-h-tags     { min-height: 2rem; }
+        .separator-line {
+            border-top: 1px solid var(--text-muted);
+            opacity: 0.3;
+            margin: 1rem 0;
         }
 
-        .flex-column {
-            flex-direction: column;
+        /* --- Botones tamaño --- */
+        .btn-sm {
+            width: 32px !important;
+            height: 32px !important;
         }
 
-        .align-items-center {
-            align-items: center;
-        }
-
-        .align-items-stretch {
-            align-items: stretch;
-        }
-
-        .justify-content-center {
-            justify-content: center;
-        }
-
-        .justify-content-between {
-            justify-content: space-between;
-        }
-
-        .flex-1 {
-            flex: 1;
-        }
-
-        .flex-shrink-0 {
+        /* --- Iconos tamaño --- */
+        .icon-md {
+            width: 20px;
+            height: 20px;
             flex-shrink: 0;
         }
 
-        .w-100 {
-            width: 100%;
+        /* --- Modal ancho --- */
+        .modal-lg { max-width: 600px !important; }
+
+        /* --- Animaciones de lista (usadas desde JS) --- */
+        .anim-slide-up-fade {
+            animation: slideUpFade 0.2s ease-out forwards;
+        }
+        .anim-slide-down-fade {
+            animation: slideDownFade 0.2s ease-out;
         }
 
-        .ml-auto {
-            margin-left: auto;
-        }
-
-        .gap-1 {
-            gap: 0.25rem;
-        }
-
-        .gap-2 {
-            gap: 0.5rem;
-        }
-
-        .gap-3 {
-            gap: 1rem;
-        }
-
-        .mt-1 {
-            margin-top: 0.25rem;
-        }
-
-        .mt-2 {
-            margin-top: 0.5rem;
-        }
-
-        .mt-3 {
-            margin-top: 1rem;
-        }
-
-        .mb-1 {
-            margin-bottom: 0.25rem;
-        }
-
-        .mb-2 {
-            margin-bottom: 0.5rem;
-        }
-
-        .mb-3 {
-            margin-bottom: 1rem;
-        }
-
-        .text-muted {
-            color: var(--text-muted) !important;
-        }
-
-        .cursor-default {
-            cursor: default;
-        }
-
-        .grid-cols-2 {
-            grid-template-columns: 1fr 1fr;
-        }
-
-        .modal-lg {
-            max-width: 600px !important;
-        }
-
-        .flex-wrap {
-            flex-wrap: wrap;
-        }
-
-        .min-h-tags {
-            min-height: 2rem;
-        }
+        /* --- Animation delays (card-fade-in) --- */
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
 
         /* ============================================================
-   COMPONENTES DINÁMICOS JS (Fase 3)
-============================================================ */
+           ESTADO VISIBLE/OCULTO — elementos controlados por JS
+           Patrón: el elemento arranca con .hidden en HTML.
+           JS remueve .hidden o agrega .visible según corresponda.
+           Se usa :not(.visible) con !important solo donde JS no puede
+           remover .hidden (elementos generados dinámicamente).
+        ============================================================ */
+
+        /* Calculadora flotante */
+        #calculadora-flotante.visible           { display: flex !important; }
+        #calculadora-total-usd.visible          { display: block !important; }
+        #calculadora-total-usd:not(.visible)    { display: none !important; }
+
+        /* Menú vistas */
+        .hidden-vista                           { display: none !important; }
+        .visible-vista                          { display: block !important; }
+        #menu-vista-calcular.anim-slide-up      { animation: slideUp 0.2s ease; }
+        #menu-vista-principal.anim-slide-up     { animation: slideUp 0.2s ease; }
+
+        /* Estadísticas */
+        #estadisticas-mensual-container.visible    { display: block !important; }
+        #estadisticas-individual-container.visible { display: block !important; }
+
+        /* Gist */
+        #gist-rango-container.visible           { display: flex !important; }
+        #gist-ultima-sync.visible               { display: block !important; }
+        #gist-rango-container:not(.visible)     { display: none !important; }
+        #gist-ultima-sync:not(.visible)         { display: none !important; }
+
+        /* Menú agregar recibo */
+        #menu-agregar-recibo.visible            { display: flex !important; }
+        #menu-agregar-recibo:not(.visible)      { display: none !important; }
+
+        /* Badge categoría */
+        #modal-facturas-categoria.visible       { display: inline-block !important; }
+        #modal-facturas-categoria:not(.visible) { display: none !important; }
+        .badge-categoria.visible                { display: inline-block !important; }
+
+        /* Botón crédito/contado */
+        .btn-credito-visible                            { display: flex !important; }
+        #btn-toggle-credito:not(.btn-credito-visible)  { display: none !important; }
+        #btn-editar-toggle-credito:not(.btn-credito-visible) { display: none !important; }
+
+        /* CustomSelect: posicionamiento del dropdown */
+        .custom-select-dropdown.dropdown-above {
+            bottom: 100%;
+            top: auto;
+            margin-bottom: 4px;
+            margin-top: 0;
+        }
+        .custom-select-dropdown.dropdown-below {
+            top: 100%;
+            bottom: auto;
+            margin-top: 4px;
+            margin-bottom: 0;
+        }
+
+        /* Context menu: posición via custom properties desde JS — ver regla base .ctx-menu en sección MENÚ CONTEXTUAL */
+
+        /* ============================================================
+           COMPONENTES DINÁMICOS (generados desde JS)
+        ============================================================ */
+
         /* Perfiles */
         .perfil-item-card {
             border: 1px solid var(--border);
@@ -1859,40 +1951,23 @@
             cursor: pointer;
             transition: border-color var(--transition-fast);
         }
-
-        .perfil-item-card.activo {
-            border-color: var(--c-green);
-        }
-
-        .perfil-header {
-            font-weight: 600;
-            font-size: 1.1rem;
-        }
-
-        .perfil-activo-badge {
-            color: var(--c-green);
-            font-size: 0.9rem;
-        }
-
+        .perfil-item-card.activo { border-color: var(--c-green); }
+        .perfil-header     { font-weight: 600; font-size: 1.1rem; }
+        .perfil-activo-badge { color: var(--c-green); font-size: 0.9rem; }
         .perfil-stats {
             font-size: 0.875rem;
             color: var(--text-muted);
             margin-top: 0.25rem;
         }
 
-        /* Debug Estadísticas */
+        /* Debug estadísticas */
         .debug-card {
             background: var(--input-bg);
             border: 1px solid var(--border);
             border-radius: var(--radius);
             padding: 0.75rem 1rem;
         }
-
-        .debug-card-title {
-            font-weight: 600;
-            margin-bottom: 0.25rem;
-        }
-
+        .debug-card-title  { font-weight: 600; margin-bottom: 0.25rem; }
         .debug-badge {
             font-size: 0.75rem;
             color: #fff;
@@ -1900,95 +1975,10 @@
             border-radius: 20px;
             display: inline-block;
         }
+        .debug-badge-success { background: var(--c-green); }
+        .debug-badge-warning { background: var(--c-gold); }
 
-        .debug-badge-success {
-            background: var(--c-green);
-        }
-
-        .debug-badge-warning {
-            background: var(--c-gold);
-        }
-
-        /* Utilidades Extra */
-        .text-green {
-            color: var(--c-green);
-            font-weight: 600;
-        }
-
-        .text-blue {
-            color: var(--c-blue);
-            font-weight: 600;
-        }
-
-        .text-gold {
-            color: var(--c-gold);
-            font-weight: 600;
-        }
-
-        .text-red {
-            color: var(--c-red);
-            font-weight: 600;
-        }
-
-        .text-danger {
-            color: var(--c-red) !important;
-        }
-
-        .text-center-muted {
-            color: var(--text-muted);
-            text-align: center;
-            padding: 1rem;
-        }
-
-        .text-sm {
-            font-size: 0.9rem;
-        }
-
-        .btn-sm {
-            width: 32px !important;
-            height: 32px !important;
-        }
-
-        .icon-md {
-            width: 20px;
-            height: 20px;
-            flex-shrink: 0;
-        }
-
-        .separator-line {
-            border-top: 1px solid var(--text-muted);
-            opacity: 0.3;
-            margin: 1rem 0;
-        }
-
-        /* ============================================================
-   AJUSTES FINALES (Fase 4)
-============================================================ */
-        .delay-1 {
-            animation-delay: 0.1s;
-        }
-
-        .delay-2 {
-            animation-delay: 0.2s;
-        }
-
-        .pos-relative {
-            position: relative;
-        }
-
-        .d-block {
-            display: block;
-        }
-
-        .d-inline-block {
-            display: inline-block;
-        }
-
-        .max-h-60vh {
-            max-height: 60vh;
-            overflow-y: auto;
-        }
-
+        /* Badge categoría (tarjeta servicio) */
         .badge-categoria {
             font-size: 0.75rem;
             font-weight: 600;
@@ -1997,6 +1987,35 @@
             border: 1px solid var(--border);
             border-radius: var(--radius);
             padding: 0.1rem 0.75rem;
+        }
+
+        /* Templates JS — misc */
+        .resumen-valor-vacio    { font-size: 2rem; }
+        .sin-categorias-text    { font-size: 0.85rem; color: var(--text-muted); }
+        .sin-facturas-text      { padding: 0.5rem 0; }
+        .select-mes-oculto      { display: none; }
+
+        /* Textos modal info */
+        .info-muted {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        .info-muted-mb  { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.75rem; }
+        .info-muted-mb2 { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem; }
+        .info-code-box {
+            background: var(--bg-body);
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        .info-code-box-mono {
+            background: var(--bg-body);
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: var(--text-muted);
         }
 
         /* ============================================================
@@ -2057,147 +2076,3 @@
             }
 
         }
-
-/* ============================================
-   CLASES UTILITARIAS - reemplazan style= inline
-   ============================================ */
-
-/* display:none para elementos que JS muestra/oculta */
-.hidden { display: none !important; }
-
-/* Modal info-resumen: margin-top en form-actions */
-.form-actions-mt { margin-top: 1rem; }
-
-/* Modal Gist: fila token */
-.gist-token-row { display: flex; gap: 0.5rem; }
-
-/* Separador "a" entre inputs de rango horario */
-.rango-sep { color: var(--text-muted); }
-
-/* Botón ± de monto (factura / editar-factura) */
-.btn-signo svg { width: 1.5em; height: 1.5em; }
-
-/* Modal informacion: iconos emoji de sección */
-.info-section-icon { font-size: 1.2rem; }
-
-/* Modal informacion: textos secundarios */
-.info-muted {
-    color: var(--text-muted);
-    font-size: 0.9rem;
-}
-.info-muted-mb { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.75rem; }
-.info-muted-mb2 { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem; }
-
-/* Modal informacion: cajas de código/ejemplo */
-.info-code-box {
-    background: var(--bg-body);
-    padding: 0.75rem;
-    border-radius: 8px;
-    font-size: 0.85rem;
-    color: var(--text-muted);
-}
-.info-code-box-mono {
-    background: var(--bg-body);
-    padding: 0.75rem;
-    border-radius: 8px;
-    font-family: monospace;
-    font-size: 0.85rem;
-    color: var(--text-muted);
-}
-
-
-/* ============================================
-   CLASES PARA REEMPLAZAR .style.xxx DESDE JS
-   ============================================ */
-
-/* display helpers */
-.d-flex-imp  { display: flex !important; }
-.d-block-imp { display: block !important; }
-.d-inline-block-imp { display: inline-block !important; }
-
-/* Calculadora flotante */
-#calculadora-flotante.visible { display: flex !important; }
-
-/* Total USD en calculadora */
-#calculadora-total-usd.visible { display: block !important; }
-
-/* Menu vistas (principal / calcular) */
-#menu-vista-principal.hidden-vista { display: none !important; }
-#menu-vista-calcular.hidden-vista  { display: none !important; }
-#menu-vista-calcular.visible-vista { display: block !important; }
-#menu-vista-calcular.anim-slide-up  { animation: slideUp 0.2s ease; }
-#menu-vista-principal.anim-slide-up { animation: slideUp 0.2s ease; }
-
-/* Estadísticas: contenedor mensual / individual */
-#estadisticas-mensual-container.hidden  { display: none !important; }
-#estadisticas-individual-container.hidden { display: none !important; }
-#estadisticas-mensual-container.visible  { display: block !important; }
-#estadisticas-individual-container.visible { display: block !important; }
-
-/* Gist rango-container */
-#gist-rango-container.visible { display: flex !important; }
-#gist-ultima-sync.visible     { display: block !important; }
-
-/* Ingreso recibo en menú agregar */
-#menu-agregar-recibo.visible  { display: flex !important; }
-
-/* Tag categoría en tarjeta de servicio */
-.badge-categoria.visible { display: inline-block !important; }
-
-/* btn-credito (contado/crédito) */
-.btn-credito-visible { display: flex !important; }
-
-/* Animaciones de listas (facturas, resultados calculador, resumen) */
-.anim-slide-up-fade {
-    animation: slideUpFade 0.2s ease-out forwards;
-}
-.anim-slide-down-fade {
-    animation: slideDownFade 0.2s ease-out;
-}
-.opacity-0 { opacity: 0; }
-.opacity-1 { opacity: 1; }
-
-/* Context menu: posición via custom properties */
-.ctx-menu {
-    left: var(--ctx-x, 0px);
-    top:  var(--ctx-y, 0px);
-}
-
-/* CustomSelect dropdown: arriba o abajo */
-.custom-select-dropdown.dropdown-above {
-    bottom: 100%;
-    top: auto;
-    margin-bottom: 4px;
-    margin-top: 0;
-}
-.custom-select-dropdown.dropdown-below {
-    top: 100%;
-    bottom: auto;
-    margin-top: 4px;
-    margin-bottom: 0;
-}
-
-/* Clases para reemplazar style= en templates JS */
-.resumen-valor-vacio { font-size: 2rem; }
-.calculador-resultado-item { cursor: pointer; }
-.select-mes-oculto { display: none; }
-.sin-categorias-text { font-size: 0.85rem; color: var(--text-muted); }
-.sin-facturas-text { padding: 0.5rem 0; }
-
-/* Estado inicial oculto para elementos de gist (reemplaza d-none que conflictuaba con .visible) */
-#gist-rango-container.gist-rango-oculto:not(.visible) { display: none !important; }
-#gist-ultima-sync.gist-ultima-oculto:not(.visible)    { display: none !important; }
-
-/* Estado inicial oculto para menu-agregar-recibo */
-#menu-agregar-recibo:not(.visible) { display: none !important; }
-
-/* calculadora-total-usd: oculto por defecto, visible con .visible */
-#calculadora-total-usd:not(.visible) { display: none !important; }
-
-/* btn-toggle-credito: oculto por defecto hasta que JS lo active */
-#btn-toggle-credito:not(.btn-credito-visible)       { display: none !important; }
-#btn-editar-toggle-credito:not(.btn-credito-visible) { display: none !important; }
-
-/* badge-categoria: oculto hasta que JS agregue .visible */
-#modal-facturas-categoria:not(.visible) { display: none !important; }
-.badge-categoria.visible { display: inline-block !important; }
